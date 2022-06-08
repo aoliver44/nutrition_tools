@@ -29,19 +29,15 @@ set.seed(1)
 #readIN <- function(path, linking_identifier, na_amount = 0.95, duplicated_threshold = 0.96, full_check = FALSE) {
 
 ## make some extra helper functions
+## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
-is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), tz = 'UTC', format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
-is.convertible.to.date2 <- function(x) !is.na(as.Date(as.character(x), tz = 'UTC', format = c('%m/%d/%Y')))
+## Date function:
+is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), 
+                                                     tz = 'UTC', 
+                                                     format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
 
-## create list of files to read in
+## create list of files to read in based on path
 fils <- list.files("data/read_in_Danielle", full.names = TRUE, recursive = TRUE)
-
-
-all_data <- data.frame(subject_id=numeric(),
-                             dataset=character(),
-                             feature=character(), 
-                             value=character(), 
-                             stringsAsFactors=FALSE) 
 
 ## create empty dataframe that will house the NA count data eventually
 na_count_features <- data.frame(dataset=character(),
@@ -51,12 +47,12 @@ na_count_features <- data.frame(dataset=character(),
                        have_data=numeric(),
                        stringsAsFactors=FALSE) 
 
+## loop through files and make checks
 for (file in fils) {
   file_name <- janitor::make_clean_names(strsplit(basename(file), split="\\.")[[1]][1])
   print(paste0("Reading in file: ", file_name))
-  ## Read in all the files
+  ## Read in all the files, do not fix colnames
   if (strsplit(basename(file), split="\\.")[[1]][2] == "csv") {
-    ## READ IN csv, do not fix column names
     f <- suppressMessages(readr::read_delim(file, delim = ",", 
                                             name_repair = "minimal"))
   } else if (strsplit(basename(file), split="\\.")[[1]][2] %in% c("tsv","txt")){
@@ -75,9 +71,7 @@ for (file in fils) {
     ## (it will coerce to unique, and i want to know where the unique id is)
     ## i.e. fiber_x_2...keeps me sure that its a duplicate
     colnames(f) <- paste0(colnames(f), '_x')
-    f <- f %>% janitor::clean_names() #%>%
-      ## get rid of columns that are 99.9999% NAs...kinda useless
-      #purrr::discard(~sum(is.na(.x))/length(.x)* 100 >=99.9999)
+    f <- f %>% janitor::clean_names() 
     
     ## check to see if subject_id is in the file
     print(paste0("Checking to see if 'subject_id' is in dataset..."))
@@ -90,7 +84,7 @@ for (file in fils) {
       next 
       }
     
-    ## checking to see if there are duplicate subject_ids in the file - CHOOSE BEST
+    ## checking to see if there are duplicate subject_ids in the file - Make unique
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
       print(paste("We detected rows in", file_name, "with the same subject_id."))
       print("We will rename the subjects for now")
@@ -109,7 +103,7 @@ for (file in fils) {
     ## you eventually need features to be be duplicates again, not the unique
     ## names that clean_names did (i.e. *_x_2)
     ## so make a new column of dataset_feature_hash which will be unique to 
-    ## each feature
+    ## each feature--help you keep track of duplicated colnames
     g <- g %>% 
       dplyr::mutate(.,  combined_name = paste(g$dataset, g$feature, sep="_")) %>%
       dplyr::rowwise() %>%
@@ -125,7 +119,6 @@ for (file in fils) {
     ## checking for dates and removing them until the end
     ## to do: find a way to convert them to unix time stamps
     g$date <- is.convertible.to.date(g$value)
-    g$date <- is.convertible.to.date2(g$value)
 
     if ((g %>% filter(., date == "TRUE") %>% nrow()) > 0) {
       
@@ -235,7 +228,6 @@ for (file in fils) {
       }
 
     } 
-    #all_data <- rbind(all_data, g)
     
     tmp <- g %>% pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
       type_convert(., na = c("na", "nan", "NA"))
@@ -264,159 +256,3 @@ print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
 print("Saving NA counts table to file, see /output/na_counts.csv")
 write_delim(na_count_features, file = "/home/outputs/na_counts.csv", delim = ",")
 ggsave("/home/outputs/na_counts.pdf", plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
-
-
-## Correlation
-# 
-# 
-# tmp <- g %>% pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
-#   type_convert(., na = c("na", "nan", "NA"))
-# tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
-# 
-# features_post_process <- preprocess_data(dataset = tmp,
-#                                          method = NULL, # commented out to scale continous data for regression
-#                                          outcome_colname = "subject_id",
-#                                          collapse_corr_feats = F,
-#                                          #group_neg_corr = T,
-#                                          remove_var = "zv")
-# pre_corr_clean <- features_post_process$dat_transformed
-# pre_corr_clean <- pre_corr_clean %>% column_to_rownames(., var = "subject_id")
-# cor_tmp <- mikropml:::group_correlated_features(pre_corr_clean, corr_thresh = 1.0)
-# 
-# cor_tmp <- as.data.frame(cor_tmp)
-# cor_tmp <- cor_tmp %>% separate(., col = cor_tmp, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge")
-# 
-# ## filter out only 1 of the co-correlated groups,
-# ## results in 146 features (including subject ID)
-# corr_clean <- pre_corr_clean %>% select(., cor_tmp$keep)
-# 
-
-
-
-
-
-
-
-
-# all_data_master <- all_data
-# 
-# ## check and see if the all data file is empty
-# if (NROW(all_data) < 1) {stop("No data was imported. Check your path and file extensions.") }
-# ## write a check to see if all the files in data were imported
-# if ((n_distinct(all_data$dataset)) < (n_distinct(fils))) {
-#   stop(paste("You have more files in", path, 
-#              "than were imported. Something may have gone wrong. 
-#              Please make sure you only have files to import in this directory."))}
-# 
-# ## make a md5 hash of dataset_feature
-# all_data <- all_data %>% 
-#   dplyr::mutate(.,  combined_name = paste(all_data$dataset, all_data$feature, sep="_")) %>%
-#   dplyr::rowwise() %>%
-#   dplyr::mutate(., data_feature_hash = digest::digest(combined_name, algo="md5", serialize = F)) %>%
-#   dplyr::select(., -combined_name)
-# ## you previously made names unique with numbers at the end. Get rid of them. 
-# all_data$feature <- gsub(pattern = "_[0-9]$", replacement = "", x = all_data$feature)
-# all_data$feature <- gsub(pattern = "_x$", replacement = "", x = all_data$feature)
-# colnames(all_data) <- gsub("_x", "", colnames(all_data))
-# 
-# ## just delete dates because dates are just ridic
-# all_data$date <- is.convertible.to.date(all_data$value)
-# all_data$date <- is.convertible.to.date2(all_data$value)
-# all_data <- all_data %>% 
-#   filter(., date == "FALSE") %>%
-#   select(., -date)
-# 
-# ## Count number of NAs and number of data points per feature, including
-# ## duplicated features
-# 
-# na_count_features <- all_data %>%
-#   dplyr::group_by(., dataset, feature,data_feature_hash) %>%
-#   dplyr::summarise(., na_count = sum(is.na(value)), have_data = sum(!is.na(value))) %>%
-#   dplyr::arrange(desc(na_count)) 
-# 
-# na_count_features %>% ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) + 
-#   geom_bar() + facet_grid(~ dataset, scales = "free") + theme(axis.title.x=element_blank(),axis.text.x=element_text(angle = 60), axis.ticks.x=element_blank())
-# 
-# ## get rid of duplicates by first checking duplicate names and then verifying
-# ## duplicate names = duplicated values. If not, rename feature.
-# 
-# duplicate_check <- na_count_features %>%
-#   janitor::get_dupes(., feature) %>% 
-#   tibble::add_column(duplicated_value = NA, .after = "have_data")
-# 
-# all_data1 <- as.data.table(all_data)
-# 
-# ## SLOW FOR MANY DUPLICATES:
-# ## loop through features in duplicates (by name), 
-# ## check if they are the same values
-# for (f_duplicated in unique(duplicate_check$feature)) {
-#   check <- all_data1 %>% filter(., feature == f_duplicated)
-#   check <- as.data.frame(check)
-#   tmp <- check %>% 
-#     #dplyr::distinct(., subject_id,data_feature_hash,value, .keep_all = T) %>%
-#     tibble::rowid_to_column(., "index") %>%
-#     drop_na() %>%
-#     dcast(., subject_id + index ~ data_feature_hash) 
-#     #drop_na() %>%
-#     #slice_sample(., prop = 0.4) %>%
-#     #column_to_rownames(., var = "subject_id") 
-#   tmp <- suppressMessages(type_convert(tmp, na = c("", "NA", "na", "NaN", "nan"))) 
-#   tmp <- tmp %>% mutate_if(., is.numeric, round, 2) %>%
-#     select(., -index) %>%
-#     rowwise %>%
-#     mutate(same = n_distinct(unlist(cur_data())) == 1) %>%
-#     ungroup
-#   
-#   ## drop duplicated columns
-#   if ((length(which(tmp$same == TRUE))) > (nrow(tmp) * 0.95)) {
-#     duplicate_check <- duplicate_check %>%
-#       mutate(., duplicated_value = ifelse(feature == f_duplicated, "duplicated_values", duplicated_value))
-#   }
-#   else  {
-#     print(paste(f_duplicated, "id a DUPLICATED column name which contains UNIQUE values across datasets. EXAMPLE:"))
-#     print(head(subset(tmp, tmp$same == FALSE), n = 2))
-#     print("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)")
-#     duplicate_check <- duplicate_check %>%
-#       mutate(., duplicated_value = ifelse(feature == f_duplicated, paste0(feature,"_",data_feature_hash), duplicated_value))
-#     #readline(prompt="Press [enter] to continue")
-#   }
-# }
-# 
-# ## now group by feature, duplicate check, sort by have data, and run distinct.
-# best_duplicated <- duplicate_check %>% 
-#   dplyr::group_by(., feature, duplicated_value) %>%
-#   dplyr::arrange(-have_data) %>%
-#   dplyr::distinct(feature, .keep_all = TRUE)
-# 
-# 
-# ## Now drop the less ideal duplicated features from all data
-# poor_features <- subset(duplicate_check, duplicate_check$data_feature_hash %!in% best_duplicated$data_feature_hash)
-# all_data_de_dup <- all_data %>% dplyr::filter(., data_feature_hash %!in% poor_features$data_feature_hash)
-# 
-# 
-# ## make into a dataframe with colnames as hashes
-# all_data_de_dup_df <- reshape2::dcast(all_data_de_dup, formula = subject_id + filename ~ data_feature_hash, value.var = "value")
-# ## drop columns that just are missing a ton of data
-# all_data_de_dup_df_col_drop <- all_data_de_dup_df[, (colSums(is.na(all_data_de_dup_df)) / NCOL(all_data_de_dup_df)) < .056]
-# all_data_de_dup_df_row_drop <- all_data_de_dup_df_col_drop %>% drop_na()
-# 
-# ## correlate to subject_id
-# 
-# features_post_process <- preprocess_data(dataset = all_data_de_dup_df_row_drop,
-#                                          method = NULL, # commented out to scale continous data for regression
-#                                          outcome_colname = "subject_id", 
-#                                          collapse_corr_feats = F, 
-#                                          #group_neg_corr = T,
-#                                          remove_var = "nzv")
-# pre_corr_clean <- features_post_process$dat_transformed
-# cor_tmp <- mikropml:::group_correlated_features(pre_corr_clean, corr_thresh = 0.9)
-# 
-# cor_tmp <- as.data.frame(cor_tmp)
-# cor_tmp <- cor_tmp %>% separate(., col = cor_tmp, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge")
-# 
-# ## filter out only 1 of the co-correlated groups, 
-# ## results in 146 features (including subject ID)
-# corr_clean <- pre_corr_clean %>% select(., cor_tmp$keep)
-# 
-# 
-# #}
