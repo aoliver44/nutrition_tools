@@ -16,6 +16,26 @@ setwd("/home")
 library(tidyverse)
 library(reshape2)
 library(data.table)
+library(optparse)
+
+## add commandline options
+option_list = list(
+  make_option(c("-p", "--path"), type="character", default="/home/data/", 
+              help="path to folder with data to import [default= %default]", metavar="character"),
+  make_option(c("-s", "--subject_identifier"), type="character", default="subject_id", 
+              help="subject key (column name) found in all files [default= %default]", metavar="character")
+); 
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+# test if there is at least one argument: if not, return an error
+if (length(args)==0) {
+  stop("At least one argument must be supplied (input file).n", call.=FALSE)
+} else if (length(args)==1) {
+  # default output file
+  args[2] = "subject_id"
+}
 
 ## create output directories
 dir.create(file.path("/home/", "outputs"))
@@ -38,6 +58,10 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
 
 ## create list of files to read in based on path
 fils <- list.files("data/read_in_Danielle", full.names = TRUE, recursive = TRUE)
+## check and make sure there are files in the path
+if (length(fils) < 1) {
+  print(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
+}
 
 ## create empty dataframe that will house the NA count data eventually
 na_count_features <- data.frame(dataset=character(),
