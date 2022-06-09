@@ -22,11 +22,11 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 # test if there is at least one argument: if not, return an error
-if (length(args)==0) {
+if (length(opt)==0) {
   stop("At least one argument must be supplied (input file).n", call.=FALSE)
-} else if (length(args)==1) {
+} else if (length(opt)==1) {
   # default output file
-  args[2] = "subject_id"
+  opt[2] = "subject_id"
 }
 
 ##########################################################################
@@ -265,7 +265,7 @@ for (file in fils) {
     
     if (exists("date_dataframe")) {
       colnames(date_dataframe) <- gsub(pattern = "_x", "", colnames(date_dataframe))
-      tmp <- merge(tmp, date_dataframe, by.x = "subject_id")
+      tmp <- merge(tmp, date_dataframe, by = "subject_id")
     }
     
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
