@@ -9,18 +9,10 @@
 ## datasets
 #################################################
 
-## set working dir to /home for the docker container
-setwd("/home")
-
-## load libraries as needed!
-library(tidyverse)
-library(reshape2)
-library(data.table)
-library(optparse)
-
 ## add commandline options
+library(optparse)
 option_list = list(
-  make_option(c("-p", "--path"), type="character", default="/home/data/", 
+  make_option(c("-i", "--input"), type="character", default="/home/data/", 
               help="path to folder with data to import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id", 
               help="subject key (column name) found in all files [default= %default]", metavar="character")
@@ -36,6 +28,16 @@ if (length(args)==0) {
   # default output file
   args[2] = "subject_id"
 }
+
+##########################################################################
+
+## set working dir to /home for the docker container
+setwd("/home")
+
+## load libraries as needed!
+library(tidyverse)
+library(reshape2)
+library(data.table)
 
 ## create output directories
 dir.create(file.path("/home/", "outputs"))
@@ -56,12 +58,14 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
                                                      tz = 'UTC', 
                                                      format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
 
+
 ## create list of files to read in based on path
-fils <- list.files("data/read_in_Danielle", full.names = TRUE, recursive = TRUE)
+fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files in the path
 if (length(fils) < 1) {
   print(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
 }
+
 
 ## create empty dataframe that will house the NA count data eventually
 na_count_features <- data.frame(dataset=character(),
@@ -88,7 +92,7 @@ for (file in fils) {
     f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal"))
   }
   
-    ## assign file name to variable
+    ## assign file name to variable/column
     f$dataset <- file_name
     
     ## add _x to end of cols to ensure clean_names add unique ids past that 
@@ -98,15 +102,18 @@ for (file in fils) {
     f <- f %>% janitor::clean_names() 
     
     ## check to see if subject_id is in the file
-    print(paste0("Checking to see if 'subject_id' is in dataset..."))
-    if ("subject_id_x" %in% names(f) == FALSE) { 
+    print(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
+    if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
       
-      print(paste0("subject_id ", "not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
+      print(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
       
       readline(prompt="Press [enter] to acknowledge ")
       
       next 
-      }
+    } else { 
+        f <- f %>% rename(., "subject_id_x" = paste0(opt$subject_identifier, "_x"))
+        print(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
+        }
     
     ## checking to see if there are duplicate subject_ids in the file - Make unique
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
