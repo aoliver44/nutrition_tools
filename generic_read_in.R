@@ -9,6 +9,28 @@
 ## datasets
 #################################################
 
+## add commandline options
+library(optparse)
+option_list = list(
+  make_option(c("-i", "--input"), type="character", default="/home/data/", 
+              help="path to folder with data to import [default= %default]", metavar="character"),
+  make_option(c("-s", "--subject_identifier"), type="character", default="subject_id", 
+              help="subject key (column name) found in all files [default= %default]", metavar="character")
+); 
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+# test if there is at least one argument: if not, return an error
+if (length(opt)==0) {
+  stop("At least one argument must be supplied (input file).n", call.=FALSE)
+} else if (length(opt)==1) {
+  # default output file
+  opt[2] = "subject_id"
+}
+
+##########################################################################
+
 ## set working dir to /home for the docker container
 setwd("/home")
 
@@ -36,8 +58,14 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
                                                      tz = 'UTC', 
                                                      format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
 
+
 ## create list of files to read in based on path
-fils <- list.files("data/read_in_Danielle", full.names = TRUE, recursive = TRUE)
+fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
+## check and make sure there are files in the path
+if (length(fils) < 1) {
+  print(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
+}
+
 
 ## create empty dataframe that will house the NA count data eventually
 na_count_features <- data.frame(dataset=character(),
@@ -64,7 +92,7 @@ for (file in fils) {
     f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal"))
   }
   
-    ## assign file name to variable
+    ## assign file name to variable/column
     f$dataset <- file_name
     
     ## add _x to end of cols to ensure clean_names add unique ids past that 
@@ -74,22 +102,29 @@ for (file in fils) {
     f <- f %>% janitor::clean_names() 
     
     ## check to see if subject_id is in the file
-    print(paste0("Checking to see if 'subject_id' is in dataset..."))
-    if ("subject_id_x" %in% names(f) == FALSE) { 
+    print(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
+    if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
       
-      print(paste0("subject_id ", "not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
+      print(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
       
-      readline(prompt="Press [enter] to acknowledge ")
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
       
       next 
-      }
+    } else { 
+        f <- f %>% rename(., "subject_id_x" = paste0(opt$subject_identifier, "_x"))
+        print(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
+        }
     
     ## checking to see if there are duplicate subject_ids in the file - Make unique
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
       print(paste("We detected rows in", file_name, "with the same subject_id."))
       print("We will rename the subjects for now")
-
-      readline(prompt="Press [enter] to acknowledge ")
+      
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
 
       duplicated_rows <- f %>% janitor::get_dupes(., c(subject_id_x))
       f$subject_id_x <- janitor::make_clean_names(f$subject_id_x)
@@ -135,7 +170,9 @@ for (file in fils) {
         filter(., date == "FALSE") %>%
         select(., -date) 
       
-      readline(prompt="Press [enter] to acknowledge ")
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
     }
     
     
@@ -198,7 +235,9 @@ for (file in fils) {
           drop_features <- tmp[tmp$data_feature_hash %!in% tmp_de_dup$data_feature_hash, ]
           g <- g %>% filter(., data_feature_hash %!in% drop_features$data_feature_hash)
 
-          readline(prompt="Press [enter] to continue ")
+          cat("Press [enter] to continue ")
+          x <- readLines(file("stdin"),1)
+          print(x)
           
         } 
         
@@ -221,7 +260,9 @@ for (file in fils) {
             arrange(., subject_id) %>% 
             write_delim(., file = paste0("/home/outputs/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
-          readline(prompt="Press [enter] to continue ")
+          cat("Press [enter] to continue ")
+          x <- readLines(file("stdin"),1)
+          print(x)
 
         }
 
@@ -234,7 +275,7 @@ for (file in fils) {
     
     if (exists("date_dataframe")) {
       colnames(date_dataframe) <- gsub(pattern = "_x", "", colnames(date_dataframe))
-      tmp <- merge(tmp, date_dataframe, by.x = "subject_id")
+      tmp <- merge(tmp, date_dataframe, by = "subject_id")
     }
     
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
