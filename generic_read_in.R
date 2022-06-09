@@ -107,7 +107,9 @@ for (file in fils) {
       
       print(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
       
-      readline(prompt="Press [enter] to acknowledge ")
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
       
       next 
     } else { 
@@ -119,8 +121,10 @@ for (file in fils) {
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
       print(paste("We detected rows in", file_name, "with the same subject_id."))
       print("We will rename the subjects for now")
-
-      readline(prompt="Press [enter] to acknowledge ")
+      
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
 
       duplicated_rows <- f %>% janitor::get_dupes(., c(subject_id_x))
       f$subject_id_x <- janitor::make_clean_names(f$subject_id_x)
@@ -166,7 +170,9 @@ for (file in fils) {
         filter(., date == "FALSE") %>%
         select(., -date) 
       
-      readline(prompt="Press [enter] to acknowledge ")
+      cat("Press [enter] to acknowledge ")
+      x <- readLines(file("stdin"),1)
+      print(x)
     }
     
     
@@ -229,7 +235,9 @@ for (file in fils) {
           drop_features <- tmp[tmp$data_feature_hash %!in% tmp_de_dup$data_feature_hash, ]
           g <- g %>% filter(., data_feature_hash %!in% drop_features$data_feature_hash)
 
-          readline(prompt="Press [enter] to continue ")
+          cat("Press [enter] to continue ")
+          x <- readLines(file("stdin"),1)
+          print(x)
           
         } 
         
@@ -252,7 +260,9 @@ for (file in fils) {
             arrange(., subject_id) %>% 
             write_delim(., file = paste0("/home/outputs/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
-          readline(prompt="Press [enter] to continue ")
+          cat("Press [enter] to continue ")
+          x <- readLines(file("stdin"),1)
+          print(x)
 
         }
 
