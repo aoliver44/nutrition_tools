@@ -46,11 +46,12 @@ library(reshape2)
 library(data.table)
 
 ## create output directories
-dir.create(file.path("/home/", "outputs"))
-dir.create(file.path("/home/outputs", "duplicated_data"))
-dir.create(file.path("/home/outputs", "duplicated_colnames"))
-dir.create(file.path("/home/outputs", "duplicated_rows"))
-dir.create(file.path("/home/outputs", "clean_files"))
+outdir_name <- paste0("outputs_", format(Sys.time(), format = "%y_%m_%d_%H%M%S"))
+dir.create(file.path(paste0("/home/", outdir_name)))
+dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_data")))
+dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_colnames")))
+dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_rows")))
+dir.create(file.path(paste0("/home/", outdir_name, "/clean_files")))
 ## set random seed if needed
 set.seed(1)
 
@@ -231,7 +232,7 @@ for (file in fils) {
           
           tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
             arrange(., subject_id) %>% 
-            write_delim(., file = paste0("/home/outputs/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+            write_delim(., file = paste0("/home/", outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           print(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
           ## keeping a superset of the distinct values and dropping from g
           ## anything not in that superset
@@ -264,7 +265,7 @@ for (file in fils) {
           print("We wrote this to file for you to manually check, see outputs/duplicated_colnames")
           tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
             arrange(., subject_id) %>% 
-            write_delim(., file = paste0("/home/outputs/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+            write_delim(., file = paste0("/home/", outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
           cat("Press [enter] to continue ")
           x <- readLines(file("stdin"),1)
@@ -287,7 +288,7 @@ for (file in fils) {
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
     
     tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
-    write_delim(tmp, file = paste0("/home/outputs/clean_files/",file_name,".csv"), delim = ",")
+    write_delim(tmp, file = paste0("/home/", outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
     
 }
 
@@ -301,5 +302,5 @@ na_figure <- na_count_features %>%
   theme(axis.text.x=element_text(angle = 90), axis.ticks.x=element_blank())
 print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
 print("Saving NA counts table to file, see /output/na_counts.csv")
-write_delim(na_count_features, file = "/home/outputs/na_counts.csv", delim = ",")
+write_delim(na_count_features, file = paste0("/home/", outdir_name, "/na_counts.csv"), delim = ",")
 ggsave("/home/outputs/na_counts.pdf", plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
