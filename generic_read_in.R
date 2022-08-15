@@ -82,6 +82,22 @@ na_count_features <- data.frame(dataset=character(),
                        have_data=numeric(),
                        stringsAsFactors=FALSE) 
 
+## create empty dataframe that will house summary problem files
+summary_problems <- data.frame(dataset=character(),
+                                subject_id_not_found=character(), 
+                                subject_id_duplicated=character(),
+                                date_not_unix=character(),
+                                duplicated_data=character(),
+                                duplicated_column_names=character(),
+                                stringsAsFactors=FALSE) 
+
+summary_problems <- summary_problems %>% add_row(dataset = "Name of dataset", 
+                              subject_id_not_found = "This file has no identifible key/subject_id",
+                              subject_id_duplicated = "This appears to be longitudinal data Take care in using ML",
+                              date_not_unix = "Time formats are messy Please standarize to Unix or drop",
+                              duplicated_data = "You have columns with the same data.  Please drop redundant columns", 
+                              duplicated_column_names = "You have the DIFFERENT data in columns with the same name. WHAT? This is sloppy.")
+
 ## loop through files and make checks
 for (file in fils) {
   file_name <- janitor::make_clean_names(strsplit(basename(file), split="\\.")[[1]][1])
@@ -115,6 +131,11 @@ for (file in fils) {
       print(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
       
       cat("Press [enter] to acknowledge ")
+      
+      ## add to a summary problem file
+      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+                                    subject_id_not_found = "needs_check")
+                                    
       x <- readLines(file("stdin"),1)
       print(x)
       
@@ -128,8 +149,14 @@ for (file in fils) {
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
       print(paste("We detected rows in", file_name, "with the same subject_id."))
       print("We will rename the subjects for now")
+      print("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!")
       
       cat("Press [enter] to acknowledge ")
+      
+      ## add to a summary problem file
+      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+                                    subject_id_duplicated = "needs_check")
+      
       x <- readLines(file("stdin"),1)
       print(x)
 
@@ -178,6 +205,12 @@ for (file in fils) {
         select(., -date) 
       
       cat("Press [enter] to acknowledge ")
+      
+      ## add to a summary problem file
+      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+                                    date_not_unix = "needs_check")
+      
+      
       x <- readLines(file("stdin"),1)
       print(x)
     }
@@ -243,6 +276,12 @@ for (file in fils) {
           g <- g %>% filter(., data_feature_hash %!in% drop_features$data_feature_hash)
 
           cat("Press [enter] to continue ")
+          
+          ## add to a summary problem file
+          summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+                                        duplicated_data = "needs_check")
+          
+          
           x <- readLines(file("stdin"),1)
           print(x)
           
@@ -268,6 +307,11 @@ for (file in fils) {
             write_delim(., file = paste0("/home/", outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
           cat("Press [enter] to continue ")
+          
+          ## add to a summary problem file
+          summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+                                        duplicated_column_names = "needs_check")
+          
           x <- readLines(file("stdin"),1)
           print(x)
 
@@ -277,6 +321,7 @@ for (file in fils) {
 
     } 
     
+    ## Add back in the date data
     tmp <- g %>% pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
       type_convert(., na = c("na", "nan", "NA"))
     
@@ -285,14 +330,16 @@ for (file in fils) {
       tmp <- merge(tmp, date_dataframe, by = "subject_id")
     }
     
+    ## clean up date data intermediate files
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
     
+    ## remove unique identifiers for repeated subject_ids
     tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
     write_delim(tmp, file = paste0("/home/", outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
     
 }
 
-## print na figure to file
+## print na figuren and data to file
 na_figure <- na_count_features %>% 
   mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
   ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) + 
@@ -302,5 +349,15 @@ na_figure <- na_count_features %>%
   theme(axis.text.x=element_text(angle = 90), axis.ticks.x=element_blank())
 print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
 print("Saving NA counts table to file, see /output/na_counts.csv")
+print("####################################################")
+print("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
+print("####################################################")
+print("Explainations of the summary_problems columns are as follows:")
+print(as.vector(t(summary_problems[1,])))
 write_delim(na_count_features, file = paste0("/home/", outdir_name, "/na_counts.csv"), delim = ",")
-ggsave("/home/outputs/na_counts.pdf", plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
+ggsave(paste0("/home/", outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
+
+## write summary problems dataframe to file 
+summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% group_by(dataset) %>% summarise(across(everything(), ~n_distinct(., na.rm = T)))
+write_delim(summary_problems_tmp, file = paste0("/home/", outdir_name, "/summary_dataset_problems.csv"), delim = ",")
+
