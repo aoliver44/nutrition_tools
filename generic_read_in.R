@@ -21,7 +21,9 @@ option_list = list(
   make_option(c("-i", "--input"), type="character", default="/home/data/", 
               help="path to folder with data to import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id", 
-              help="subject key (column name) found in all files [default= %default]", metavar="character")
+              help="subject key (column name) found in all files [default= %default]", metavar="character"),
+  make_option(c("-o", "--outdir"), type="character", default=paste0("outputs_", format(Sys.time(), format = "%y_%m_%d_%H%M%S")),
+              help="output directory to write [default= %default]", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -46,12 +48,15 @@ library(reshape2)
 library(data.table)
 
 ## create output directories
-outdir_name <- paste0("outputs_", format(Sys.time(), format = "%y_%m_%d_%H%M%S"))
+
+outdir_name <- opt$outdir
+
 dir.create(file.path(paste0("/home/", outdir_name)))
 dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_data")))
 dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_colnames")))
 dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_rows")))
 dir.create(file.path(paste0("/home/", outdir_name, "/clean_files")))
+
 ## set random seed if needed
 set.seed(1)
 
