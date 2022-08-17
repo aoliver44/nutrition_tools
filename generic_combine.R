@@ -16,7 +16,7 @@
 ## add commandline options
 library(optparse)
 option_list = list(
-  make_option(c("-i", "--input"), type="character", default="outputs_22_08_15_171447/",
+  make_option(c("-i", "--input"), type="character", default="/home/output/",
               help="path to clean_data directory for import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id",
               help="subject key (column name) found in all files [default= %default]", metavar="character"),
@@ -38,7 +38,7 @@ if (length(opt)==0) {
 ##########################################################################
 
 ## set working dir to /home for the docker container
-setwd(paste0("/home/", opt$input))
+setwd(opt$input)
 
 ## load libraries as needed!
 library(tidyverse)
@@ -56,7 +56,7 @@ set.seed(1)
 ## check and see if clean_files directory exists
 print("Checking for clean_files directory and summary_dataset_problems.csv")
 
-fils <- list.files(paste0("clean_files/"), full.names = TRUE, recursive = TRUE)
+fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files clean_files dir
 if (length(fils) >= 1) {
   print(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"))
@@ -90,6 +90,15 @@ if (file.exists("summary_dataset_problems.csv")) {
       print(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
       print("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
       
+      ## get interactive acknowledgment 
+      cat("Press [enter] to continue ")
+      x <- readLines(file("stdin"),1)
+      print(x)
+      
+      ## remove summary_problem_datasets from fils list
+      fils <- as.data.frame(fils) %>% 
+        dplyr::filter(., !grepl(pattern = paste(summary_problems$dataset, collapse = "|"), x = fils)) %>%
+        pull(., var = "fils")
     }
   }
 }

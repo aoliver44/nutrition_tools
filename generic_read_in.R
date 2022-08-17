@@ -51,11 +51,11 @@ library(data.table)
 
 outdir_name <- opt$outdir
 
-dir.create(file.path(paste0("/home/", outdir_name)))
-dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_data")))
-dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_colnames")))
-dir.create(file.path(paste0("/home/", outdir_name, "/duplicated_rows")))
-dir.create(file.path(paste0("/home/", outdir_name, "/clean_files")))
+dir.create(file.path(paste0(outdir_name)))
+dir.create(file.path(paste0(outdir_name, "/duplicated_data")))
+dir.create(file.path(paste0(outdir_name, "/duplicated_colnames")))
+dir.create(file.path(paste0(outdir_name, "/duplicated_rows")))
+dir.create(file.path(paste0(outdir_name, "/clean_files")))
 
 ## set random seed if needed
 set.seed(1)
@@ -270,7 +270,7 @@ for (file in fils) {
           
           tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
             arrange(., subject_id) %>% 
-            write_delim(., file = paste0("/home/", outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+            write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           print(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
           ## keeping a superset of the distinct values and dropping from g
           ## anything not in that superset
@@ -309,7 +309,7 @@ for (file in fils) {
           print("We wrote this to file for you to manually check, see outputs/duplicated_colnames")
           tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
             arrange(., subject_id) %>% 
-            write_delim(., file = paste0("/home/", outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+            write_delim(., file = paste0(outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
           cat("Press [enter] to continue ")
           
@@ -340,7 +340,7 @@ for (file in fils) {
     
     ## remove unique identifiers for repeated subject_ids
     tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
-    write_delim(tmp, file = paste0("/home/", outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
+    write_delim(tmp, file = paste0(outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
     
 }
 
@@ -359,10 +359,10 @@ print("Saving a summary_problems file, see /output/summary_dataset_problems.csv"
 print("####################################################")
 print("Explainations of the summary_problems columns are as follows:")
 print(as.vector(t(summary_problems[1,])))
-write_delim(na_count_features, file = paste0("/home/", outdir_name, "/na_counts.csv"), delim = ",")
-ggsave(paste0("/home/", outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
+write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
+ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
 ## write summary problems dataframe to file 
 summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% group_by(dataset) %>% summarise(across(everything(), ~n_distinct(., na.rm = T)))
-write_delim(summary_problems_tmp, file = paste0("/home/", outdir_name, "/summary_dataset_problems.csv"), delim = ",")
+write_delim(summary_problems_tmp, file = paste0(outdir_name, "/summary_dataset_problems.csv"), delim = ",")
 
