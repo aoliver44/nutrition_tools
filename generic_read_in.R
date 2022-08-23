@@ -1,5 +1,4 @@
-#################################################
-## SCRIPT: generic_read_in.R
+## SCRIPT: generic_read_in.R ============
 ## AUTHOR: Andrew Oliver
 ## DATE:   May 31, 2022
 ##
@@ -7,7 +6,7 @@
 ## format, which may have copies of columns/rows
 ## and columns may be duplicated across different 
 ## datasets
-#################################################
+
 
 ## docker command:
 #docker run --rm -it -p 8787:8787 
@@ -15,10 +14,11 @@
 #-v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home 
 #amr_r_env:3.1.0
 
-## add commandline options
+## add commandline options =====================================================
+
 library(optparse)
 option_list = list(
-  make_option(c("-i", "--input"), type="character", default="/home/data/", 
+  make_option(c("-i", "--input"), type="character", default="/home/data/read_in_tests/", 
               help="path to folder with data to import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id", 
               help="subject key (column name) found in all files [default= %default]", metavar="character"),
@@ -37,17 +37,16 @@ if (length(opt)==0) {
   opt[2] = "subject_id"
 }
 
-##########################################################################
-
 ## set working dir to /home for the docker container
 setwd("/home")
 
-## load libraries as needed!
+## load libraries ==============================================================
+
 library(tidyverse)
 library(reshape2)
 library(data.table)
 
-## create output directories
+## create output directories ===================================================
 
 outdir_name <- opt$outdir
 
@@ -60,9 +59,9 @@ dir.create(file.path(paste0(outdir_name, "/clean_files")))
 ## set random seed if needed
 set.seed(1)
 
-#readIN <- function(path, linking_identifier, na_amount = 0.95, duplicated_threshold = 0.96, full_check = FALSE) {
 
-## make some extra helper functions
+## helper functions ============================================================
+
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 ## Date function:
@@ -70,6 +69,8 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
                                                      tz = 'UTC', 
                                                      format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
 
+
+## check input dir not empty ===================================================
 
 ## create list of files to read in based on path
 fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
@@ -79,6 +80,9 @@ if (length(fils) < 1) {
 }
 
 
+
+## create NA count file ========================================================
+
 ## create empty dataframe that will house the NA count data eventually
 na_count_features <- data.frame(dataset=character(),
                        feature=character(), 
@@ -87,6 +91,9 @@ na_count_features <- data.frame(dataset=character(),
                        have_data=numeric(),
                        stringsAsFactors=FALSE) 
 
+
+## create summary problems file  ===============================================
+
 ## create empty dataframe that will house summary problem files
 summary_problems <- data.frame(dataset=character(),
                                 subject_id_not_found=character(), 
@@ -94,6 +101,7 @@ summary_problems <- data.frame(dataset=character(),
                                 date_not_unix=character(),
                                 duplicated_data=character(),
                                 duplicated_column_names=character(),
+                                data_are_symbols=character(),
                                 stringsAsFactors=FALSE) 
 
 summary_problems <- summary_problems %>% add_row(dataset = "Name of dataset", 
@@ -101,7 +109,10 @@ summary_problems <- summary_problems %>% add_row(dataset = "Name of dataset",
                               subject_id_duplicated = "This appears to be longitudinal data Take care in using ML",
                               date_not_unix = "Time formats are messy Please standarize to Unix or drop",
                               duplicated_data = "You have columns with the same data.  Please drop redundant columns", 
-                              duplicated_column_names = "You have the DIFFERENT data in columns with the same name. WHAT? This is sloppy.")
+                              duplicated_column_names = "You have the DIFFERENT data in columns with the same name. WHAT? This is sloppy.",
+                              data_are_symbols = "You have data that appear not to contain alpha_numeric information. We can't use this downstream")
+
+## read in files  ==============================================================
 
 ## loop through files and make checks
 for (file in fils) {
@@ -129,6 +140,8 @@ for (file in fils) {
     colnames(f) <- paste0(colnames(f), '_x')
     f <- f %>% janitor::clean_names() 
     
+## subject id check  ===========================================================
+    
     ## check to see if subject_id is in the file
     print(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
     if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
@@ -149,6 +162,8 @@ for (file in fils) {
         f <- f %>% rename(., "subject_id_x" = paste0(opt$subject_identifier, "_x"))
         print(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
         }
+    
+## dup subject id check  =======================================================
     
     ## checking to see if there are duplicate subject_ids in the file - Make unique
     if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
@@ -190,6 +205,9 @@ for (file in fils) {
     g$feature <- gsub(pattern = "_x$", replacement = "", x = g$feature)
     colnames(g) <- gsub("_x", "", colnames(g))
     
+   
+## check for POSIXct date  =====================================================
+    
     ## checking for dates and removing them until the end
     ## to do: find a way to convert them to unix time stamps
     g$date <- is.convertible.to.date(g$value)
@@ -219,7 +237,27 @@ for (file in fils) {
       x <- readLines(file("stdin"),1)
       print(x)
     }
+   
+## check for non-alphanumeric  =================================================
+  
+  ## checking to see if values are not alpha_numeric
+  g_tmp <- g %>% as.data.frame() %>% dplyr::filter(., !is.na(value))
+  g_tmp$alpha_numeric <- grepl("^([A-Z])|([a-z]|[0-9])", g_tmp$value, ignore.case = TRUE)
+  g_tmp <- dplyr::filter(g_tmp, alpha_numeric == FALSE)
+  if (NROW(g_tmp) > 0) {
+    writeLines("You have cells in your data that contain only a symbol. We can't do anything with that")
+    cat("Press [enter] to acknowledge ")
+
+      ## add to a summary problem file
+      summary_problems <- summary_problems %>% add_row(dataset = file_name,
+                                                       data_are_symbols = "needs_check")
+
+      x <- readLines(file("stdin"),1)
+      print(x)
+  }
+      
     
+## count NAs  ==================================================================
     
     ## what features are missing  a ton of data
     na_count_features_tmp <- g %>%
@@ -227,7 +265,10 @@ for (file in fils) {
       dplyr::summarise(., na_count = sum(is.na(value)), have_data = sum(!is.na(value))) %>%
       dplyr::arrange(desc(na_count))
     na_count_features <- rbind(na_count_features, na_count_features_tmp)
-    na_count_features <- na_count_features %>% dplyr::filter(., na_count > 0)
+    #na_count_features <- na_count_features %>% dplyr::filter(., na_count > 0)
+    
+## get duplicated columns  =====================================================
+    
     ## what features are duplicated in the na_count_features
     duplicate_check <- na_count_features_tmp %>%
       janitor::get_dupes(., feature) %>% 
@@ -235,6 +276,8 @@ for (file in fils) {
     
     if (NROW(duplicate_check > 1)) {
       g_dt <- as.data.table(g)
+      
+### do dup cols have same data?  ===============================================
       
       ## loop through features in duplicates (by name), 
       ## check if they are the same values
@@ -292,6 +335,8 @@ for (file in fils) {
           
         } 
         
+## do dup cols have different data?  ===========================================
+       
         ## or if the data is truly unique, but had the same col names, start
         ## the process of renaming the features. Also write to duplicated_colnames/
         else  {
@@ -326,6 +371,8 @@ for (file in fils) {
 
     } 
     
+## add back in POSIX date data  ================================================
+    
     ## Add back in the date data
     tmp <- g %>% pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
       type_convert(., na = c("na", "nan", "NA"))
@@ -338,13 +385,17 @@ for (file in fils) {
     ## clean up date data intermediate files
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
     
+## remove unique subject ID bandaid  ===========================================
+    
     ## remove unique identifiers for repeated subject_ids
     tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
     write_delim(tmp, file = paste0(outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
     
 }
 
-## print na figuren and data to file
+## write figures and files  ====================================================
+
+## print na figure and data to file
 na_figure <- na_count_features %>% 
   mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
   ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) + 
