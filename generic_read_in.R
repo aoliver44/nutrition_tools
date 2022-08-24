@@ -45,6 +45,7 @@ setwd("/home")
 library(tidyverse)
 library(reshape2)
 library(data.table)
+library(naniar)
 
 ## create output directories ===================================================
 
@@ -69,6 +70,11 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
                                                      tz = 'UTC', 
                                                      format = c('%m/%d/%Y %H:%M', '%m/%d/%Y')))
 
+## ideas from naniar::common_na_strings
+na_possibilities <- c("NA", "N A", "N/A", "#N/A", " NA", "NA ", "N / A", 
+                      "N /A", "N / A ", "na", "n a", "n/a", " na", "na ", 
+                      "n /a", "n / a", "a / a", "n / a ", "NULL", "null", "", 
+                      ".", "*", "?")
 
 ## check input dir not empty ===================================================
 
@@ -78,8 +84,6 @@ fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
 if (length(fils) < 1) {
   print(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
 }
-
-
 
 ## create NA count file ========================================================
 
@@ -121,14 +125,14 @@ for (file in fils) {
   ## Read in all the files, do not fix colnames
   if (strsplit(basename(file), split="\\.")[[1]][2] == "csv") {
     f <- suppressMessages(readr::read_delim(file, delim = ",", 
-                                            name_repair = "minimal"))
+                                            name_repair = "minimal", na = na_possibilities))
   } else if (strsplit(basename(file), split="\\.")[[1]][2] %in% c("tsv","txt")){
     f <- suppressMessages(readr::read_delim(file, delim = "\t", 
-                                            name_repair = "minimal"))
+                                            name_repair = "minimal", na = na_possibilities))
   } else if (strsplit(basename(file), split="\\.")[[1]][2] == "xls") {
-    f <- suppressMessages(readxl::read_xls(file, .name_repair = "minimal"))
+    f <- suppressMessages(readxl::read_xls(file, .name_repair = "minimal", na = na_possibilities))
   } else if (strsplit(basename(file), split="\\.")[[1]][2] == "xlsx") {
-    f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal"))
+    f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal", na = na_possibilities))
   }
   
     ## assign file name to variable/column
@@ -204,7 +208,7 @@ for (file in fils) {
     g$feature <- gsub(pattern = "_[0-9]$", replacement = "", x = g$feature)
     g$feature <- gsub(pattern = "_x$", replacement = "", x = g$feature)
     colnames(g) <- gsub("_x", "", colnames(g))
-    
+
    
 ## check for POSIXct date  =====================================================
     
@@ -245,7 +249,8 @@ for (file in fils) {
   g_tmp$alpha_numeric <- grepl("^([A-Z])|([a-z]|[0-9])", g_tmp$value, ignore.case = TRUE)
   g_tmp <- dplyr::filter(g_tmp, alpha_numeric == FALSE)
   if (NROW(g_tmp) > 0) {
-    writeLines("You have cells in your data that contain only a symbol. We can't do anything with that")
+    writeLines("You have cells in your data that contain only a symbol. We cant do anything with that.")
+    writeLines("We check against a large list of possible NAs. Are you using a really weird NA symbol?")
     cat("Press [enter] to acknowledge ")
 
       ## add to a summary problem file
