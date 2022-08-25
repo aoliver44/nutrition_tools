@@ -74,7 +74,7 @@ is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x),
 na_possibilities <- c("NA", "N A", "N/A", "#N/A", " NA", "NA ", "N / A", 
                       "N /A", "N / A ", "na", "n a", "n/a", " na", "na ", 
                       "n /a", "n / a", "a / a", "n / a ", "NULL", "null", "", 
-                      ".", "*", "?")
+                      ".", "*", "?", "-", " - ")
 
 ## check input dir not empty ===================================================
 
@@ -270,7 +270,7 @@ for (file in fils) {
       dplyr::summarise(., na_count = sum(is.na(value)), have_data = sum(!is.na(value))) %>%
       dplyr::arrange(desc(na_count))
     na_count_features <- rbind(na_count_features, na_count_features_tmp)
-    #na_count_features <- na_count_features %>% dplyr::filter(., na_count > 0)
+
     
 ## get duplicated columns  =====================================================
     
