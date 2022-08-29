@@ -42,10 +42,16 @@ setwd("/home")
 
 ## load libraries ==============================================================
 
-library(tidyverse)
+library(tibble)
+library(janitor)
+library(readr)
+library(readxl)
+library(tidyr)
 library(reshape2)
-library(data.table)
-library(naniar)
+library(dplyr)
+library(digest)
+library(tidyr)
+library(ggplot2)
 
 ## create output directories ===================================================
 
@@ -108,7 +114,7 @@ summary_problems <- data.frame(dataset=character(),
                                 data_are_symbols=character(),
                                 stringsAsFactors=FALSE) 
 
-summary_problems <- summary_problems %>% add_row(dataset = "Name of dataset", 
+summary_problems <- summary_problems %>% tibble::add_row(dataset = "Name of dataset", 
                               subject_id_not_found = "This file has no identifible key/subject_id",
                               subject_id_duplicated = "This appears to be longitudinal data Take care in using ML",
                               date_not_unix = "Time formats are messy Please standarize to Unix or drop",
@@ -155,7 +161,7 @@ for (file in fils) {
       cat("Press [enter] to acknowledge ")
       
       ## add to a summary problem file
-      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+      summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
                                     subject_id_not_found = "needs_check")
                                     
       x <- readLines(file("stdin"),1)
@@ -178,7 +184,7 @@ for (file in fils) {
       cat("Press [enter] to acknowledge ")
       
       ## add to a summary problem file
-      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+      summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
                                     subject_id_duplicated = "needs_check")
       
       x <- readLines(file("stdin"),1)
@@ -216,25 +222,25 @@ for (file in fils) {
     ## to do: find a way to convert them to unix time stamps
     g$date <- is.convertible.to.date(g$value)
 
-    if ((g %>% filter(., date == "TRUE") %>% nrow()) > 0) {
+    if ((g %>% dplyr::filter(., date == "TRUE") %>% nrow()) > 0) {
       
       rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
       
       writeLines("I think you have POSIXct time/date data included. \nThese often mess up downstream analyses. \nYou should try and convert it to a UNIX timestamp.")
       
-      print(g %>% filter(., date == "TRUE") %>% select(., feature) %>% unique() %>% pull(.))
-      date_features <- g %>% filter(., date == "TRUE") %>% select(., feature) %>% unique() %>% pull()
+      print(g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull(.))
+      date_features <- g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull()
       
-      date_dataframe <- f %>% select(., subject_id_x, dplyr::contains(date_features))
+      date_dataframe <- f %>% dplyr::select(., subject_id_x, dplyr::contains(date_features))
       
       g <- g %>% 
-        filter(., date == "FALSE") %>%
-        select(., -date) 
+        dplyr::filter(., date == "FALSE") %>%
+        dplyr::select(., -date) 
       
       cat("Press [enter] to acknowledge ")
       
       ## add to a summary problem file
-      summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+      summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
                                     date_not_unix = "needs_check")
       
       
@@ -254,7 +260,7 @@ for (file in fils) {
     cat("Press [enter] to acknowledge ")
 
       ## add to a summary problem file
-      summary_problems <- summary_problems %>% add_row(dataset = file_name,
+      summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name,
                                                        data_are_symbols = "needs_check")
 
       x <- readLines(file("stdin"),1)
@@ -290,15 +296,15 @@ for (file in fils) {
         check <- g_dt %>% filter(., feature == f_duplicated)
         check <- as.data.frame(check)
         tmp <- check %>%
-          pivot_longer(-subject_id) %>%
-          drop_na %>%
-          group_by(subject_id, name) %>%
-          mutate(n = 1:n()) %>%
-          ungroup %>%
-          pivot_wider %>%
-          select(-n) %>%
-          type_convert(.) %>%
-          drop_na()
+          tidyr::pivot_longer(-subject_id) %>%
+          tidyr::drop_na %>%
+          dplyr::group_by(subject_id, name) %>%
+          dplyr::mutate(n = 1:n()) %>%
+          dplyr::ungroup %>%
+          tidyr::pivot_wider %>%
+          dplyr::select(-n) %>%
+          readr::type_convert(.) %>%
+          tidyr::drop_na()
         
         ## for each feature, round numerics and convert character
         if (is.numeric(tmp$value) == TRUE) { tmp$value  <- round(tmp$value, 2) 
@@ -309,16 +315,16 @@ for (file in fils) {
         if (NROW(tmp %>% janitor::get_dupes(., c(subject_id, value))) > (NROW(tmp)*0.2)) {
           ## recording that there might be a duplicated value
           duplicate_check <- duplicate_check %>%
-            mutate(., duplicated_value = ifelse(feature == f_duplicated, "duplicated_values", duplicated_value))
+            dplyr::mutate(., duplicated_value = ifelse(feature == f_duplicated, "duplicated_values", duplicated_value))
       
           ## printing to file for you to manually check if data is duplicated
           print(paste(f_duplicated, "is a DUPLICATED column name which contains DUPLICATED values across columns EXAMPLE:"))
           
-          print(tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% arrange(., subject_id) %>% head(n = 5))
+          print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
           
-          tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
-            arrange(., subject_id) %>% 
-            write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+          tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
+            dplyr::arrange(., subject_id) %>% 
+            readr::write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           print(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
           ## keeping a superset of the distinct values and dropping from g
           ## anything not in that superset
@@ -326,12 +332,12 @@ for (file in fils) {
             dplyr::arrange(., value) %>% 
             dplyr::distinct(., subject_id, .keep_all = T)
           drop_features <- tmp[tmp$data_feature_hash %!in% tmp_de_dup$data_feature_hash, ]
-          g <- g %>% filter(., data_feature_hash %!in% drop_features$data_feature_hash)
+          g <- g %>% dplyr::filter(., data_feature_hash %!in% drop_features$data_feature_hash)
 
           cat("Press [enter] to continue ")
           
           ## add to a summary problem file
-          summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+          summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
                                         duplicated_data = "needs_check")
           
           
@@ -348,23 +354,23 @@ for (file in fils) {
           ## showing you why we think it is a duplicated value
           print(paste(f_duplicated, "is a DUPLICATED column name which contains UNIQUE values across columns EXAMPLE:"))
           
-          print(tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% arrange(., subject_id) %>% head(n = 5))
+          print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
           
           print("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)")
           
           ## renaming feature in g
           g <- g %>%
-            mutate(., feature = ifelse(feature == f_duplicated, paste0(feature,"_",data_feature_hash), feature))
+            dplyr::mutate(., feature = ifelse(feature == f_duplicated, paste0(feature,"_",data_feature_hash), feature))
           ## writing to file for you to check later
           print("We wrote this to file for you to manually check, see outputs/duplicated_colnames")
-          tmp %>% pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
-            arrange(., subject_id) %>% 
-            write_delim(., file = paste0(outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
+          tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
+            dplyr::arrange(., subject_id) %>% 
+            readr::write_delim(., file = paste0(outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
           
           cat("Press [enter] to continue ")
           
           ## add to a summary problem file
-          summary_problems <- summary_problems %>% add_row(dataset = file_name, 
+          summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
                                         duplicated_column_names = "needs_check")
           
           x <- readLines(file("stdin"),1)
@@ -379,8 +385,8 @@ for (file in fils) {
 ## add back in POSIX date data  ================================================
     
     ## Add back in the date data
-    tmp <- g %>% pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
-      type_convert(., na = c("na", "nan", "NA"))
+    tmp <- g %>% tidyr::pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
+      readr::type_convert(., na = c("na", "nan", "NA"))
     
     if (exists("date_dataframe")) {
       colnames(date_dataframe) <- gsub(pattern = "_x", "", colnames(date_dataframe))
@@ -394,7 +400,7 @@ for (file in fils) {
     
     ## remove unique identifiers for repeated subject_ids
     tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
-    write_delim(tmp, file = paste0(outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
+    readr::write_delim(tmp, file = paste0(outdir_name, "/clean_files/", file_name,".csv"), delim = ",")
     
 }
 
@@ -402,8 +408,8 @@ for (file in fils) {
 
 ## print na figure and data to file
 na_figure <- na_count_features %>% 
-  mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
-  ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) + 
+  dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
+  ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) + 
   geom_bar() + 
   labs(y = "NA Count", x = "Features with NAs") +
   facet_grid(~ dataset, scales = "free") + 
@@ -415,10 +421,10 @@ print("Saving a summary_problems file, see /output/summary_dataset_problems.csv"
 print("####################################################")
 print("Explainations of the summary_problems columns are as follows:")
 print(as.vector(t(summary_problems[1,])))
-write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
+readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
 ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
 ## write summary problems dataframe to file 
-summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% group_by(dataset) %>% summarise(across(everything(), ~n_distinct(., na.rm = T)))
-write_delim(summary_problems_tmp, file = paste0(outdir_name, "/summary_dataset_problems.csv"), delim = ",")
+summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% dplyr::group_by(dataset) %>% dplyr::summarise(across(everything(), ~n_distinct(., na.rm = T)))
+readr::write_delim(summary_problems_tmp, file = paste0(outdir_name, "/summary_dataset_problems.csv"), delim = ",")
 
