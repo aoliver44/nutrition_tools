@@ -1,11 +1,9 @@
-#################################################
-## SCRIPT: generic_combine.R
+## SCRIPT: generic_combine.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Aug 8, 2022
 ##
 ## PURPOSE: To combine files cleaned from running
 ## the generic_read_in.R script
-#################################################
 
 ## docker command:
 #docker run --rm -it -p 8787:8787 
@@ -21,8 +19,10 @@ option_list = list(
               help="path to clean_data directory for import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id",
               help="subject key (column name) found in all files [default= %default]", metavar="numeric"),
-  make_option(c("-c", "--cor_level"), type="numeric", default=0.95,
+  make_option(c("-c", "--cor_level"), type="numeric", default=0.50,
               help="subject key (column name) found in all files [default= %default]", metavar="character"),
+  make_option(c("-d", "--cor_choose"), type="character", default="FALSE",
+              help="If --cor_choose TRUE, you choose which correlated vars to keep [default= %default]"),
   make_option(c("-o", "--output_file"), type="character", default="combined_raw_file.csv",
               help="output file to write [default= %default]", metavar="character")
 );
@@ -38,11 +38,6 @@ if (length(opt)==0) {
   opt[2] = "subject_id"
 }
 
-##########################################################################
-
-## set working dir to /home for the docker container
-setwd(opt$input)
-getwd()
 ## load libraries ==============================================================
 
 library(tidyverse)
@@ -52,14 +47,19 @@ library(mikropml)
 library(Hmisc)
 library(heatmaply)
 
-## 
 ## set random seed if needed
 set.seed(1)
+
+## set working dir to /home for the docker container
+setwd(opt$input)
+getwd()
 
 ## helper functions ============================================================
 
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
+
+## check for inputs ============================================================
 
 ## check and see if clean_files directory exists
 print("Checking for clean_files directory and summary_dataset_problems.csv")
@@ -82,6 +82,8 @@ if (file.exists("summary_dataset_problems.csv")) {
   ## make a tmp directory and copy problem files into
   dir.create(file.path(paste0("problem_check/")))
 }
+
+## check if problem files are fixed ============================================
 
 for (fil in summary_problems$dataset) {
     ## copy into a tmp directory
@@ -113,6 +115,7 @@ if (NROW(summary_problems_recheck >= 1)) {
         pull(., var = "fils")
 }
 
+## read in & merge clean files =================================================
 
 ## read in the files that passed muster
 if (length(fils) > 0) {
@@ -147,7 +150,7 @@ if (NROW(full_merge) < 200) {
   
 }
 
-## de-duplicate columns, picking one with least NAs
+## de-duplicate based on NA count ==============================================
 full_merge_dedup <- full_merge %>% 
   tibble::column_to_rownames(., var = opt$subject_identifier) %>%
   t() %>%
@@ -161,17 +164,32 @@ full_merge_dedup <- full_merge %>%
   as.data.frame() %>%
   readr::type_convert(.)
 
-## for now lets remove columns that are mostly NAs
-full_merge_dedup_tmp_col_drop <- full_merge_dedup[ , colSums(is.na(full_merge_dedup)) < (NCOL(full_merge_dedup)*0.01)]
-## ok lets remove rows that are mostly NA (addmittedly a much smaller dataset)...but no NAs left!
+## pre-corr col drop ===========================================================
+
+## drop columns with more than 1% NAs
+full_merge_dedup_tmp_col_drop <- full_merge_dedup[ , colSums(is.na(full_merge_dedup)) < (NROW(full_merge_dedup)*0.01)]
+
+## Notify user about what columns were dropped
+if (((NCOL(full_merge_dedup)) - (NCOL(full_merge_dedup[ , colSums(is.na(full_merge_dedup)) < (NCOL(full_merge_dedup)*0.01)]))) > 0) {
+  cat("For correlation purposes, we drop some NA-replete features prior to 
+      row drops. We will next row-drop in order to have a NA-free dataset. 
+      This is only for a global correlation check. We will write both a NA and 
+      NA-free file, its up to you if you want to use interpolation methods.")
+}
+
+## pre-corr row drop ===========================================================
+
+## ok lets remove rows that are mostly NA (admittedly a much smaller dataset)...but no NAs left!
 full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_na()
 
+## co-correlate features =======================================================
+
 ## add in a dummy var for correlation purpose
+## this dummy var is meaningless. We are using the next steps for 
+## co-correlation of features and for one-hot-encoding.
 full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>% 
   mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
-  tibble::rownames_to_column(., var = "subject_id") 
-
-## co-correlate features =======================================================
+  tibble::rownames_to_column(., var = "subject_id")
 
 ## check correlation level
 
@@ -191,43 +209,48 @@ if (opt$cor_level < 0.95) {
   
 }
 
-## correlate to show which features are super redundant
+## prepare the data for correlation (one-hot encode, remove zero-variance)
 corr_raw_data <- mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
                                          method = NULL,
-                                         outcome_colname = "dummy_var", 
+                                         outcome_colname = "dummy_var", ## meaningless var
                                          collapse_corr_feats = F, 
                                          remove_var = "zv")
 
-
+## co-correlate features at specified threshold
 high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed, 
                                                 corr_thresh = opt$cor_level, group_neg_corr = T)
 
+## make dataframe of what is correlated at specified threshold.
 high_cor <- as.data.frame(high_cor) %>% 
   separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge") %>%
   dplyr::filter(., keep != "dummy_var")
 
-high_cor_list <- c(high_cor$keep, high_cor$`co-correlated`)
-high_cor_list <- gsub(pattern = "\\|", replacement = " ", x = high_cor_list)
-high_cor_list <- unlist(strsplit( high_cor_list, " " ))
 
+## write correlation figure ====================================================
+
+## make a list of uncorrelated features
+un_corr_list <- c(high_cor$keep[is.na(high_cor$`co-correlated`)])
+
+## make list of all cor-correlated features
+co_corr_list <- c(high_cor$`co-correlated`[!is.na(high_cor$`co-correlated`)])
+co_corr_list <- gsub(pattern = "\\|", replacement = " ", x = co_corr_list)
+co_corr_list <- unlist(strsplit( co_corr_list, " " ))
+
+## co-correlate these vars
 post_correlate <- corr_raw_data$dat_transformed %>% 
-  dplyr::select(., any_of(high_cor_list), -dummy_var) %>%
+  dplyr::select(., any_of(co_corr_list), -dummy_var) %>%
   correlate(method = "pearson") %>% 
   tibble::column_to_rownames(., var = "term") %>% abs()
 
+## set anything below cor threshold to zero
 v1 <- sample(colnames(post_correlate))
 post_correlate[v1] <- lapply(post_correlate[v1], function(x) replace(x,  (x < (opt$cor_level - 0.000001)), 0))
 
-## for now lets remove columns that are mostly NAs
+## remove cols and rows that are NAs
 post_correlate <- post_correlate[ , colSums(post_correlate, na.rm = T) > 0]
 post_correlate <- post_correlate[ rowSums(post_correlate, na.rm = T) > 0, ]
 
-
-## write correlation figure ====================================================
-## We use Hmisc to calculate a matrix of p-values from correlation tests
-post_correlate.rcorr <- Hmisc::rcorr(as.matrix(post_correlate))
-p <- post_correlate.rcorr$P
-
+## write interactive heatmap of correlation
 heatmaply_cor(
   as.matrix(post_correlate),
   #node_type = "scatter",
@@ -239,5 +262,50 @@ heatmaply_cor(
   main = paste0("Absolute Pearson Correlations that are above r= ", opt$cor_level, "\nAll other correlations set to 0 for vizualization purposes"),
 )
 
+## decide which co-correlated vars to keep =====================================
+
+if (opt$cor_choose == TRUE) {
+  corr_decision_list = c()
+  
+  corr_choices <- high_cor %>%
+    tidyr::drop_na() %>%
+    dplyr::pull(var = keep)
+  for (keep_var in corr_choices) {
+    ## get vars that are co-correlated
+    corr_choose <- subset(high_cor, high_cor$keep == keep_var)
+    
+    ## get rid of the | and make list
+    corr_choose_list <- c(corr_choose$`co-correlated`)
+    corr_choose_list <- gsub(pattern = "\\|", replacement = " ", x = corr_choose_list)
+    corr_choose_list <- unlist(strsplit( corr_choose_list, " " ))
+    
+    ## put into dataframe with the auto-kept var
+    corr_choose_df <- as.data.frame(c(corr_choose$keep, corr_choose_list))
+    
+    ## interactive decision 
+    corr_decision <- corr_choose_df[menu(apply(corr_choose_df,1,paste,collapse="  "),graphics=TRUE),]
+    corr_decision_list <- append(x = corr_decision_list, values = corr_decision)
+  }
+  
+  ## add in the non-co-correlated vars
+  full_decision_list <- c(un_corr_list, corr_decision_list)
+  
+} else {
+  
+  full_decision_list <- high_cor$keep
+  
+}
 
 
+## summarize features kept =====================================================
+
+
+
+
+post_corr <- full_merge_dedup[, colnames(full_merge_dedup) %!in% co_corr_list]
+
+post_corr_tmp <- post_corr %>% 
+  rename_at(vars(high_cor$keep), ~ paste0(high_cor$keep, "_cor", opt$cor_level))
+
+data <- data %>% 
+  rename_at(vars(names$vars), ~ names$labels)
