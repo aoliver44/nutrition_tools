@@ -1,4 +1,4 @@
-## SCRIPT: generic_read_in.R ============
+## SCRIPT: generic_read_in.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   May 31, 2022
 ##
