@@ -14,6 +14,8 @@
 #-v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home 
 #amr_r_env:3.1.0
 
+## general command:
+#Rscript /home/scripts/generic_read_in.R -i /home/data/read_in_tests/ -s subject_id -o /home/output/
 ## add commandline options =====================================================
 
 library(optparse)
@@ -50,7 +52,6 @@ library(tidyr)
 library(reshape2)
 library(dplyr)
 library(digest)
-library(tidyr)
 library(ggplot2)
 
 ## create output directories ===================================================
@@ -413,7 +414,7 @@ na_figure <- na_count_features %>%
   geom_bar() + 
   labs(y = "NA Count", x = "Features with NAs") +
   facet_grid(~ dataset, scales = "free") + 
-  theme(axis.text.x=element_text(angle = 90), axis.ticks.x=element_blank())
+  theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
 print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
 print("Saving NA counts table to file, see /output/na_counts.csv")
 print("####################################################")
@@ -422,7 +423,7 @@ print("####################################################")
 print("Explainations of the summary_problems columns are as follows:")
 print(as.vector(t(summary_problems[1,])))
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
-ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 10, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
+ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
 ## write summary problems dataframe to file 
 summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% dplyr::group_by(dataset) %>% dplyr::summarise(across(everything(), ~n_distinct(., na.rm = T)))
