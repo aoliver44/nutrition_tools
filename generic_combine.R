@@ -18,8 +18,8 @@ option_list = list(
   make_option(c("-i", "--input"), type="character", default="/home/output/",
               help="path to clean_data directory for import [default= %default]", metavar="character"),
   make_option(c("-s", "--subject_identifier"), type="character", default="subject_id",
-              help="subject key (column name) found in all files [default= %default]", metavar="numeric"),
-  make_option(c("-c", "--cor_level"), type="numeric", default=0.50,
+              help="subject key (column name) found in all files [default= %default]", metavar="character"),
+  make_option(c("-c", "--cor_level"), type="numeric", default=0.95,
               help="subject key (column name) found in all files [default= %default]", metavar="character"),
   make_option(c("-d", "--cor_choose"), type="character", default="FALSE",
               help="If --cor_choose TRUE, you choose which correlated vars to keep [default= %default]"),
@@ -235,29 +235,31 @@ un_corr_list <- c(high_cor$keep[is.na(high_cor$`co-correlated`)])
 co_corr_list <- c(high_cor$`co-correlated`[!is.na(high_cor$`co-correlated`)])
 co_corr_list <- gsub(pattern = "\\|", replacement = " ", x = co_corr_list)
 co_corr_list <- unlist(strsplit( co_corr_list, " " ))
+co_corr_list_add <- c(high_cor$keep[!is.na(high_cor$`co-correlated`)])
+co_corr_list <- c(co_corr_list_add, co_corr_list)
 
 ## co-correlate these vars
-post_correlate <- corr_raw_data$dat_transformed %>% 
+correlate_figure <- corr_raw_data$dat_transformed %>% 
   dplyr::select(., any_of(co_corr_list), -dummy_var) %>%
   correlate(method = "pearson") %>% 
   tibble::column_to_rownames(., var = "term") %>% abs()
 
 ## set anything below cor threshold to zero
-v1 <- sample(colnames(post_correlate))
-post_correlate[v1] <- lapply(post_correlate[v1], function(x) replace(x,  (x < (opt$cor_level - 0.000001)), 0))
+v1 <- sample(colnames(correlate_figure))
+correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (opt$cor_level - 0.000001)), 0))
 
 ## remove cols and rows that are NAs
-post_correlate <- post_correlate[ , colSums(post_correlate, na.rm = T) > 0]
-post_correlate <- post_correlate[ rowSums(post_correlate, na.rm = T) > 0, ]
+correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
+correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
 
 ## write interactive heatmap of correlation
 heatmaply_cor(
-  as.matrix(post_correlate),
+  as.matrix(correlate_figure),
   #node_type = "scatter",
   #point_size_mat = -log10(p), 
   #point_size_name = "-log10(p-value)",
   label_names = c("x", "y", "Correlation"),
-  file = "heatmaply.html",
+  file = "correlation_heatmap.html",
   #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
   main = paste0("Absolute Pearson Correlations that are above r= ", opt$cor_level, "\nAll other correlations set to 0 for vizualization purposes"),
 )
@@ -300,12 +302,31 @@ if (opt$cor_choose == TRUE) {
 ## summarize features kept =====================================================
 
 
+## write file of ALL features
+kept_features_summary <- data.frame(features=character(),
+                                    category=character(),
+                               stringsAsFactors=FALSE) 
+kept_features_summary <- kept_features_summary %>% 
+  tibble::add_row(features = colnames(full_merge_dedup)) %>%
+  dplyr::mutate(., category = ifelse(is.na(category), "all_features", NA))
 
+kept_features_summary <- kept_features_summary %>% 
+  tibble::add_row(features = setdiff(colnames(full_merge_dedup), colnames(full_merge_dedup_tmp_col_drop))) %>% 
+  dplyr::mutate(., category = ifelse(is.na(category), "dropped_to_retain_samples", category))
 
-post_corr <- full_merge_dedup[, colnames(full_merge_dedup) %!in% co_corr_list]
+kept_features_summary <- kept_features_summary %>% 
+  tibble::add_row(features = setdiff(co_corr_list, full_decision_list)) %>% 
+  dplyr::mutate(., category = ifelse(is.na(category), "dropped_in_correlation", category))
 
-post_corr_tmp <- post_corr %>% 
-  rename_at(vars(high_cor$keep), ~ paste0(high_cor$keep, "_cor", opt$cor_level))
+kept_features_summary <- kept_features_summary %>% 
+  tibble::add_row(features = full_decision_list) %>% 
+  dplyr::mutate(., category = ifelse(is.na(category), "final_feature_list", category))
 
-data <- data %>% 
-  rename_at(vars(names$vars), ~ names$labels)
+readr::write_delim(x = kept_features_summary, file = paste0(opt$input, "feature_summary.csv"), delim = ",", quote = NULL)
+
+## write final file for ML =====================================================
+
+for_ml <- corr_raw_data$dat_transformed %>% 
+  dplyr::select(., any_of(full_decision_list))
+
+readr::write_delim(for_ml, file = paste0(opt$input, opt$output_file), delim = ",", quote = NULL)
