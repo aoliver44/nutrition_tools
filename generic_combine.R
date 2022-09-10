@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript 
+
 ## SCRIPT: generic_combine.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Aug 8, 2022
@@ -5,38 +7,42 @@
 ## PURPOSE: To combine files cleaned from running
 ## the generic_read_in.R script
 
+## docker info =================================================================
+
 ## docker command:
 #docker run --rm -it -p 8787:8787 
 #-e PASSWORD=yourpasswordhere 
 #-v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home 
 #amr_r_env:3.1.0
 
+## general command:
+## ./home/scripts/generic_read_in.R --subject_identifier subject_id /home/data/read_in_tests/ /home/output
+
+## set working dir to /home for the docker container
+setwd("/home")
+
+
 ## add commandline options =====================================================
 
-library(optparse)
-option_list = list(
-  make_option(c("-i", "--input"), type="character", default="/home/output/",
-              help="path to clean_data directory for import [default= %default]", metavar="character"),
-  make_option(c("-s", "--subject_identifier"), type="character", default="subject_id",
-              help="subject key (column name) found in all files [default= %default]", metavar="character"),
-  make_option(c("-c", "--cor_level"), type="numeric", default=0.95,
-              help="subject key (column name) found in all files [default= %default]", metavar="character"),
-  make_option(c("-d", "--cor_choose"), type="character", default="FALSE",
-              help="If --cor_choose TRUE, you choose which correlated vars to keep [default= %default]"),
-  make_option(c("-o", "--output_file"), type="character", default="combined_raw_file.csv",
-              help="output file to write [default= %default]", metavar="character")
-);
+library(docopt)
+"Combine data from read_in step, prior to ML
+Usage:
+    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose>] <input> <output_file>
+    
+Options:
+    -h --help  Show this screen.
+    -v --version  Show version.
+    --subject_identifier=<subject_colname> name of columns with subject IDs [default: subject_id]
+    --cor_level level of general feature correlation [default: 0.95]
+    --cor_choose choose which features are kept in correlation [default: FALSE]
+    
+Arguments:
+    input  input directory containing files
+    output_file  output file name
 
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser);
+" -> doc
 
-## test if there is at least one argument: if not, return an error
-if (length(opt)==0) {
-  stop("At least one argument must be supplied (input file).n", call.=FALSE)
-} else if (length(opt)==1) {
-  # default output file
-  opt[2] = "subject_id"
-}
+opt <- docopt(doc, version = 'generic_combine.R v1.0\n\n')
 
 ## load libraries ==============================================================
 
@@ -193,7 +199,7 @@ full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>%
 
 ## check correlation level
 
-if (opt$cor_level < 0.95) {
+if (as.numeric(opt$cor_level) < 0.95) {
   print("################################################")
   print("WARNING:")
   cat("Your correlation level is below 0.95. This is a global correlation check, 
@@ -218,7 +224,7 @@ corr_raw_data <- mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
 
 ## co-correlate features at specified threshold
 high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed, 
-                                                corr_thresh = opt$cor_level, group_neg_corr = T)
+                                                corr_thresh = as.numeric(opt$cor_level), group_neg_corr = T)
 
 ## make dataframe of what is correlated at specified threshold.
 high_cor <- as.data.frame(high_cor) %>% 
@@ -246,14 +252,14 @@ correlate_figure <- corr_raw_data$dat_transformed %>%
 
 ## set anything below cor threshold to zero
 v1 <- sample(colnames(correlate_figure))
-correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (opt$cor_level - 0.000001)), 0))
+correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (as.numeric(opt$cor_level) - 0.000001)), 0))
 
 ## remove cols and rows that are NAs
 correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
 correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
 
 ## write interactive heatmap of correlation
-heatmaply_cor(
+cor_figure <- heatmaply_cor(
   as.matrix(correlate_figure),
   #node_type = "scatter",
   #point_size_mat = -log10(p), 
@@ -261,7 +267,7 @@ heatmaply_cor(
   label_names = c("x", "y", "Correlation"),
   file = "correlation_heatmap.html",
   #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
-  main = paste0("Absolute Pearson Correlations that are above r= ", opt$cor_level, "\nAll other correlations set to 0 for vizualization purposes"),
+  main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
 )
 
 ## decide which co-correlated vars to keep =====================================
@@ -282,11 +288,16 @@ if (opt$cor_choose == TRUE) {
     corr_choose_list <- unlist(strsplit( corr_choose_list, " " ))
     
     ## put into dataframe with the auto-kept var
-    corr_choose_df <- as.data.frame(c(corr_choose$keep, corr_choose_list))
+    #corr_choose_df <- as.data.frame(c(corr_choose$keep, corr_choose_list))
+    corr_options <- c(corr_choose$keep, corr_choose_list)
+    corr_choose_df <- as.data.frame(sq = seq_along(corr_options), corr_options)
     
     ## interactive decision 
-    corr_decision <- corr_choose_df[menu(apply(corr_choose_df,1,paste,collapse="  "),graphics=TRUE),]
-    corr_decision_list <- append(x = corr_decision_list, values = corr_decision)
+    print(corr_choose_df)
+    cat("Which corr_option (select the number) do you want included in the model?")
+    corr_decision <- readLines("stdin", n = 1)
+    corr_decision_list <- append(x = corr_decision_list, values = corr_choose_df$corr_options[as.numeric(corr_decision)])
+    
   }
   
   ## add in the non-co-correlated vars
