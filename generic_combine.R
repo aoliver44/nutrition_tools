@@ -42,13 +42,15 @@ Arguments:
 
 " -> doc
 
-opt <- docopt(doc, version = 'generic_combine.R v1.0\n\n')
+opt <- docopt::docopt(doc, version = 'generic_combine.R v1.0\n\n')
 
 ## load libraries ==============================================================
 
-library(tidyverse)
-library(reshape2)
-library(corrr)
+library(dpylr)
+library(tibble)
+library(tidyr)
+library(readr)
+library(janitor)
 library(mikropml)
 library(Hmisc)
 library(heatmaply)
@@ -73,17 +75,17 @@ print("Checking for clean_files directory and summary_dataset_problems.csv")
 fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files clean_files dir
 if (length(fils) >= 1) {
-  print(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"))
+  cat(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"))
 }
 ## check and make sure summary_dataset_problems exists
 if (file.exists("summary_dataset_problems.csv")) {
-  print(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"))
-  print("Using file to check if clean_files have been fixed...")
+  cat(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"))
+  cat("Using file to check if clean_files have been fixed...")
   
   ## use summary_problems to check and see if problems still exist in data
   summary_problems <- read.csv("summary_dataset_problems.csv")
   
-  print(paste0("Checking all files that were previously identified as problems"))
+  cat(paste0("Checking all files that were previously identified as problems"))
   
   ## make a tmp directory and copy problem files into
   dir.create(file.path(paste0("problem_check/")))
@@ -107,13 +109,12 @@ if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
 }
 
 if (NROW(summary_problems_recheck >= 1)) {
-      print(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
-      print("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
+      cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
+      cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
       
       ## get interactive acknowledgment 
       cat("Press [enter] to continue ")
       x <- readLines(file("stdin"),1)
-      print(x)
       
       ## remove summary_problem_datasets from fils list
       fils <- as.data.frame(fils) %>% 
@@ -134,26 +135,23 @@ full_merge <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_ide
 ## check sample size here ======================================================
 
 if (NROW(full_merge) < 200) {
-  print("################################################")
-  print("WARNING:")
-  print("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is 
-        made much worse if you have a multiclass problem (> 2 classes for classification).")
-  print("################################################")
+  cat("################################################")
+  cat("WARNING:")
+  cat("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is made much worse if you have a multiclass problem (> 2 classes for classification).")
+  cat("################################################")
   
   ## get interactive acknowledgment 
   cat("Press [enter] to continue ")
   x <- readLines(file("stdin"),1)
-  print(x)
   
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
-  print("Note:")
-  print("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.")
+  cat("Note:")
+  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.")
   
   ## get interactive acknowledgment 
   cat("Press [enter] to continue ")
   x <- readLines(file("stdin"),1)
-  print(x)
-  
+
 }
 
 ## de-duplicate based on NA count ==============================================
@@ -194,14 +192,14 @@ full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_n
 ## this dummy var is meaningless. We are using the next steps for 
 ## co-correlation of features and for one-hot-encoding.
 full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>% 
-  mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
+  dplyr::mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
   tibble::rownames_to_column(., var = "subject_id")
 
 ## check correlation level
 
 if (as.numeric(opt$cor_level) < 0.95) {
-  print("################################################")
-  print("WARNING:")
+  cat("################################################")
+  cat("WARNING:")
   cat("Your correlation level is below 0.95. This is a global correlation check, 
   mainly for PURELY redundant features. For feature engineering, PROPER correlation-based 
   feature selection should happen inside a Train-Test split or a cross-validation 
@@ -211,8 +209,7 @@ if (as.numeric(opt$cor_level) < 0.95) {
   ## get interactive acknowledgment 
   cat("Press [enter] to continue ")
   x <- readLines(file("stdin"),1)
-  print(x)
-  
+
 }
 
 ## prepare the data for correlation (one-hot encode, remove zero-variance)
@@ -228,7 +225,7 @@ high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed,
 
 ## make dataframe of what is correlated at specified threshold.
 high_cor <- as.data.frame(high_cor) %>% 
-  separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge") %>%
+  tidyr::separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge") %>%
   dplyr::filter(., keep != "dummy_var")
 
 
@@ -259,7 +256,7 @@ correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0
 correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
 
 ## write interactive heatmap of correlation
-cor_figure <- heatmaply_cor(
+cor_figure <- heatmaply::heatmaply_cor(
   as.matrix(correlate_figure),
   #node_type = "scatter",
   #point_size_mat = -log10(p), 
