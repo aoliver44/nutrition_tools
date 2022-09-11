@@ -16,7 +16,7 @@
 #amr_r_env:3.1.0
 
 ## general command:
-## ./home/scripts/generic_read_in.R --subject_identifier subject_id /home/data/read_in_tests/ /home/output
+## /home/scripts/generic_combine.R --cor_level 0.8 --cor_choose TRUE /home/output/ combined_ml_data.csv
 
 ## set working dir to /home for the docker container
 setwd("/home")
@@ -97,11 +97,11 @@ for (fil in summary_problems$dataset) {
 }
 
 ## run generic_read_in.R on this problem subset and see if any problems occur
-system(paste0("Rscript /home/scripts/generic_read_in.R -i ", opt$input, "problem_check/ ", "-s ", opt$subject_identifier, " -o ", opt$input, "problem_check/output/"))
-  
+system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+
 ## check and see if summary_dataset_problems got written  
 if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
-    summary_problems_recheck <- read.csv(paste0("problem_check/output/summary_dataset_problems.csv"))
+    summary_problems_recheck <- read.csv(paste0(opt$input,"problem_check/output/summary_dataset_problems.csv"))
     problem_check_dataset <- summary_problems_recheck[1,]$dataset
     problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
 }

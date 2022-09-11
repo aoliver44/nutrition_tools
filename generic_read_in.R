@@ -37,7 +37,7 @@ Options:
 
 Arguments:
     input  input directory containing files
-    outdir  output directory name 
+    outdir  output directory name
 
 " -> doc
 
