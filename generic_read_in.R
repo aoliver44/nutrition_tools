@@ -90,7 +90,7 @@ na_possibilities <- c("NA", "N A", "N/A", "#N/A", " NA", "NA ", "N / A",
 fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files in the path
 if (length(fils) < 1) {
-  print(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
+  cat(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
 }
 
 ## create NA count file ========================================================
@@ -129,7 +129,7 @@ summary_problems <- summary_problems %>% tibble::add_row(dataset = "Name of data
 ## loop through files and make checks
 for (file in fils) {
   file_name <- janitor::make_clean_names(strsplit(basename(file), split="\\.")[[1]][1])
-  print(paste0("Reading in file: ", file_name))
+  cat(paste0("Reading in file: ", file_name))
   ## Read in all the files, do not fix colnames
   if (strsplit(basename(file), split="\\.")[[1]][2] == "csv") {
     f <- suppressMessages(readr::read_delim(file, delim = ",", 
@@ -155,10 +155,10 @@ for (file in fils) {
   ## subject id check  ===========================================================
   
   ## check to see if subject_id is in the file
-  print(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
+  cat(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
   if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
     
-    print(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
+    cat(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
     
     cat("Press [enter] to acknowledge ")
     
@@ -167,21 +167,20 @@ for (file in fils) {
                                                              subject_id_not_found = "needs_check")
     
     x <- readLines(file("stdin"),1)
-    print(x)
-    
+
     next 
   } else { 
     f <- f %>% rename(., "subject_id_x" = paste0(opt$subject_identifier, "_x"))
-    print(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
+    cat(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
   }
   
   ## dup subject id check  =======================================================
   
   ## checking to see if there are duplicate subject_ids in the file - Make unique
   if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
-    print(paste("We detected rows in", file_name, "with the same subject_id."))
-    print("We will rename the subjects for now")
-    print("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!")
+    cat(paste("We detected rows in", file_name, "with the same subject_id."))
+    cat("We will rename the subjects for now")
+    cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!")
     
     cat("Press [enter] to acknowledge ")
     
@@ -190,8 +189,7 @@ for (file in fils) {
                                                              subject_id_duplicated = "needs_check")
     
     x <- readLines(file("stdin"),1)
-    print(x)
-    
+
     duplicated_rows <- f %>% janitor::get_dupes(., c(subject_id_x))
     f$subject_id_x <- janitor::make_clean_names(f$subject_id_x)
     
@@ -247,7 +245,7 @@ for (file in fils) {
     
     
     x <- readLines(file("stdin"),1)
-    print(x)
+    
   }
   
   ## check for non-alphanumeric  =================================================
@@ -266,7 +264,7 @@ for (file in fils) {
                                                              data_are_symbols = "needs_check")
     
     x <- readLines(file("stdin"),1)
-    print(x)
+    
   }
   
   
@@ -320,14 +318,14 @@ for (file in fils) {
           dplyr::mutate(., duplicated_value = ifelse(feature == f_duplicated, "duplicated_values", duplicated_value))
         
         ## printing to file for you to manually check if data is duplicated
-        print(paste(f_duplicated, "is a DUPLICATED column name which contains DUPLICATED values across columns EXAMPLE:"))
+        cat(paste(f_duplicated, "is a DUPLICATED column name which contains DUPLICATED values across columns EXAMPLE:"))
         
         print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
         
         tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
           dplyr::arrange(., subject_id) %>% 
           readr::write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
-        print(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
+        cat(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
         ## keeping a superset of the distinct values and dropping from g
         ## anything not in that superset
         tmp_de_dup <- tmp %>%
@@ -344,8 +342,8 @@ for (file in fils) {
         
         
         x <- readLines(file("stdin"),1)
-        print(x)
-        
+      
+
       } 
       
       ## do dup cols have different data?  ===========================================
@@ -354,17 +352,17 @@ for (file in fils) {
       ## the process of renaming the features. Also write to duplicated_colnames/
       else  {
         ## showing you why we think it is a duplicated value
-        print(paste(f_duplicated, "is a DUPLICATED column name which contains UNIQUE values across columns EXAMPLE:"))
+        cat(paste(f_duplicated, "is a DUPLICATED column name which contains UNIQUE values across columns EXAMPLE:"))
         
         print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
         
-        print("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)")
+        cat("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)")
         
         ## renaming feature in g
         g <- g %>%
           dplyr::mutate(., feature = ifelse(feature == f_duplicated, paste0(feature,"_",data_feature_hash), feature))
         ## writing to file for you to check later
-        print("We wrote this to file for you to manually check, see outputs/duplicated_colnames")
+        cat("We wrote this to file for you to manually check, see outputs/duplicated_colnames")
         tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
           dplyr::arrange(., subject_id) %>% 
           readr::write_delim(., file = paste0(outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",")
@@ -376,8 +374,7 @@ for (file in fils) {
                                                                  duplicated_column_names = "needs_check")
         
         x <- readLines(file("stdin"),1)
-        print(x)
-        
+
       }
       
     }
@@ -416,13 +413,13 @@ na_figure <- na_count_features %>%
   labs(y = "NA Count", x = "Features with NAs") +
   facet_grid(~ dataset, scales = "free") + 
   theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
-print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
-print("Saving NA counts table to file, see /output/na_counts.csv")
-print("####################################################")
-print("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
-print("####################################################")
-print("Explainations of the summary_problems columns are as follows:")
-print(as.vector(t(summary_problems[1,])))
+cat("Saving NA counts figure to file, see /outputs/na_counts.pdf")
+cat("Saving NA counts table to file, see /output/na_counts.csv")
+cat("####################################################")
+cat("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
+cat("####################################################")
+cat("Explainations of the summary_problems columns are as follows:")
+cat(as.vector(t(summary_problems[1,])))
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
 ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
