@@ -18,7 +18,7 @@
 #amr_r_env:3.1.0
 
 ## general command:
-## ./home/scripts/generic_read_in.R --subject_identifier subject_id /home/data/read_in_tests/ /home/output
+## /home/scripts/generic_read_in.R --subject_identifier subject_id /home/data/read_in_tests/ /home/output
 
 ## set working dir to /home for the docker container
 setwd("/home")
@@ -182,7 +182,7 @@ for (file in fils) {
     cat("We will rename the subjects for now")
     cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!")
     
-    cat("Press [enter] to acknowledge ")
+    cat(" Press [enter] to acknowledge  ")
     
     ## add to a summary problem file
     summary_problems <- summary_problems %>% tibble::add_row(dataset = file_name, 
@@ -413,13 +413,13 @@ na_figure <- na_count_features %>%
   labs(y = "NA Count", x = "Features with NAs") +
   facet_grid(~ dataset, scales = "free") + 
   theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
-cat("Saving NA counts figure to file, see /outputs/na_counts.pdf")
-cat("Saving NA counts table to file, see /output/na_counts.csv")
-cat("####################################################")
-cat("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
-cat("####################################################")
-cat("Explainations of the summary_problems columns are as follows:")
-cat(as.vector(t(summary_problems[1,])))
+print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
+print("Saving NA counts table to file, see /output/na_counts.csv")
+print("####################################################")
+print("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
+print("####################################################")
+print("Explainations of the summary_problems columns are as follows:")
+print(as.vector(t(summary_problems[1,])))
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
 ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 

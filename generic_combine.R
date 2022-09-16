@@ -46,7 +46,7 @@ opt <- docopt::docopt(doc, version = 'generic_combine.R v1.0\n\n')
 
 ## load libraries ==============================================================
 
-library(dpylr)
+library(dplyr)
 library(tibble)
 library(tidyr)
 library(readr)
@@ -54,6 +54,7 @@ library(janitor)
 library(mikropml)
 library(Hmisc)
 library(heatmaply)
+library(corrr)
 
 ## set random seed if needed
 set.seed(1)
@@ -113,7 +114,7 @@ if (NROW(summary_problems_recheck >= 1)) {
       cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
       
       ## get interactive acknowledgment 
-      cat("Press [enter] to continue ")
+      cat("  Press [enter] to continue  ")
       x <- readLines(file("stdin"),1)
       
       ## remove summary_problem_datasets from fils list
@@ -141,7 +142,7 @@ if (NROW(full_merge) < 200) {
   cat("################################################")
   
   ## get interactive acknowledgment 
-  cat("Press [enter] to continue ")
+  cat("  Press [enter] to continue  ")
   x <- readLines(file("stdin"),1)
   
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
@@ -149,7 +150,7 @@ if (NROW(full_merge) < 200) {
   cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.")
   
   ## get interactive acknowledgment 
-  cat("Press [enter] to continue ")
+  cat("  Press [enter] to continue  ")
   x <- readLines(file("stdin"),1)
 
 }
@@ -207,7 +208,7 @@ if (as.numeric(opt$cor_level) < 0.95) {
   reporting results that look better than they probably are.")
   
   ## get interactive acknowledgment 
-  cat("Press [enter] to continue ")
+  cat("  Press [enter] to continue  ")
   x <- readLines(file("stdin"),1)
 
 }
@@ -244,7 +245,7 @@ co_corr_list <- c(co_corr_list_add, co_corr_list)
 ## co-correlate these vars
 correlate_figure <- corr_raw_data$dat_transformed %>% 
   dplyr::select(., any_of(co_corr_list), -dummy_var) %>%
-  correlate(method = "pearson") %>% 
+  corrr::correlate(method = "pearson") %>% 
   tibble::column_to_rownames(., var = "term") %>% abs()
 
 ## set anything below cor threshold to zero
