@@ -71,7 +71,7 @@ getwd()
 ## check for inputs ============================================================
 
 ## check and see if clean_files directory exists
-print("Checking for clean_files directory and summary_dataset_problems.csv")
+cat("Checking for clean_files directory and summary_dataset_problems.csv")
 
 fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files clean_files dir
