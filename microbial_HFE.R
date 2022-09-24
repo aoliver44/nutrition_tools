@@ -105,6 +105,8 @@ taxa_only_split$metaphlan_taxonomy <- metaphlan$clade_name
 taxa_only_split$taxa_abundance <- rowSums(metaphlan[,2:NCOL(metaphlan)])
 taxa_only_split$na_count <- rowSums(is.na(taxa_only_split))
 
+taxa_only_split_history <- taxa_only_split
+
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
 
@@ -113,7 +115,7 @@ metaphlan <- metaphlan %>%
 genera <- taxa_only_split %>%
   group_by(., genus) %>%
   summarize(., count = n_distinct(species)) %>% tidyr::drop_na()
-parent_winners <- c()
+
 count = 1
 
 for (parent_trial in genera[genera$count > 1, ]$genus) {
@@ -151,8 +153,7 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 0), "drop_dis", species))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
     
-    parent_winners <- append(parent_winners, values = parent_trial)
-
+    taxa_only_split_history <- taxa_only_split_history %>% dplyr::mutate(., history = ifelse((genus == parent_trial & !is.na(genus) & na_count == 0), "Parent wins due to correlation", history))
 
   } else {
   
@@ -166,8 +167,8 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 0), "drop_dis", species))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
       
-      parent_winners <- append(parent_winners, values = parent_trial)
-
+      taxa_only_split_history <- taxa_only_split_history %>% dplyr::mutate(., history = ifelse((genus == parent_trial & !is.na(genus) & na_count == 0), "Parent wins in model", history))
+      
     } else { 
       #print("CHILDERN WERE THE WINNER!")
       
@@ -193,7 +194,10 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       taxa_only_split <- taxa_only_split %>% 
         dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
       
-      }
+      taxa_only_split_history <- taxa_only_split_history %>% dplyr::mutate(., history = ifelse((genus == parent_trial & !is.na(genus) & is.na(species)), "At least some Children win in model", history))
+      taxa_only_split_history <- taxa_only_split_history %>% dplyr::mutate(., history = ifelse((species %in% children_toss & is.na(genus) & !is.na(species)), "Children won, but this was dropped bc didnt beat parent in model", history))
+      
+     }
   }
 
     svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
@@ -210,7 +214,7 @@ metaphlan <- metaphlan %>%
 families <- taxa_only_split %>%
   group_by(., family) %>%
   summarize(., count = n_distinct(genus)) %>% tidyr::drop_na()
-parent_winners <- c()
+
 count = 1
 
 for (parent_trial in families[families$count > 1, ]$family) {
@@ -248,8 +252,6 @@ for (parent_trial in families[families$count > 1, ]$family) {
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., genus = ifelse((family == parent_trial & !is.na(family) & na_count == 1), "drop_dis", genus))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = genus))
     
-    parent_winners <- append(parent_winners, values = parent_trial)
-    
     
   } else {
     
@@ -263,8 +265,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., genus = ifelse((family == parent_trial & !is.na(family) & na_count == 1), "drop_dis", genus))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = genus))
       
-      parent_winners <- append(parent_winners, values = parent_trial)
-      
+
     } else { 
       #print("CHILDERN WERE THE WINNER!")
       
@@ -308,7 +309,7 @@ metaphlan <- metaphlan %>%
 orders <- taxa_only_split %>%
   group_by(., order) %>%
   summarize(., count = n_distinct(family)) %>% tidyr::drop_na()
-parent_winners <- c()
+
 count = 1
 
 for (parent_trial in orders[orders$count > 1, ]$order) {
@@ -346,8 +347,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., family = ifelse((order == parent_trial & !is.na(order) & na_count == 2), "drop_dis", family))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = family))
     
-    parent_winners <- append(parent_winners, values = parent_trial)
-    
+
     
   } else {
     
@@ -361,8 +361,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., family = ifelse((order == parent_trial & !is.na(order) & na_count == 2), "drop_dis", family))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = family))
       
-      parent_winners <- append(parent_winners, values = parent_trial)
-      
+
     } else { 
       #print("CHILDERN WERE THE WINNER!")
       
@@ -405,7 +404,7 @@ metaphlan <- metaphlan %>%
 classes <- taxa_only_split %>%
   group_by(., class) %>%
   summarize(., count = n_distinct(order)) %>% tidyr::drop_na()
-parent_winners <- c()
+
 count = 1
 
 for (parent_trial in classes[classes$count > 1, ]$class) {
@@ -443,8 +442,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., order = ifelse((class == parent_trial & !is.na(class) & na_count == 3), "drop_dis", order))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = order))
     
-    parent_winners <- append(parent_winners, values = parent_trial)
-    
+
     
   } else {
     
@@ -458,8 +456,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., order = ifelse((class == parent_trial & !is.na(class) & na_count == 3), "drop_dis", order))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = order))
       
-      parent_winners <- append(parent_winners, values = parent_trial)
-      
+
     } else { 
       #print("CHILDERN WERE THE WINNER!")
       
@@ -504,7 +501,7 @@ metaphlan <- metaphlan %>%
 phyla <- taxa_only_split %>%
   group_by(., phylum) %>%
   summarize(., count = n_distinct(class)) %>% tidyr::drop_na()
-parent_winners <- c()
+
 count = 1
 
 for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
@@ -542,8 +539,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., class = ifelse((phylum == parent_trial & !is.na(phylum) & na_count == 4), "drop_dis", class))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = class))
     
-    parent_winners <- append(parent_winners, values = parent_trial)
-    
+
     
   } else {
     
@@ -557,8 +553,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., class = ifelse((phylum == parent_trial & !is.na(phylum) & na_count == 4), "drop_dis", class))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = class))
       
-      parent_winners <- append(parent_winners, values = parent_trial)
-      
+
     } else { 
       #print("CHILDERN WERE THE WINNER!")
       
