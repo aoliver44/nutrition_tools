@@ -24,7 +24,7 @@ setwd("/home")
 library(docopt)
 'Microbial hierarchical feature engineering (HFE) of metaphfor classification
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<var>] <input_metadata> <input_metaphlan> <output_file>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE>] <input_metadata> <input_metaphlan> <output_file>
     
 Options:
     -h --help  Show this screen.
@@ -33,6 +33,7 @@ Options:
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
     --var_control filter features that contain less than this threshold of percentage of unique features [default: 5]
+    --super_filter to run a final RF and only take positive values [default: FALSE]
     
 Arguments:
     input_meta path to metadata input (CSV)
@@ -42,7 +43,7 @@ Arguments:
 ' -> doc
 
 opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.0\n\n')
-print(opt)
+#print(opt)
 ## load libraries ==============================================================
 
 library(dplyr)
@@ -68,20 +69,21 @@ nperm = 5
 ## check for inputs ============================================================
 
 ## check and see if clean_files directory exists
-cat("Checking for for input_metadata...")
+cat("\n","Checking for for input_metadata...")
 
 if (file.exists(opt$input_metadata)) {
-  cat(paste0("Using ", opt$input_metadata, " as input")) 
+  cat("\n",paste0("Using ", opt$input_metadata, " as input")) 
 } else { stop("Metadata input not found.") }
 
-cat("Checking for for input")
+cat("\n","Checking for for input")
 
 if (file.exists(opt$input_metaphlan)) {
-  cat(paste0("Using ", opt$input_metaphlan, " as input")) 
+  cat("\n",paste0("Using ", opt$input_metaphlan, " as input")) 
 } else { stop("Input not found.") }
 
 
 metaphlan <- readr::read_delim(file = opt$input_metaphlan, delim = "\t", skip = 1) %>% dplyr::select(., -any_of(c("NCBI_tax_id")))
+#metaphlan <- metaphlan %>% dplyr::filter(., grepl("Bacteroidetes", clade_name)) # short test
 original_taxa_count <- NROW(metaphlan)
 colnames(metaphlan) <- gsub(pattern = ".metaphlan", "", x = colnames(metaphlan))
 
@@ -92,6 +94,11 @@ metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier)
 
 ## Remove low variance features ================================================
 
+## in feature engineering, youre not ~really~ supposed to know the
+## whole dataset prior to ML analysis. But this script could definitely
+## be better about that generally...and maybe someday it will be.
+
+## randomly subsample for variance filter
 random_subsample <- sample(colnames(metaphlan[2:NCOL(metaphlan)]), (NCOL(metaphlan[,2:NCOL(metaphlan)]) * 0.75))
 metaphlan_var <- metaphlan %>%
   tibble::column_to_rownames(., var = "clade_name") %>%
@@ -99,15 +106,20 @@ metaphlan_var <- metaphlan %>%
   t() %>% 
   as.data.frame()
 
+## filter for taxa for which the percentage of samples with unique values is 
+## greater than var_control
+cat("\n", "Removing features that that have the same values in", (100 - as.numeric(opt$var_control)),"%(+) of the samples...\n")
 nzv <- caret::nearZeroVar(metaphlan_var,saveMetrics= TRUE)
 non_nzv_taxa <- nzv %>%
   tibble::rownames_to_column(., var = "taxa") %>%
   dplyr::filter(., percentUnique > as.numeric(opt$var_control)) %>%
   dplyr::pull(., "taxa")
 
+## remove the features below that threshold
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% non_nzv_taxa)
-
+metaphlan_master <- metaphlan
+## make the table of features that will compete in parent-child competitions
 taxa_only_split <- metaphlan %>% 
   tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
   dplyr::select(., 1:8)
@@ -118,11 +130,9 @@ taxa_only_split$na_count <- rowSums(is.na(taxa_only_split))
 taxa_only_split_master <- taxa_only_split
 #taxa_only_split_history <- taxa_only_split %>% tibble::add_column(., history = NA)
 
-metaphlan <- metaphlan %>%
-  dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
+cat("\n",paste0((NROW(nzv) - NROW(metaphlan)), " taxa dropped due to variability filter.\n"))
+Sys.sleep(3)
 
-cat(paste0((NROW(nzv) - NROW(metaphlan)), " taxa dropped due to variability filter."))
-sleep(3)
 
 ## Species =====================================================================
 
@@ -134,7 +144,7 @@ count = 1
 
 for (parent_trial in specieses[specieses$count > 1, ]$species) {
   
-  print(paste0("Analyzing if type are more important than species: ",parent_trial))
+  #print(paste0("Analyzing if type are more important than species: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -148,21 +158,21 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
     as.data.frame()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
-    print("PARENT not found, summing species to produce PARENT")
+    #print("PARENT not found, summing species to produce PARENT")
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
   }
   
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-    print("Parent wins due to correlation")
+    #print("Parent wins due to correlation")
     
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., type = ifelse((species == parent_trial & !is.na(species) & na_count == 0), "drop_dis", type))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = type))
@@ -200,8 +210,8 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
     }
     
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
-      print("Parent is most important feature in model")
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
+      #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., type = ifelse((species == parent_trial & !is.na(species) & na_count == 0), "drop_dis", type))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = type))
@@ -210,10 +220,10 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       
     } else { 
       ### RF WINNER - CHILD ####
-      print("Children are winner")
+      #print("Children are winner")
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -236,10 +246,10 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
     }
   }
   ### PROGRESS ####
-  #svMisc::progress(count, length(specieses[specieses$count > 1, ]$species))
-  #Sys.sleep(0.01)
-  #if (count == length(specieses[specieses$count > 1, ]$species)) message("Done with Species!")
-  #count = count + 1
+  svMisc::progress(count, length(specieses[specieses$count > 1, ]$species))
+  Sys.sleep(0.01)
+  if (count == length(specieses[specieses$count > 1, ]$species)) message("Done with Species!")
+  count = count + 1
 }
 
 metaphlan <- metaphlan %>%
@@ -256,7 +266,7 @@ count = 1
 
 for (parent_trial in genera[genera$count > 1, ]$genus) {
 
-  print(paste0("Analyzing if species are more important than genus: ",parent_trial))
+  #print(paste0("Analyzing if remaining species are more important than genus: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -270,21 +280,21 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     as.data.frame()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
-    print("PARENT not found, summing species to produce PARENT")
+    #print("PARENT not found, summing species to produce PARENT")
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
   }
   
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
 
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-    print("Parent wins due to correlation")
+    #print("Parent wins due to correlation")
 
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 1), "drop_dis", species))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
@@ -322,8 +332,8 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     }
     
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
-      print("Parent is most important feature in model")
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
+      #print("Parent is most important feature in model")
 
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 1), "drop_dis", species))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
@@ -332,10 +342,10 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       
     } else { 
       ### RF WINNER - CHILD ####
-      print("Children are winner")
+      #print("Children are winner")
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -358,14 +368,18 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
      }
   }
     ### PROGRESS ####
-    #svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
-    #Sys.sleep(0.01)
-    #if (count == length(genera[genera$count > 1, ]$genus)) message("Done with Genus!")
-    #count = count + 1
+    svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
+    Sys.sleep(0.01)
+    if (count == length(genera[genera$count > 1, ]$genus)) message("Done with Genus!")
+    count = count + 1
 }
 
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
+
+## save for debugging
+metaphlan_genus <- metaphlan
+taxa_only_split_genus <- taxa_only_split
 
 ## Family ======================================================================
 
@@ -377,7 +391,7 @@ count = 1
 
 for (parent_trial in families[families$count > 1, ]$family) {
   
-  #print(paste0("Analyzing if genus are more important than family: ",parent_trial))
+  #print(paste0("Analyzing if remaining genus are more important than family: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -398,11 +412,11 @@ for (parent_trial in families[families$count > 1, ]$family) {
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
-    select(., -subject_id)
+    dplyr::select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
     #print("Parent wins due to correlation")
@@ -444,7 +458,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
       
     }
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
       #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., genus = ifelse((family == parent_trial & !is.na(family) & na_count == 2), "drop_dis", genus))
@@ -455,10 +469,10 @@ for (parent_trial in families[families$count > 1, ]$family) {
 
     } else { 
       ### RF WINNER - CHILD ####
-      
+      #print("Children are winner")
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -490,6 +504,9 @@ for (parent_trial in families[families$count > 1, ]$family) {
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
 
+## save for debugging
+metaphlan_family <- metaphlan
+taxa_only_split_family <- taxa_only_split
 
 ## Order ======================================================================
 
@@ -501,7 +518,7 @@ count = 1
 
 for (parent_trial in orders[orders$count > 1, ]$order) {
   
-  #print(paste0("Analyzing if family are more important than order: ",parent_trial))
+  #print(paste0("Analyzing if remaining family are more important than order: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -522,7 +539,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
@@ -568,7 +585,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
       
     }
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
       #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., family = ifelse((order == parent_trial & !is.na(order) & na_count == 3), "drop_dis", family))
@@ -579,10 +596,10 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
 
     } else { 
       ### RF WINNER - CHILD ####
-      
+      #print("Children are the winner")
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -614,6 +631,10 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
 
+## save for debugging
+metaphlan_order <- metaphlan
+taxa_only_split_order <- taxa_only_split
+
 ## Class ======================================================================
 
 classes <- taxa_only_split %>%
@@ -624,7 +645,7 @@ count = 1
 
 for (parent_trial in classes[classes$count > 1, ]$class) {
   
-  #print(paste0("Analyzing if order are more important than class: ",parent_trial))
+  #print(paste0("Analyzing if remaining order are more important than class: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -645,7 +666,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
@@ -690,7 +711,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
       
     }
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
       #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., order = ifelse((class == parent_trial & !is.na(class) & na_count == 4), "drop_dis", order))
@@ -702,7 +723,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
 
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -731,7 +752,9 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
 
-
+## save for debugging
+metaphlan_class <- metaphlan
+taxa_only_split_class <- taxa_only_split
 
 ## Phylum ======================================================================
 
@@ -743,7 +766,7 @@ count = 1
 
 for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
   
-  #print(paste0("Analyzing if class are more important than phylum: ",parent_trial))
+  #print(paste0("Analyzing if remaining class are more important than phylum: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -764,7 +787,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
@@ -809,7 +832,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
       
     }
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
       #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., class = ifelse((phylum == parent_trial & !is.na(phylum) & na_count == 5), "drop_dis", class))
@@ -821,7 +844,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
 
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
@@ -850,6 +873,10 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% taxa_only_split$metaphlan_taxonomy)
 
+## save for debugging
+metaphlan_phylum <- metaphlan
+taxa_only_split_phylum <- taxa_only_split
+
 ## Kingdom ======================================================================
 
 kingdoms <- taxa_only_split %>%
@@ -860,7 +887,7 @@ count = 1
 
 for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
   
-  #print(paste0("Analyzing if phyla are more important than kingdom: ",parent_trial))
+  #print(paste0("Analyzing if remaining phyla are more important than kingdom: ",parent_trial))
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -881,7 +908,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
   metaphlan_parent_merge <- merge(metadata, metaphlan_parent, by.x = "subject_id", by.y = "row.names")
   
   ### CORRELATION #####
-  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% pull(., term)
+  cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
   
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
@@ -926,7 +953,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
       
     }
     ### RF WINNER - PARENT ####
-    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% pull(., taxa)) == "PARENT") {
+    if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
       #print("Parent is most important feature in model")
       
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., phylum = ifelse((kingdom == parent_trial & !is.na(kingdom) & na_count == 6), "drop_dis", phylum))
@@ -937,14 +964,14 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
       
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
-      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% pull(., taxa)
+      children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
       children_toss <- c(children_toss, cor_drop)
       
       ## drop parent
       taxa_only_split <- taxa_only_split %>% 
         dplyr::mutate(., phylum = ifelse((kingdom == parent_trial & !is.na(kingdom) & is.na(phylum)), "drop_dis", phylum))
       taxa_only_split <- taxa_only_split %>% 
-        mutate_at(c("kingdom", "phylum", "family", "order", "genus", "species", "type"), ~ 
+        mutate_at(c("kingdom", "class", "family", "order", "genus", "species", "type"), ~ 
                     replace(., kingdom == parent_trial, NA)) %>%
         dplyr::filter(., !grepl(pattern = "drop_dis", x = phylum))
       
@@ -969,35 +996,49 @@ metaphlan <- metaphlan %>%
 
 ## super filter ================================================================
 
-# if (opt$super_filter == "TRUE") {
-#   metaphlan_sf <- metaphlan %>%
-#     tibble::column_to_rownames(., var = "clade_name") %>%
-#     t() %>%
-#     as.data.frame() %>%
-#     tibble::rownames_to_column(., var = "subject_id") %>%
-#     janitor::clean_names()
-#   
-#   output_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
-#   output_sf <- dplyr::select(., -subject_id) %>%
-#     janitor::clean_names() 
-#   
-#   apples <- sample(x = 1:1000, size = 10, replace = F)
-#   for (apple_seed in apples) {
-#     
-#     if (opt$feature_type == "factor") {
-#       model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = apple_seed)
-#       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa") 
+if (opt$super_filter == "TRUE") {
+ metaphlan_sf <- metaphlan %>%
+   tibble::column_to_rownames(., var = "clade_name") %>%
+   t() %>%
+   as.data.frame() %>%
+   tibble::rownames_to_column(., var = "subject_id") %>%
+   janitor::clean_names()
+ 
+ output_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
+ output_sf <- output_sf %>% dplyr::select(., -subject_id) %>%
+   janitor::clean_names() 
+   
+ if (opt$feature_type == "factor") {
+   ctrl <- caret::trainControl(method = 'cv', 
+                               number = 10,
+                               classProbs = TRUE,
+                               savePredictions = TRUE,
+                               verboseIter = TRUE)
+   
+   rfFit <- caret::train(as.factor(feature_of_interest) ~ ., 
+                         data = output_sf, 
+                         method = "ranger",
+                         importance = "permutation", #***
+                         trControl = ctrl,
+                         verbose = T)
 
-
-#     } else {
-#       model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = apple_seed)
-#       
-#     }
-#   
-#   }
-#     
-#   
-# }
+ } else {
+   ctrl <- caret::trainControl(method = 'cv', 
+                               number = 10,
+                               classProbs = TRUE,
+                               savePredictions = TRUE,
+                               verboseIter = TRUE)
+   
+   rfFit <- caret::train(as.numeric(feature_of_interest) ~ ., 
+                         data = output_sf, 
+                         method = "ranger",
+                         importance = "permutation", #***
+                         trControl = ctrl,
+                         verbose = T)
+   
+ }
+ 
+}
 
 
 
@@ -1010,12 +1051,12 @@ metaphlan <- metaphlan %>%
   tibble::rownames_to_column(., var = "subject_id") %>%
   janitor::clean_names()
 
-cat(paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NCOL(metaphlan) -1)))
+cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NCOL(metaphlan) -1)))
 output <- merge(metadata, metaphlan, by.x = "subject_id", by.y = "subject_id")
 readr::write_delim(file = opt$output_file, x = output, delim = "\t")
 readr::write_delim(file = "/home/output/taxa_only_split.txt", x = taxa_only_split, delim = "\t")
-
-cat(".  Output written.  ")
+save.image(file = "/home/output/microbial_HFE.RData")
+cat("\n","Output written.  ")
 
 
 
