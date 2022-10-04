@@ -1007,52 +1007,53 @@ if (opt$super_filter == "TRUE") {
  output_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
  output_sf <- output_sf %>% dplyr::select(., -subject_id) %>%
    janitor::clean_names() 
+ nperm = nperm + 10
+ if (opt$feature_type == "factor") {  
+   model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
+   model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+   for (seed in sample(1:1000, nperm)) {
+     model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
+     model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+     model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+     
+   }
+   colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
+   model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
+ 
+  } else {
+    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
+    model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+    for (seed in sample(1:1000, nperm)) {
+      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
+      model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+      model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
    
- if (opt$feature_type == "factor") {
-   ctrl <- caret::trainControl(method = 'cv', 
-                               number = 10,
-                               classProbs = TRUE,
-                               savePredictions = TRUE,
-                               verboseIter = TRUE)
-   
-   rfFit <- caret::train(as.factor(feature_of_interest) ~ ., 
-                         data = output_sf, 
-                         method = "ranger",
-                         importance = "permutation", #***
-                         trControl = ctrl,
-                         verbose = T)
+  }
+  }
+ 
+ model_importance <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
+ metaphlan_output <- output_sf %>% dplyr::select(., feature_of_interest, all_of(model_importance))
+ taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
+ taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance)
 
- } else {
-   ctrl <- caret::trainControl(method = 'cv', 
-                               number = 10,
-                               classProbs = TRUE,
-                               savePredictions = TRUE,
-                               verboseIter = TRUE)
-   
-   rfFit <- caret::train(as.numeric(feature_of_interest) ~ ., 
-                         data = output_sf, 
-                         method = "ranger",
-                         importance = "permutation", #***
-                         trControl = ctrl,
-                         verbose = T)
-   
- }
  
 }
 
 
-
 ## Write Output ================================================================
 
-metaphlan <- metaphlan %>%
-  tibble::column_to_rownames(., var = "clade_name") %>%
-  t() %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column(., var = "subject_id") %>%
-  janitor::clean_names()
+if (opt$super_filter != "TRUE") {
+  metaphlan_output <- metaphlan %>%
+    tibble::column_to_rownames(., var = "clade_name") %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(., var = "subject_id") %>%
+    janitor::clean_names()
+}
 
-cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NCOL(metaphlan) -1)))
-output <- merge(metadata, metaphlan, by.x = "subject_id", by.y = "subject_id")
+
+cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split))))
+output <- merge(metadata, metaphlan_output, by.x = "subject_id", by.y = "subject_id")
 readr::write_delim(file = opt$output_file, x = output, delim = "\t")
 readr::write_delim(file = "/home/output/taxa_only_split.txt", x = taxa_only_split, delim = "\t")
 save.image(file = "/home/output/microbial_HFE.RData")
