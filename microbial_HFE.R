@@ -1007,7 +1007,7 @@ if (opt$super_filter == "TRUE") {
  output_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
  output_sf <- output_sf %>% dplyr::select(., -subject_id) %>%
    janitor::clean_names() 
- nperm = nperm + 10
+ nperm = nperm + 95
  if (opt$feature_type == "factor") {  
    model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
    model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
@@ -1028,13 +1028,15 @@ if (opt$super_filter == "TRUE") {
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
    
-  }
+    }
+    colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
+    model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
   }
  
- model_importance <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
- metaphlan_output <- output_sf %>% dplyr::select(., feature_of_interest, all_of(model_importance))
+ model_importance_list <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
+ output <- output_sf %>% dplyr::select(., feature_of_interest, all_of(model_importance_list))
  taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
- taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance)
+ taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
 
  
 }
@@ -1042,22 +1044,37 @@ if (opt$super_filter == "TRUE") {
 
 ## Write Output ================================================================
 
-if (opt$super_filter != "TRUE") {
+if (opt$super_filter == "FALSE") {
   metaphlan_output <- metaphlan %>%
     tibble::column_to_rownames(., var = "clade_name") %>%
     t() %>%
     as.data.frame() %>%
     tibble::rownames_to_column(., var = "subject_id") %>%
     janitor::clean_names()
+  output <- merge(metadata, metaphlan_output, by.x = "subject_id", by.y = "subject_id")
 }
 
-
+filename <- basename(tools::file_path_sans_ext(opt$output_file))
 cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split))))
-output <- merge(metadata, metaphlan_output, by.x = "subject_id", by.y = "subject_id")
 readr::write_delim(file = opt$output_file, x = output, delim = "\t")
-readr::write_delim(file = "/home/output/taxa_only_split.txt", x = taxa_only_split, delim = "\t")
-save.image(file = "/home/output/microbial_HFE.RData")
+readr::write_delim(file = paste0(tools::file_path_sans_ext(opt$output_file), "_taxa_list.txt"), x = taxa_only_split, delim = "\t")
+save.image(file = paste0(tools::file_path_sans_ext(opt$output_file), ".RData"))
 cat("\n","Output written.  ")
 
 
+## Write Figure ================================================================
 
+top_features <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::arrange(., desc(average)) %>% dplyr::pull(., taxa)
+top_features <- top_features[1:20]
+figure_data <- output_sf %>% dplyr::select(., feature_of_interest, all_of(top_features)) %>%
+  reshape2::melt(id.vars = "feature_of_interest")
+
+
+ggplot(data = figure_data) +
+  aes(x = feature_of_interest, y = log(value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap( ~ variable, scales = "free_y") +
+  theme_bw() + theme(strip.text.x = element_text(size = 2.5))
+
+ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
