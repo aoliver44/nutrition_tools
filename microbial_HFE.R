@@ -1064,17 +1064,21 @@ cat("\n","Output written.  ")
 
 ## Write Figure ================================================================
 
-top_features <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::arrange(., desc(average)) %>% dplyr::pull(., taxa)
-top_features <- top_features[1:20]
-figure_data <- output_sf %>% dplyr::select(., feature_of_interest, all_of(top_features)) %>%
-  reshape2::melt(id.vars = "feature_of_interest")
+if (opt$super_filter == "TRUE") {
+  
+  top_features <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::arrange(., desc(average)) %>% dplyr::pull(., taxa)
+  top_features <- top_features[1:20]
+  figure_data <- output %>% dplyr::select(., feature_of_interest, all_of(top_features)) %>%
+    reshape2::melt(id.vars = "feature_of_interest")
+  
+  
+  ggplot(data = figure_data) +
+    aes(x = feature_of_interest, y = log(value)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    facet_wrap( ~ variable, scales = "free_y") +
+    theme_bw() + theme(strip.text.x = element_text(size = 2.5))
+  
+  ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
 
-
-ggplot(data = figure_data) +
-  aes(x = feature_of_interest, y = log(value)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_wrap( ~ variable, scales = "free_y") +
-  theme_bw() + theme(strip.text.x = element_text(size = 2.5))
-
-ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
+}
