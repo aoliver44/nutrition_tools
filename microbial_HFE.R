@@ -1005,7 +1005,7 @@ if (opt$super_filter == "TRUE") {
    janitor::clean_names()
  
  metaphlan_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
- output_sf <- output_sf %>% dplyr::select(., -subject_id) %>%
+ output_sf <- metaphlan_sf %>% dplyr::select(., -subject_id) %>%
    janitor::clean_names() 
  nperm = nperm + 95
  if (opt$feature_type == "factor") {  
