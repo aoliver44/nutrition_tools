@@ -52,6 +52,9 @@ library(tidyr)
 library(tibble)
 library(caret)
 library(readr)
+library(reshape2)
+library(ggplot2)
+library(ggsci)
 
 ## set random seed if needed
 set.seed(42)
@@ -1042,7 +1045,7 @@ if (opt$super_filter == "TRUE") {
 }
 
 
-## Write Output ================================================================
+## No super filter =============================================================
 
 if (opt$super_filter == "FALSE") {
   metaphlan_output <- metaphlan %>%
@@ -1054,14 +1057,6 @@ if (opt$super_filter == "FALSE") {
   output <- merge(metadata, metaphlan_output, by.x = "subject_id", by.y = "subject_id")
 }
 
-filename <- basename(tools::file_path_sans_ext(opt$output_file))
-cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split))))
-readr::write_delim(file = opt$output_file, x = output, delim = "\t")
-readr::write_delim(file = paste0(tools::file_path_sans_ext(opt$output_file), "_taxa_list.txt"), x = taxa_only_split, delim = "\t")
-save.image(file = paste0(tools::file_path_sans_ext(opt$output_file), ".RData"))
-cat("\n","Output written.  ")
-
-
 ## Write Figure ================================================================
 
 if (opt$super_filter == "TRUE") {
@@ -1071,14 +1066,37 @@ if (opt$super_filter == "TRUE") {
   figure_data <- output %>% dplyr::select(., feature_of_interest, all_of(top_features)) %>%
     reshape2::melt(id.vars = "feature_of_interest")
   
+  if (opt$feature_type == "factor") {
+    ggplot(data = figure_data) +
+      aes(x = as.factor(feature_of_interest), y = log(value)) +
+      geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
+      geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
+      facet_wrap( ~ variable, scales = "free_y") +
+      theme_bw() + theme(strip.text.x = element_text(size = 2.5), legend.position = "none") + 
+      ggsci::scale_fill_jama()
+    
+    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
   
-  ggplot(data = figure_data) +
-    aes(x = feature_of_interest, y = log(value)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    facet_wrap( ~ variable, scales = "free_y") +
-    theme_bw() + theme(strip.text.x = element_text(size = 2.5))
-  
-  ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
+  } else {
+    ggplot(data = figure_data) +
+      aes(x = feature_of_interest, y = log(value)) +
+      geom_point() +
+      geom_smooth(method = "lm") +
+      facet_wrap( ~ variable, scales = "free_y") +
+      theme_bw() + theme(strip.text.x = element_text(size = 2.5))
+    
+    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output_file), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
 
+  }
 }
+
+
+## Write outputs ===============================================================
+
+filename <- basename(tools::file_path_sans_ext(opt$output_file))
+cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split))))
+readr::write_delim(file = opt$output_file, x = output, delim = "\t")
+readr::write_delim(file = paste0(tools::file_path_sans_ext(opt$output_file), "_taxa_list.txt"), x = taxa_only_split, delim = "\t")
+save.image(file = paste0(tools::file_path_sans_ext(opt$output_file), ".RData"))
+cat("\n","Output written.  ")
+
