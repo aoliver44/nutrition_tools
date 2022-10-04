@@ -1004,7 +1004,7 @@ if (opt$super_filter == "TRUE") {
    tibble::rownames_to_column(., var = "subject_id") %>%
    janitor::clean_names()
  
- output_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
+ metaphlan_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
  output_sf <- output_sf %>% dplyr::select(., -subject_id) %>%
    janitor::clean_names() 
  nperm = nperm + 95
@@ -1034,7 +1034,7 @@ if (opt$super_filter == "TRUE") {
   }
  
  model_importance_list <- model_importance %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
- output <- output_sf %>% dplyr::select(., feature_of_interest, all_of(model_importance_list))
+ output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
  taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
  taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
 
