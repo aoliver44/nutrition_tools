@@ -1083,7 +1083,7 @@ if (opt$super_filter == "FALSE") {
 if (opt$super_filter == "TRUE") {
   
   top_features <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::arrange(., desc(average)) %>% dplyr::pull(., taxa)
-  top_features <- top_features[1:10]
+  top_features <- top_features[1:pmin(10, length(top_features))]
   figure_data <- output %>% dplyr::select(., feature_of_interest, any_of(top_features)) %>%
     reshape2::melt(id.vars = "feature_of_interest")
   
