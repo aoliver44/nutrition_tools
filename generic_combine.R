@@ -256,17 +256,24 @@ correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x 
 correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
 correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
 
-## write interactive heatmap of correlation
-cor_figure <- heatmaply::heatmaply_cor(
-  as.matrix(correlate_figure),
-  #node_type = "scatter",
-  #point_size_mat = -log10(p), 
-  #point_size_name = "-log10(p-value)",
-  label_names = c("x", "y", "Correlation"),
-  file = "correlation_heatmap.html",
-  #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
-  main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
-)
+if (NROW(correlate_figure) > 5) {
+  ## write interactive heatmap of correlation
+  cor_figure <- heatmaply::heatmaply_cor(
+    as.matrix(correlate_figure),
+    #node_type = "scatter",
+    #point_size_mat = -log10(p), 
+    #point_size_name = "-log10(p-value)",
+    label_names = c("x", "y", "Correlation"),
+    file = "correlation_heatmap.html",
+    #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
+    main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
+  )
+} else {
+  cat("You have too few correlated variables for the heatmap function to probably work")
+  cat("We printed the correlation matrix to file, might help!")
+  readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
+}
+
 
 ## decide which co-correlated vars to keep =====================================
 
