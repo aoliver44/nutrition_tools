@@ -105,24 +105,28 @@ system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subjec
 ## check and see if summary_dataset_problems got written  
 if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
     summary_problems_recheck <- read.csv(paste0(opt$input,"problem_check/output/summary_dataset_problems.csv"))
-    problem_check_dataset <- summary_problems_recheck[1,]$dataset
-    problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
+    summary_problems_recheck <- summary_problems_recheck %>% 
+      dplyr::filter(., dataset != "Name of dataset") %>%
+      dplyr::filter(., dataset != "NA")
+    
+  if (NROW(summary_problems_recheck >= 1)) {
+    
+        problem_check_dataset <- summary_problems_recheck[1,]$dataset
+        problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
+        
+        cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
+        cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
+        
+        ## get interactive acknowledgment 
+        cat("  Press [enter] to continue  ")
+        x <- readLines(file("stdin"),1)
+        
+        ## remove summary_problem_datasets from fils list
+        fils <- as.data.frame(fils) %>% 
+          dplyr::filter(., !grepl(pattern = paste(summary_problems$dataset, collapse = "|"), x = fils)) %>%
+          pull(., var = "fils")
+  }
 }
-
-if (NROW(summary_problems_recheck >= 1)) {
-      cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
-      cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
-      
-      ## get interactive acknowledgment 
-      cat("  Press [enter] to continue  ")
-      x <- readLines(file("stdin"),1)
-      
-      ## remove summary_problem_datasets from fils list
-      fils <- as.data.frame(fils) %>% 
-        dplyr::filter(., !grepl(pattern = paste(summary_problems$dataset, collapse = "|"), x = fils)) %>%
-        pull(., var = "fils")
-}
-
 ## read in & merge clean files =================================================
 
 ## read in the files that passed muster
