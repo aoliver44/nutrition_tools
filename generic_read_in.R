@@ -33,7 +33,7 @@ Usage:
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --subject_identifier=<subject_colname> name of columns with subject IDs [default: subject_id]
+    --subject_identifier name of columns with subject IDs [default: subject_id]
 
 Arguments:
     input  input directory containing files
