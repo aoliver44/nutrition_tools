@@ -27,14 +27,15 @@ setwd("/home")
 library(docopt)
 "Combine data from read_in step, prior to ML
 Usage:
-    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose>] <input> <output_file>
+    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --subject_identifier=<subject_colname> name of columns with subject IDs [default: subject_id]
+    --subject_identifier name of columns with subject IDs [default: subject_id]
     --cor_level level of general feature correlation [default: 0.95]
     --cor_choose choose which features are kept in correlation [default: FALSE]
+    --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
 Arguments:
     input  input directory containing files
@@ -42,7 +43,7 @@ Arguments:
 
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'generic_combine.R v1.0\n\n')
+opt <- docopt::docopt(doc, version = 'generic_combine.R v1.1\n\n')
 
 ## load libraries ==============================================================
 
@@ -56,12 +57,12 @@ library(Hmisc)
 library(heatmaply)
 library(corrr)
 
+
 ## set random seed if needed
 set.seed(1)
 
 ## set working dir to /home for the docker container
 setwd(opt$input)
-getwd()
 
 ## helper functions ============================================================
 
@@ -71,22 +72,25 @@ getwd()
 ## check for inputs ============================================================
 
 ## check and see if clean_files directory exists
-cat("Checking for clean_files directory and summary_dataset_problems.csv")
+cat("Checking for clean_files directory and summary_dataset_problems.csv", "\n\n")
 
 fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files clean_files dir
 if (length(fils) >= 1) {
-  cat(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"))
+  cat(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"), "\n\n")
+} else {
+  stop("No files found.")
 }
+
 ## check and make sure summary_dataset_problems exists
 if (file.exists("summary_dataset_problems.csv")) {
-  cat(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"))
-  cat("Using file to check if clean_files have been fixed...")
+  cat(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"), "\n\n")
+  cat("Using file to check if clean_files have been fixed...", "\n\n")
   
   ## use summary_problems to check and see if problems still exist in data
   summary_problems <- read.csv("summary_dataset_problems.csv")
   
-  cat(paste0("Checking all files that were previously identified as problems"))
+  cat(paste0("Checking all files that were previously identified as problems"), "\n\n")
   
   ## make a tmp directory and copy problem files into
   dir.create(file.path(paste0("problem_check/")))
@@ -114,8 +118,8 @@ if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
         problem_check_dataset <- summary_problems_recheck[1,]$dataset
         problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
         
-        cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"))
-        cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses")
+        cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"), "\n\n")
+        cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses", "\n\n")
         
         ## get interactive acknowledgment 
         cat("  Press [enter] to continue  ")
@@ -140,18 +144,18 @@ full_merge <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_ide
 ## check sample size here ======================================================
 
 if (NROW(full_merge) < 200) {
-  cat("################################################")
-  cat("WARNING:")
-  cat("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is made much worse if you have a multiclass problem (> 2 classes for classification).")
-  cat("################################################")
+  cat("\n","################################################", "\n\n")
+  cat("WARNING:", "\n\n")
+  cat("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is made much worse if you have a multiclass problem (> 2 classes for classification).", "\n\n")
+  cat("################################################", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
   x <- readLines(file("stdin"),1)
   
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
-  cat("Note:")
-  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.")
+  cat("\n", "Note:", "\n\n")
+  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
@@ -175,16 +179,41 @@ full_merge_dedup <- full_merge %>%
 
 ## pre-corr col drop ===========================================================
 
-## drop columns with more than 1% NAs
-full_merge_dedup_tmp_col_drop <- full_merge_dedup[ , colSums(is.na(full_merge_dedup)) < (NROW(full_merge_dedup)*0.01)]
+## lets initally drop columns that are mostly NA already (50% or greater)
+full_merge_dedup_init_filt <- full_merge_dedup[, -which(colSums(is.na(full_merge_dedup)) > (0.5 * NROW(full_merge_dedup)))]
+## lets initally drop rows that are mostly NA already (75% or greater)
+full_merge_dedup_init_filt <- full_merge_dedup_init_filt[-which(rowSums(is.na(full_merge_dedup_init_filt)) > (0.75 * NCOL(full_merge_dedup_init_filt))), ]
 
-## Notify user about what columns were dropped
-if (((NCOL(full_merge_dedup)) - (NCOL(full_merge_dedup[ , colSums(is.na(full_merge_dedup)) < (NCOL(full_merge_dedup)*0.01)]))) > 0) {
-  cat("For correlation purposes, we drop some NA-replete features prior to 
+## calculate cutoffs of features to preserve samples or more features 
+## NOTE: preserving features at this point works pretty well because of the initial filters
+preserve_features_cutoff<- as.numeric(quantile(colSums(is.na(full_merge_dedup_init_filt)))[2])
+preserve_samples_cutoff<- mean(c(as.numeric(quantile(colSums(is.na(full_merge_dedup_init_filt)))[1]), as.numeric(quantile(colSums(is.na(full_merge_dedup_init_filt)))[2])))
+
+## drop columns with a lot of NAs
+if (opt$preserve_samples == TRUE) {
+  full_merge_dedup_tmp_col_drop <- full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_samples_cutoff)]
+  
+  ## Notify user about what columns were dropped
+  if (((NCOL(full_merge_dedup_init_filt)) - (NCOL(full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_samples_cutoff)]))) > 0) {
+    cat("\n", "For correlation purposes, we drop some NA-replete features prior to 
       row drops. We will next row-drop in order to have a NA-free dataset. 
       This is only for a global correlation check. We will write both a NA and 
-      NA-free file, its up to you if you want to use interpolation methods.")
+      NA-free file, its up to you if you want to use interpolation methods.", "\n\n")
+  }
+} else {
+  
+  full_merge_dedup_tmp_col_drop <- full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_features_cutoff)]
+  
+  ## Notify user about what columns were dropped
+  if (((NCOL(full_merge_dedup_init_filt)) - (NCOL(full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_features_cutoff)]))) > 0) {
+    cat("\n", "For correlation purposes, we drop some NA-replete features prior to 
+      row drops. We will next row-drop in order to have a NA-free dataset. 
+      This is only for a global correlation check. We will write both a NA and 
+      NA-free file, its up to you if you want to use interpolation methods.", "\n\n")
+  }
 }
+
+
 
 ## pre-corr row drop ===========================================================
 
@@ -203,13 +232,13 @@ full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>%
 ## check correlation level
 
 if (as.numeric(opt$cor_level) < 0.95) {
-  cat("################################################")
-  cat("WARNING:")
+  cat("\n","################################################", "\n\n")
+  cat("WARNING:", "\n\n")
   cat("Your correlation level is below 0.95. This is a global correlation check, 
   mainly for PURELY redundant features. For feature engineering, PROPER correlation-based 
   feature selection should happen inside a Train-Test split or a cross-validation 
   procedure. Not doing so constitutes DATA LEAKAGE. You risk overfitting and 
-  reporting results that look better than they probably are.")
+  reporting results that look better than they probably are.", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
@@ -273,8 +302,8 @@ if (NROW(correlate_figure) > 5) {
     main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
   )
 } else {
-  cat("You have too few correlated variables for the heatmap function to probably work")
-  cat("We printed the correlation matrix to file, might help!")
+  cat("\n", "You have too few correlated variables for the heatmap function to probably work", "\n\n")
+  cat("We printed the correlation matrix to file, might help!", "\n\n")
   readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
 }
 
@@ -320,7 +349,6 @@ if (opt$cor_choose == TRUE) {
 
 
 ## summarize features kept =====================================================
-
 
 ## write file of ALL features
 kept_features_summary <- data.frame(features=character(),
