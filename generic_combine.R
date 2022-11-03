@@ -71,7 +71,7 @@ opt <- data.frame(subject_identifier=character(),
                                 preserve_samples=logical(),
                                 input=character(),
                                 output_file=character())
-opt <- opt %>% add_row(subject_identifier = c("subject_id"), cor_level = 0.98, cor_choose = FALSE, preserve_samples = FALSE, input = c("/home/output_tmp/"), output_file="pipeline_nutrition_test.csv")
+opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.98, cor_choose = FALSE, preserve_samples = FALSE, input = c("/home/output_tmp/"), output_file="pipeline_nutrition_test.csv")
 
 ## check for inputs ============================================================
 
