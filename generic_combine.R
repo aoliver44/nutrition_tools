@@ -57,19 +57,26 @@ library(Hmisc)
 library(heatmaply)
 library(corrr)
 
-
 ## set random seed if needed
 set.seed(1)
-
-## set working dir to /home for the docker container
-setwd(opt$input)
 
 ## helper functions ============================================================
 
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
+opt <- data.frame(subject_identifier=character(),
+                                cor_level=numeric(),
+                                cor_choose=logical(),
+                                preserve_samples=logical(),
+                                input=character(),
+                                output_file=character())
+opt <- opt %>% add_row(subject_identifier = c("subject_id"), cor_level = 0.98, cor_choose = FALSE, preserve_samples = FALSE, input = c("/home/output_tmp/"), output_file="pipeline_nutrition_test.csv")
+
 ## check for inputs ============================================================
+
+## set working dir to /home for the docker container
+setwd(opt$input)
 
 ## check and see if clean_files directory exists
 cat("Checking for clean_files directory and summary_dataset_problems.csv", "\n\n")
@@ -127,7 +134,7 @@ if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
         
         ## remove summary_problem_datasets from fils list
         fils <- as.data.frame(fils) %>% 
-          dplyr::filter(., !grepl(pattern = paste(summary_problems$dataset, collapse = "|"), x = fils)) %>%
+          dplyr::filter(., !grepl(pattern = paste(summary_problems_recheck$dataset, collapse = "|"), x = fils)) %>%
           pull(., var = "fils")
   }
 }
@@ -180,9 +187,9 @@ full_merge_dedup <- full_merge %>%
 ## pre-corr col drop ===========================================================
 
 ## lets initally drop columns that are mostly NA already (50% or greater)
-full_merge_dedup_init_filt <- full_merge_dedup[, -which(colSums(is.na(full_merge_dedup)) > (0.5 * NROW(full_merge_dedup)))]
+full_merge_dedup_init_filt <- full_merge_dedup[, colSums(!is.na(full_merge_dedup)) >= (0.5 * NROW(full_merge_dedup))]
 ## lets initally drop rows that are mostly NA already (75% or greater)
-full_merge_dedup_init_filt <- full_merge_dedup_init_filt[-which(rowSums(is.na(full_merge_dedup_init_filt)) > (0.75 * NCOL(full_merge_dedup_init_filt))), ]
+full_merge_dedup_init_filt <- full_merge_dedup_init_filt[rowSums(!is.na(full_merge_dedup_init_filt)) >= (0.75 * NCOL(full_merge_dedup_init_filt)), ]
 
 ## calculate cutoffs of features to preserve samples or more features 
 ## NOTE: preserving features at this point works pretty well because of the initial filters
@@ -282,7 +289,7 @@ correlate_figure <- corr_raw_data$dat_transformed %>%
   tibble::column_to_rownames(., var = "term") %>% abs()
 
 ## set anything below cor threshold to zero
-v1 <- sample(colnames(correlate_figure))
+v1 <- colnames(correlate_figure)
 correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (as.numeric(opt$cor_level) - 0.000001)), 0))
 
 ## remove cols and rows that are NAs
