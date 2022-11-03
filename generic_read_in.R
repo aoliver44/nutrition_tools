@@ -90,7 +90,7 @@ na_possibilities <- c("NA", "N A", "N/A", "#N/A", " NA", "NA ", "N / A",
 fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files in the path
 if (length(fils) < 1) {
-  cat(paste0("We did not detect any files in ", opt$path, " please check your path or folder."))
+  cat(paste0("We did not detect any files in ", opt$path, " please check your path or folder."), "\n\n")
 }
 
 ## create NA count file ========================================================
@@ -158,7 +158,7 @@ for (file in fils) {
   cat(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."))
   if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
     
-    cat(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis.")) 
+    cat(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis."), "\n\n") 
     
     cat("Press [enter] to acknowledge ")
     
@@ -171,16 +171,16 @@ for (file in fils) {
     next 
   } else { 
     f <- f %>% rename(., "subject_id_x" = paste0(opt$subject_identifier, "_x"))
-    cat(paste0("Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"))
+    cat(paste0("\n", "Renaming ", opt$subject_identifier, " to subject_id. No change if you are already using subject_id"), "\n\n")
   }
   
   ## dup subject id check  =======================================================
   
   ## checking to see if there are duplicate subject_ids in the file - Make unique
   if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
-    cat(paste("We detected rows in", file_name, "with the same subject_id."))
-    cat("We will rename the subjects for now")
-    cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!")
+    cat(paste("We detected rows in", file_name, "with the same subject_id."), "\n\n")
+    cat("We will rename the subjects for now", "\n\n")
+    cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!", "\n\n")
     
     cat(" Press [enter] to acknowledge  ")
     
@@ -226,7 +226,9 @@ for (file in fils) {
     
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
     
-    writeLines("I think you have POSIXct time/date data included. \nThese often mess up downstream analyses. \nYou should try and convert it to a UNIX timestamp.")
+    cat("\n", "I think you have POSIXct time/date data included. 
+        These often mess up downstream analyses. You should try and 
+        convert it to a UNIX timestamp.", "\n\n")
     
     print(g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull(.))
     date_features <- g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull()
@@ -255,8 +257,10 @@ for (file in fils) {
   g_tmp$alpha_numeric <- grepl("^([A-Z])|([a-z]|[0-9])", g_tmp$value, ignore.case = TRUE)
   g_tmp <- dplyr::filter(g_tmp, alpha_numeric == FALSE)
   if (NROW(g_tmp) > 0) {
-    writeLines("You have cells in your data that contain only a symbol. We cant do anything with that.")
-    writeLines("We check against a large list of possible NAs. Are you using a really weird NA symbol?")
+    cat("You have cells in your data that contain only a symbol. 
+        We cant do anything with that.", "\n\n")
+    cat("We check against a large list of possible NAs. 
+        Are you using a really weird NA symbol?", "\n\n")
     cat("Press [enter] to acknowledge ")
     
     ## add to a summary problem file
@@ -318,14 +322,14 @@ for (file in fils) {
           dplyr::mutate(., duplicated_value = ifelse(feature == f_duplicated, "duplicated_values", duplicated_value))
         
         ## printing to file for you to manually check if data is duplicated
-        cat(paste(f_duplicated, "is a DUPLICATED column name which contains DUPLICATED values across columns EXAMPLE:"))
+        cat("\n", paste(f_duplicated, "is a DUPLICATED column name which contains DUPLICATED values across columns EXAMPLE:"), "\n\n")
         
         print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
         
         tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
           dplyr::arrange(., subject_id) %>% 
           readr::write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",")
-        cat(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"))
+        cat(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"), "\n\n")
         ## keeping a superset of the distinct values and dropping from g
         ## anything not in that superset
         tmp_de_dup <- tmp %>%
@@ -352,11 +356,11 @@ for (file in fils) {
       ## the process of renaming the features. Also write to duplicated_colnames/
       else  {
         ## showing you why we think it is a duplicated value
-        cat(paste(f_duplicated, "is a DUPLICATED column name which contains UNIQUE values across columns EXAMPLE:"))
+        cat(paste(f_duplicated, "is a DUPLICATED column name which contains UNIQUE values across columns EXAMPLE:"), "\n\n")
         
         print(tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% dplyr::arrange(., subject_id) %>% head(n = 5))
         
-        cat("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)")
+        cat("Renaming feature to feature + dataset to keep it unique (if it is the same it will get dropped in correlation)", "\n\n")
         
         ## renaming feature in g
         g <- g %>%
@@ -413,13 +417,13 @@ na_figure <- na_count_features %>%
   labs(y = "NA Count", x = "Features with NAs") +
   facet_grid(~ dataset, scales = "free") + 
   theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
-print("Saving NA counts figure to file, see /outputs/na_counts.pdf")
-print("Saving NA counts table to file, see /output/na_counts.csv")
-print("####################################################")
-print("Saving a summary_problems file, see /output/summary_dataset_problems.csv")
-print("####################################################")
-print("Explainations of the summary_problems columns are as follows:")
-print(as.vector(t(summary_problems[1,])))
+cat("Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
+cat("Saving NA counts table to file, see /output/na_counts.csv", "\n\n")
+cat("####################################################", "\n")
+cat("Saving a summary_problems file, see /output/summary_dataset_problems.csv", "\n")
+cat("####################################################", "\n\n")
+cat("Explainations of the summary_problems columns are as follows:", "\n\n")
+cat(as.vector(t(summary_problems[1,])))
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
 ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
