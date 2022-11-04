@@ -14,7 +14,7 @@
 #docker run --rm -it -p 8787:8787 -e PASSWORD=yourpasswordhere -v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home amr_r_env:3.1.0
 
 ## general command:
-## ./microbial_HFE.R --subject_identifier subject_id --label cluster --var_control TRUE --feature_type factor /home/data/read_in_tests/abx_cluster_andrew.csv /home/data/synthetic_test_data/merged_metaphlan4.txt /home/output/metaphlan_hfe.txt
+## ./microbial_HFE.R --subject_identifier subject_id --feature_type factor --var_control 5 --label cluster --super_filter TRUE --feature_limit 15 /home/data/synthetic_test_data/abx_cluster_andrew_bi.csv /home/data/synthetic_test_data/merged_metaphlan4.txt /home/output_old/abx_cluster_bi_metaphlan4.txt
 
 ## set working dir to /home for the docker container
 setwd("/home")
@@ -24,25 +24,25 @@ setwd("/home")
 library(docopt)
 'Microbial hierarchical feature engineering (HFE) of metaphfor classification
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE>] <input_metadata> <input_metaphlan> <output_file>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features>] <input_metadata> <input_metaphlan> <output_file>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --subject_identifier=<subject_colname> name of columns with subject IDs [default: subject_id]
+    --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
     --var_control filter features that contain less than this threshold of percentage of unique features [default: 5]
     --super_filter to run a final RF and only take positive values [default: FALSE]
-    
+    --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
 Arguments:
     input_meta path to metadata input (CSV)
-    input  path to input file from hierarchical data (i.e. metaphlan data) (TSV)
-    output_file  output file name
+    input path to input file from hierarchical data (i.e. metaphlan data) (TSV)
+    output_file output file name (TSV)
 
 ' -> doc
 
-opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.0\n\n')
+opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.1\n\n')
 #print(opt)
 ## load libraries ==============================================================
 
@@ -1057,11 +1057,21 @@ if (opt$super_filter == "TRUE") {
     model_importance <- model_importance %>% dplyr::relocate(., average)
   }
  
+ if (opt$feature_limit != "ALL") {
+   
+   model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::arrange(dplyr::desc(average)) %>% dplyr::slice_head(n = as.numeric(opt$feature_limit)) %>% dplyr::pull(., taxa)
+   output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
+   taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
+   taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
+   
+ } else{
+ 
  model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
  output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
  taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
  taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
 
+ }
  
 }
 
