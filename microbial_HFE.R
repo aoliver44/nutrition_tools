@@ -93,7 +93,7 @@ if (file.exists(opt$input)) {
 } else { stop("Input not found.") }
 
 ## read in data, should be in tab or comma separated format
-if (strsplit(basename(opt$input), split="\\.")[[1]][2] == c("tsv","txt")) {
+if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")) {
 metaphlan <- readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
 } else {
   metaphlan <- readr::read_delim(file = opt$input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
@@ -104,7 +104,7 @@ original_taxa_count <- NROW(metaphlan)
 ## read in metadata file and rename the subject_identifier to subject_id and
 ## rename the label to feature_of_interest
 ## metadata, should be in tab or comma separated format
-if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] == c("tsv","txt")) {
+if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","txt")) {
 metadata <- readr::read_delim(file = opt$input_metadata, delim = "\t")
 } else {
   metadata <- readr::read_delim(file = opt$input_metadata, delim = ",")
