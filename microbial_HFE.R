@@ -36,9 +36,9 @@ Options:
     --super_filter to run a final RF and only take positive values [default: FALSE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
 Arguments:
-    input_meta path to metadata input (CSV)
-    input path to input file from hierarchical data (i.e. metaphlan data) (TSV)
-    output output file name (TSV)
+    input_meta path to metadata input (txt | tsv | csv)
+    input path to input file from hierarchical data (i.e. metaphlan data) (txt | tsv | csv)
+    output output file name (txt)
 
 ' -> doc
 
@@ -92,13 +92,24 @@ if (file.exists(opt$input)) {
   cat("\n",paste0("Using ", opt$input, " as input")) 
 } else { stop("Input not found.") }
 
-## read in data, should be in TSV format
+## read in data, should be in tab or comma separated format
+if (strsplit(basename(opt$input), split="\\.")[[1]][2] == c("tsv","txt")) {
 metaphlan <- readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
+} else {
+  metaphlan <- readr::read_delim(file = opt$input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
+}
+
 original_taxa_count <- NROW(metaphlan)
 
 ## read in metadata file and rename the subject_identifier to subject_id and
 ## rename the label to feature_of_interest
-metadata <- readr::read_delim(file = opt$input_metadata, delim = ",")
+## metadata, should be in tab or comma separated format
+if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] == c("tsv","txt")) {
+metadata <- readr::read_delim(file = opt$input_metadata, delim = "\t")
+} else {
+  metadata <- readr::read_delim(file = opt$input_metadata, delim = ",")
+}
+
 metadata <- metadata %>% dplyr::select(., opt$subject_identifier, opt$label)
 metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier) %>%
   rename(., "feature_of_interest" = opt$label) 
