@@ -34,7 +34,7 @@ Options:
     --feature_type of response i.e. numeric or factor [default: factor]
     --super_filter to run a final RF and only take positive values [default: FALSE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
-    --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into formate [default: FALSE]
+    --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into format [default: FALSE]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
     input path to input file from hierarchical data (i.e. metaphlan data) (txt | tsv | csv)
