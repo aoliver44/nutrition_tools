@@ -22,9 +22,9 @@ setwd("/home")
 ## add commandline options =====================================================
 
 library(docopt)
-'Microbial hierarchical feature engineering (HFE) of metaphfor classification
+'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features>] <input_metadata> <input> <outpute>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -35,6 +35,7 @@ Options:
     --var_control filter features that contain less than this threshold of percentage of unique features [default: 5]
     --super_filter to run a final RF and only take positive values [default: FALSE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
+    --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into formate [default: FALSE]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
     input path to input file from hierarchical data (i.e. metaphlan data) (txt | tsv | csv)
@@ -42,19 +43,20 @@ Arguments:
 
 ' -> doc
 
-opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.1\n\n')
+opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.2\n\n')
 #print(opt)
 ## load libraries ==============================================================
 
-library(dplyr)
-library(janitor)
-library(tidyr)
-library(tibble)
-library(caret)
-library(readr)
-library(reshape2)
-library(ggplot2)
-library(ggsci)
+library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
+library(janitor, quietly = T, verbose = F, warn.conflicts = F)
+library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
+library(tibble, quietly = T, verbose = F, warn.conflicts = F)
+library(caret, quietly = T, verbose = F, warn.conflicts = F)
+library(readr, quietly = T, verbose = F, warn.conflicts = F)
+library(reshape2, quietly = T, verbose = F, warn.conflicts = F)
+library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
+library(ggsci, quietly = T, verbose = F, warn.conflicts = F)
+library(vegan, quietly = T, verbose = F, warn.conflicts = F)
 
 ## set random seed if needed
 set.seed(42)
@@ -70,15 +72,16 @@ nperm = 10
 #                   feature_type=character(),
 #                   var_control=numeric(),
 #                   super_filter=character(),
-#                   feature_limit=numeric(),
+#                   feature_limit=character(),
+#                   format_metaphlan=character(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "cluster", feature_type = "factor", var_control = 5, super_filter = "TRUE", feature_limit = 15, input_metadata = "/home/data/synthetic_test_data/abx_cluster_andrew_bi.csv", input= "/home/data/synthetic_test_data/merged_metaphlan4.txt", output = "/home/output_old/abx_cluster_bi_metaphlan4.txt")
-
-
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", var_control = 5, super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "butyrate", feature_type = "numeric", var_control = 5, super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/synthetic_test_data/fecal_scfa_fl100.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/butyrate_metaphlan4.txt")
 
 ## check for inputs ============================================================
+cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
 
 ## check and see if clean_files directory exists
 cat("\n","Checking for for input_metadata...")
@@ -94,25 +97,66 @@ if (file.exists(opt$input)) {
 
 ## read in data, should be in tab or comma separated format
 if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")) {
-metaphlan <- readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
+  metaphlan <- suppressMessages(readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
+  colnames(metaphlan)[1] <- "clade_name"
 } else {
-  metaphlan <- readr::read_delim(file = opt$input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid")))
+  metaphlan <- suppressMessages(readr::read_delim(file = opt$input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
+  colnames(metaphlan)[1] <- "clade_name"
 }
 
 original_taxa_count <- NROW(metaphlan)
+
+## if not "metaphlan" format, attempt to convert ===============================
+
+if (opt$format_metaphlan == "FALSE") {
+  cat("\n\n", "Attempting to convert to metaphlan-style input...")
+  metaphlan <- metaphlan %>% 
+    relocate(., clade_name) %>%
+    tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|", extra = "merge")
+  
+  metaphlan_1 <- metaphlan %>% select(., kingdom, 9:dplyr::last_col()) %>% rename(., "clade_name" = "kingdom") %>% dtplyr::lazy_dt()
+  metaphlan_1 <- metaphlan_1 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_2 <- metaphlan %>% select(., kingdom, phylum, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum)) %>% dplyr::select(., -kingdom, -phylum) %>% dtplyr::lazy_dt()
+  metaphlan_2 <- metaphlan_2 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_3 <- metaphlan %>% select(., kingdom, phylum, class, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class)) %>% dplyr::select(., -kingdom, -phylum, -class) %>% dtplyr::lazy_dt()
+  metaphlan_3 <- metaphlan_3 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_4 <- metaphlan %>% select(., kingdom, phylum, class, order, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class, "|", order)) %>% dplyr::select(., -kingdom, -phylum, -class, -order) %>% dtplyr::lazy_dt()
+  metaphlan_4 <- metaphlan_4 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_5 <- metaphlan %>% select(., kingdom, phylum, class, order, family, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class, "|", order, "|", family)) %>% dplyr::select(., -kingdom, -phylum, -class, -order, -family) %>% dtplyr::lazy_dt()
+  metaphlan_5 <- metaphlan_5 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_6 <- metaphlan %>% select(., kingdom, phylum, class, order, family, genus, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class, "|", order, "|", family, "|", genus)) %>% dplyr::select(., -kingdom, -phylum, -class, -order, -family, -genus) %>% dtplyr::lazy_dt()
+  metaphlan_6 <- metaphlan_6 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_7 <- metaphlan %>% select(., kingdom, phylum, class, order, family, genus, species, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class, "|", order, "|", family, "|", genus, "|", species)) %>% dplyr::select(., -kingdom, -phylum, -class, -order, -family, -genus, -species) %>% dtplyr::lazy_dt()
+  metaphlan_7 <- metaphlan_7 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  metaphlan_8 <- metaphlan %>% select(., kingdom, phylum, class, order, family, genus, species, type, 9:dplyr::last_col()) %>% dplyr::mutate(., clade_name = paste0(kingdom, "|", phylum, "|", class, "|", order, "|", family, "|", genus, "|", species, "|", type)) %>% dplyr::select(., -kingdom, -phylum, -class, -order, -family, -genus, -species, -type) %>% dtplyr::lazy_dt()
+  metaphlan_8 <- metaphlan_8 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
+  
+  metaphlan <- rbind(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
+                              metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
+  ## clean up
+  rm(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
+     metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
+}
 
 ## read in metadata file and rename the subject_identifier to subject_id and
 ## rename the label to feature_of_interest
 ## metadata, should be in tab or comma separated format
 if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","txt")) {
-metadata <- readr::read_delim(file = opt$input_metadata, delim = "\t")
+metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = "\t"))
 } else {
-  metadata <- readr::read_delim(file = opt$input_metadata, delim = ",")
+  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = ","))
 }
 
 metadata <- metadata %>% dplyr::select(., opt$subject_identifier, opt$label)
 metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier) %>%
   rename(., "feature_of_interest" = opt$label) 
+
+## Remove very low prevalent features ==========================================
+cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
+## remove taxa/rows that are 95% zeros (5% prevalence filter)
+metaphlan <- metaphlan[rowSums(metaphlan[,2:NCOL(metaphlan)] == 0) <= (NCOL(metaphlan[,2:NCOL(metaphlan)])*0.95), ]
+cat("\n\n Prevelance filter: ")
+cat(paste0((original_taxa_count - NROW(metaphlan)), " features dropped due to 5% prevelance filter.\n"))
 
 ## Remove low variance features ================================================
 
@@ -123,6 +167,7 @@ metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier)
 ## randomly subsample 75% of the entire dataset for variance filtering
 random_subsample <- sample(colnames(metaphlan[2:NCOL(metaphlan)]), (NCOL(metaphlan[,2:NCOL(metaphlan)]) * 0.75))
 metaphlan_var <- metaphlan %>%
+  tibble::remove_rownames() %>%
   tibble::column_to_rownames(., var = "clade_name") %>%
   dplyr::select(., all_of(random_subsample)) %>%
   t() %>% 
@@ -133,7 +178,8 @@ metaphlan_var <- metaphlan %>%
 ## have different values, useful for ML applications). 
 ## See caret::nearZeroVar for more info.
 
-cat("\n", "Removing features that that have the same values in", (100 - as.numeric(opt$var_control)),"%(+) of the samples...\n")
+cat("\nLow variance filter: ")
+cat("(Removing features that that have the same values in", (100 - as.numeric(opt$var_control)),"%(+) of the samples...)")
 nzv <- caret::nearZeroVar(metaphlan_var,saveMetrics= TRUE)
 non_nzv_taxa <- nzv %>%
   tibble::rownames_to_column(., var = "taxa") %>%
@@ -144,14 +190,36 @@ non_nzv_taxa <- nzv %>%
 ## non_nzv_taxa vector)
 metaphlan <- metaphlan %>%
   dplyr::filter(., clade_name %in% non_nzv_taxa)
+var_features <- NROW(metaphlan)
+## inform user about how many features were dropped because they had too little
+## variability (var_control filter)
+cat("\n",paste0((NROW(nzv) - NROW(metaphlan)), " features dropped due to variability filter.\n"))
+Sys.sleep(0.25)
+
+## Remove very low abundant features ===========================================
+## remove taxa/rows that are below 0.00001 relative abundance
+cat("\n Low abundance filter: ")
+metaphlan_mean_total_abundance <- metaphlan %>% dplyr::filter(., grepl("\\|", clade_name)) %>% tibble::column_to_rownames(., var = "clade_name") %>% summarise_all(sum) %>% rowMeans()
+metaphlan_abund_filter <- metaphlan %>% tibble::column_to_rownames(., var = "clade_name")
+metaphlan_abund_filter$mean_abundance <- rowMeans(metaphlan_abund_filter)
+metaphlan_abund_filter <- metaphlan_abund_filter %>% 
+  dplyr::filter(., (mean_abundance / metaphlan_mean_total_abundance) >= 0.00001) %>% 
+  tibble::rownames_to_column(., var = "clade_name") %>% 
+  dplyr::pull(., clade_name)
+metaphlan <- metaphlan %>% dplyr::filter(., clade_name %in% metaphlan_abund_filter)
+
+cat(paste0((var_features - NROW(metaphlan)), " features dropped due to abundance filter.\n"))
+Sys.sleep(0.25)
+
 metaphlan_master <- metaphlan
 
 ## make the dataframe of features that will compete in parent-child competitions.
 ## Basically this is just the taxonomic (hierarchical) information of all
 ## the features left at this step.
 taxa_only_split <- metaphlan %>% 
-  tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
-  dplyr::select(., 1:8)
+  tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|", extra = "merge") %>%
+  dplyr::select(., 1:8) %>%
+  suppressWarnings()
 
 ## add some columns to this dataframe (full clade name, full taxa abundance, number of NAs)
 ## NOTE: future scripts could add an abundance threshold filter here
@@ -160,11 +228,7 @@ taxa_only_split$taxa_abundance <- rowSums(metaphlan[,2:NCOL(metaphlan)])
 taxa_only_split$na_count <- rowSums(is.na(taxa_only_split))
 taxa_only_split_master <- taxa_only_split
 
-## inform user about how many features were dropped because they had too little
-## variability (var_control filter)
-cat("\n",paste0((NROW(nzv) - NROW(metaphlan)), " taxa dropped due to variability filter.\n"))
-Sys.sleep(0.25)
-
+cat("\n\n", "##################################\n", "Starting hierarchical competitions\n", "##################################\n")
 
 ## Species =====================================================================
 
@@ -192,7 +256,8 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "type") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   ## if no columns named parent exists (species renamed parent in previous step)
   ## create column by summing up children (sub-species)
@@ -249,7 +314,7 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -263,7 +328,7 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -281,8 +346,8 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       ## drop children from master taxa file taxa_only_split
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., type = ifelse((species == parent_trial & !is.na(species) & na_count == 0), "drop_dis", type))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = type))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
@@ -326,7 +391,7 @@ genera <- taxa_only_split %>%
 count = 1
 
 for (parent_trial in genera[genera$count > 1, ]$genus) {
-
+  
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
     tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|") %>%
@@ -337,7 +402,8 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "species") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -347,19 +413,19 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
   
   ### CORRELATION #####
   cor_drop <- suppressMessages(corrr::correlate(metaphlan_parent)) %>% corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% dplyr::pull(., term)
-
+  
   metaphlan_parent_merge_cor_subset <- metaphlan_parent_merge %>% 
     dplyr::select(., -all_of(cor_drop)) %>%
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 1), "drop_dis", species))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
     
-
+    
   } else {
-  
+    
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
@@ -368,7 +434,7 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -381,7 +447,7 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -392,11 +458,11 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., species = ifelse((genus == parent_trial & !is.na(genus) & na_count == 1), "drop_dis", species))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
@@ -419,12 +485,12 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       taxa_only_split <- taxa_only_split %>% 
         dplyr::filter(., !grepl(pattern = "drop_dis", x = species))
       
-     }
+    }
   }
-    ### PROGRESS ####
-    svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
-    if (count == length(genera[genera$count > 1, ]$genus)) message("Done with Genus!")
-    count = count + 1
+  ### PROGRESS ####
+  svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
+  if (count == length(genera[genera$count > 1, ]$genus)) message("Done with Genus!")
+  count = count + 1
 }
 
 metaphlan <- metaphlan %>%
@@ -454,7 +520,8 @@ for (parent_trial in families[families$count > 1, ]$family) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "genus") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -470,7 +537,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
     dplyr::select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., genus = ifelse((family == parent_trial & !is.na(family) & na_count == 2), "drop_dis", genus))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = genus))
     
@@ -485,7 +552,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -499,7 +566,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -509,11 +576,11 @@ for (parent_trial in families[families$count > 1, ]$family) {
     }
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., genus = ifelse((family == parent_trial & !is.na(family) & na_count == 2), "drop_dis", genus))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = genus))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
@@ -571,7 +638,8 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "family") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -587,7 +655,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., family = ifelse((order == parent_trial & !is.na(order) & na_count == 3), "drop_dis", family))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = family))
     
@@ -602,7 +670,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -616,7 +684,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -626,11 +694,11 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     }
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., family = ifelse((order == parent_trial & !is.na(order) & na_count == 3), "drop_dis", family))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = family))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
@@ -652,7 +720,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
         dplyr::mutate(., family = ifelse((family %in% children_toss & is.na(order) & !is.na(family)), "drop_dis", family))
       taxa_only_split <- taxa_only_split %>% 
         dplyr::filter(., !grepl(pattern = "drop_dis", x = family))
-
+      
     }
   }
   ### PROGRESS ####
@@ -688,7 +756,8 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "order") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -704,11 +773,11 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., order = ifelse((class == parent_trial & !is.na(class) & na_count == 4), "drop_dis", order))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = order))
     
-
+    
     
   } else {
     
@@ -720,7 +789,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -734,7 +803,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -744,14 +813,14 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     }
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., order = ifelse((class == parent_trial & !is.na(class) & na_count == 4), "drop_dis", order))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = order))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
-
+      
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
       children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
@@ -807,7 +876,8 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "class") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -823,11 +893,11 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., class = ifelse((phylum == parent_trial & !is.na(phylum) & na_count == 5), "drop_dis", class))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = class))
     
-
+    
     
   } else {
     
@@ -839,7 +909,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -853,7 +923,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -863,14 +933,14 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     }
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., class = ifelse((phylum == parent_trial & !is.na(phylum) & na_count == 5), "drop_dis", class))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = class))
-
-
+      
+      
     } else { 
       ### RF WINNER - CHILD ####
-
+      
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
       children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
@@ -926,7 +996,8 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
     tibble::column_to_rownames(., "phylum") %>%
     t() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    suppressWarnings()
   
   if ("PARENT" %!in% colnames(metaphlan_parent)) { 
     metaphlan_parent$PARENT <- rowSums(metaphlan_parent)
@@ -942,7 +1013,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
     select(., -subject_id)
   
   if (NCOL(metaphlan_parent_merge_cor_subset) < 3) {
-
+    
     taxa_only_split <- taxa_only_split %>% dplyr::mutate(., phylum = ifelse((kingdom == parent_trial & !is.na(kingdom) & na_count == 6), "drop_dis", phylum))
     taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = phylum))
     
@@ -958,7 +1029,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -972,7 +1043,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
       for (seed in sample(1:1000, nperm)) {
         model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-        model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
+        suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
       }
       colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
@@ -982,10 +1053,10 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
     }
     ### RF WINNER - PARENT ####
     if ((model_importance %>% dplyr::arrange(., desc(average)) %>% slice_head(., n = 1) %>% dplyr::pull(., taxa)) == "PARENT") {
-
+      
       taxa_only_split <- taxa_only_split %>% dplyr::mutate(., phylum = ifelse((kingdom == parent_trial & !is.na(kingdom) & na_count == 6), "drop_dis", phylum))
       taxa_only_split <- taxa_only_split %>% dplyr::filter(., !grepl(pattern = "drop_dis", x = phylum))
-
+      
     } else { 
       ### RF WINNER - CHILD ####
       
@@ -1023,59 +1094,59 @@ metaphlan <- metaphlan %>%
 ## super filter ================================================================
 
 if (opt$super_filter == "TRUE") {
- metaphlan_sf <- metaphlan %>%
-   tibble::column_to_rownames(., var = "clade_name") %>%
-   t() %>%
-   as.data.frame() %>%
-   tibble::rownames_to_column(., var = "subject_id") %>%
-   janitor::clean_names()
- 
- metaphlan_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
- output_sf <- metaphlan_sf %>% dplyr::select(., -subject_id) 
- nperm = nperm + 190
- 
- if (opt$feature_type == "factor") {  
-   model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
-   model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-   for (seed in sample(1:1000, nperm)) {
-     model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
-     model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-     model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
-     
-   }
-   colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
-   model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
-   model_importance <- model_importance %>% dplyr::relocate(., average)
+  metaphlan_sf <- metaphlan %>%
+    tibble::column_to_rownames(., var = "clade_name") %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(., var = "subject_id") %>%
+    janitor::clean_names()
+  
+  metaphlan_sf <- merge(metadata, metaphlan_sf, by.x = "subject_id", by.y = "subject_id")
+  output_sf <- metaphlan_sf %>% dplyr::select(., -subject_id) 
+  nperm = nperm + 190
+  
+  if (opt$feature_type == "factor") {  
+    model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
+    model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+    for (seed in sample(1:1000, nperm)) {
+      model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
+      model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
+      suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
+      
+    }
+    colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
+    model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
+    model_importance <- model_importance %>% dplyr::relocate(., average)
   } else {
     model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
       model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
-      model_importance <- merge(model_importance, model_importance_tmp, by = "taxa")
-   
+      suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
+      
     }
     colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
     model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
     model_importance <- model_importance %>% dplyr::relocate(., average)
   }
- 
- if (opt$feature_limit != "ALL") {
-   
-   model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::arrange(dplyr::desc(average)) %>% dplyr::slice_head(n = as.numeric(opt$feature_limit)) %>% dplyr::pull(., taxa)
-   output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
-   taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
-   taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
-   
- } else{
- 
- model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
- output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
- taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
- taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
-
- }
- 
+  
+  if (opt$feature_limit != "ALL") {
+    
+    model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::arrange(dplyr::desc(average)) %>% dplyr::slice_head(n = pmin(as.numeric(opt$feature_limit), NROW(model_importance))) %>% dplyr::pull(., taxa)
+    output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
+    taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
+    taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
+    
+  } else{
+    
+    model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
+    output <- metaphlan_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
+    taxa_only_split$metaphlan_taxonomy <- janitor::make_clean_names(taxa_only_split$metaphlan_taxonomy)
+    taxa_only_split <- taxa_only_split %>% dplyr::filter(., metaphlan_taxonomy %in% model_importance_list)
+    
+  }
+  
 }
 
 
@@ -1106,11 +1177,11 @@ if (opt$super_filter == "TRUE") {
       geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
       geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
       facet_wrap( ~ variable, scales = "free_y") +
-      theme_bw() + theme(strip.text.x = element_text(size = 2.5), legend.position = "none") + 
+      theme_bw() + theme(strip.text.x = element_text(size = 5.5), legend.position = "none") + 
       ggsci::scale_fill_jama()
     
     ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
-  
+    
   } else {
     ggplot(data = figure_data) +
       aes(x = feature_of_interest, y = log(value)) +
@@ -1120,9 +1191,9 @@ if (opt$super_filter == "TRUE") {
       theme_bw() + theme(strip.text.x = element_text(size = 2.5))
     
     ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
-
+    
   }
- }
+}
 
 
 ## Write outputs ===============================================================
