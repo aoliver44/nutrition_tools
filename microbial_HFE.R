@@ -24,7 +24,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format>] <input_metadata> <input> <output>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -32,7 +32,6 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --var_control filter features that contain less than this threshold of percentage of unique features [default: 5]
     --super_filter to run a final RF and only take positive values [default: FALSE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
     --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into formate [default: FALSE]
@@ -70,15 +69,15 @@ nperm = 10
 # opt <- data.frame(subject_identifier=character(),
 #                   label=character(),
 #                   feature_type=character(),
-#                   var_control=numeric(),
+#                   #var_control=numeric(),
 #                   super_filter=character(),
 #                   feature_limit=character(),
 #                   format_metaphlan=character(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", var_control = 5, super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "butyrate", feature_type = "numeric", var_control = 5, super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/synthetic_test_data/fecal_scfa_fl100.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/butyrate_metaphlan4.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "butyrate", feature_type = "numeric", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/synthetic_test_data/fecal_scfa_fl100.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/butyrate_metaphlan4.txt")
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
@@ -156,45 +155,8 @@ cat("\n\n", "###########################\n", "Applying filtering steps...\n", "#
 ## remove taxa/rows that are 95% zeros (5% prevalence filter)
 metaphlan <- metaphlan[rowSums(metaphlan[,2:NCOL(metaphlan)] == 0) <= (NCOL(metaphlan[,2:NCOL(metaphlan)])*0.95), ]
 cat("\n\n Prevelance filter: ")
-cat(paste0((original_taxa_count - NROW(metaphlan)), " features dropped due to 5% prevelance filter.\n"))
-
-## Remove low variance features ================================================
-
-## in feature engineering, youre not ~really~ supposed to know the
-## whole dataset prior to ML analysis. But this script could definitely
-## be better about that generally...and maybe someday it will be.
-
-## randomly subsample 75% of the entire dataset for variance filtering
-random_subsample <- sample(colnames(metaphlan[2:NCOL(metaphlan)]), (NCOL(metaphlan[,2:NCOL(metaphlan)]) * 0.75))
-metaphlan_var <- metaphlan %>%
-  tibble::remove_rownames() %>%
-  tibble::column_to_rownames(., var = "clade_name") %>%
-  dplyr::select(., all_of(random_subsample)) %>%
-  t() %>% 
-  as.data.frame()
-
-## filter for taxa for which the percentage of samples with unique values is 
-## greater than var_control (greater than var_control means more samples 
-## have different values, useful for ML applications). 
-## See caret::nearZeroVar for more info.
-
-cat("\nLow variance filter: ")
-cat("(Removing features that that have the same values in", (100 - as.numeric(opt$var_control)),"%(+) of the samples...)")
-nzv <- caret::nearZeroVar(metaphlan_var,saveMetrics= TRUE)
-non_nzv_taxa <- nzv %>%
-  tibble::rownames_to_column(., var = "taxa") %>%
-  dplyr::filter(., percentUnique > as.numeric(opt$var_control)) %>%
-  dplyr::pull(., "taxa")
-
-## select features that are above the var_control threshold (in the
-## non_nzv_taxa vector)
-metaphlan <- metaphlan %>%
-  dplyr::filter(., clade_name %in% non_nzv_taxa)
-var_features <- NROW(metaphlan)
-## inform user about how many features were dropped because they had too little
-## variability (var_control filter)
-cat("\n",paste0((NROW(nzv) - NROW(metaphlan)), " features dropped due to variability filter.\n"))
-Sys.sleep(0.25)
+prev_filter <- NROW(metaphlan)
+cat(paste0((original_taxa_count - prev_filter), " features dropped due to 5% prevelance filter.\n"))
 
 ## Remove very low abundant features ===========================================
 ## remove taxa/rows that are below 0.00001 relative abundance
@@ -208,7 +170,7 @@ metaphlan_abund_filter <- metaphlan_abund_filter %>%
   dplyr::pull(., clade_name)
 metaphlan <- metaphlan %>% dplyr::filter(., clade_name %in% metaphlan_abund_filter)
 
-cat(paste0((var_features - NROW(metaphlan)), " features dropped due to abundance filter.\n"))
+cat(paste0((prev_filter - NROW(metaphlan)), " features dropped due to abundance filter (rel. abund. >10e-5).\n"))
 Sys.sleep(0.25)
 
 metaphlan_master <- metaphlan
@@ -1172,25 +1134,25 @@ if (opt$super_filter == "TRUE") {
     reshape2::melt(id.vars = "feature_of_interest")
   
   if (opt$feature_type == "factor") {
-    ggplot(data = figure_data) +
+    suppressWarnings(ggplot(data = figure_data) +
       aes(x = as.factor(feature_of_interest), y = log(value)) +
       geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
       geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
       facet_wrap( ~ variable, scales = "free_y") +
-      theme_bw() + theme(strip.text.x = element_text(size = 5.5), legend.position = "none") + 
-      ggsci::scale_fill_jama()
+      theme_bw() + theme(strip.text.x = element_text(size = 5), legend.position = "none") + 
+      ggsci::scale_fill_jama())
     
-    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
+    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 12, height = 8, units = "in")
     
   } else {
-    ggplot(data = figure_data) +
+    suppressWarnings(ggplot(data = figure_data) +
       aes(x = feature_of_interest, y = log(value)) +
       geom_point() +
       geom_smooth(method = "lm") +
       facet_wrap( ~ variable, scales = "free_y") +
-      theme_bw() + theme(strip.text.x = element_text(size = 2.5))
+      theme_bw() + theme(strip.text.x = element_text(size = 5)))
     
-    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 11, height = 8, units = "in")
+    ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 12, height = 8, units = "in")
     
   }
 }
