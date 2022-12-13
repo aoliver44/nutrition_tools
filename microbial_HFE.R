@@ -131,7 +131,7 @@ if (opt$format_metaphlan == "FALSE") {
   metaphlan_8 <- metaphlan_8 %>% group_by(., clade_name) %>% summarise_all(sum) %>% as.data.frame() %>% dplyr::filter(., !grepl(pattern = "NA", clade_name))
   
   metaphlan <- rbind(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
-                              metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
+                     metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
   ## clean up
   rm(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
      metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
@@ -141,7 +141,7 @@ if (opt$format_metaphlan == "FALSE") {
 ## rename the label to feature_of_interest
 ## metadata, should be in tab or comma separated format
 if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","txt")) {
-metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = "\t"))
+  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = "\t"))
 } else {
   metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = ","))
 }
@@ -159,18 +159,18 @@ prev_filter <- NROW(metaphlan)
 cat(paste0((original_taxa_count - prev_filter), " features dropped due to 5% prevelance filter.\n"))
 
 ## Remove very low abundant features ===========================================
-## remove taxa/rows that are below 0.00001 relative abundance
+## remove taxa/rows that are below 0.0001 relative abundance
 cat("\n Low abundance filter: ")
-metaphlan_mean_total_abundance <- metaphlan %>% dplyr::filter(., grepl("\\|", clade_name)) %>% tibble::column_to_rownames(., var = "clade_name") %>% summarise_all(sum) %>% rowMeans()
-metaphlan_abund_filter <- metaphlan %>% tibble::column_to_rownames(., var = "clade_name")
+metaphlan_mean_total_abundance <- metaphlan %>% dplyr::filter(., !grepl("\\|", clade_name)) %>% tibble::column_to_rownames(., var = "clade_name") %>% summarise_all(sum) %>% rowMeans()
+metaphlan_abund_filter <- metaphlan %>% tibble::remove_rownames() %>% tibble::column_to_rownames(., var = "clade_name")
 metaphlan_abund_filter$mean_abundance <- rowMeans(metaphlan_abund_filter)
 metaphlan_abund_filter <- metaphlan_abund_filter %>% 
-  dplyr::filter(., (mean_abundance / metaphlan_mean_total_abundance) >= 0.00001) %>% 
+  dplyr::filter(., (mean_abundance / metaphlan_mean_total_abundance) >= 0.0001) %>% 
   tibble::rownames_to_column(., var = "clade_name") %>% 
   dplyr::pull(., clade_name)
 metaphlan <- metaphlan %>% dplyr::filter(., clade_name %in% metaphlan_abund_filter)
 
-cat(paste0((prev_filter - NROW(metaphlan)), " features dropped due to abundance filter (rel. abund. >10e-5).\n"))
+cat(paste0((prev_filter - NROW(metaphlan)), " features dropped due to abundance filter (rel. abund. >10e-4).\n"))
 Sys.sleep(0.25)
 
 metaphlan_master <- metaphlan
@@ -1135,22 +1135,22 @@ if (opt$super_filter == "TRUE") {
   
   if (opt$feature_type == "factor") {
     suppressWarnings(ggplot(data = figure_data) +
-      aes(x = as.factor(feature_of_interest), y = log(value)) +
-      geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
-      geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
-      facet_wrap( ~ variable, scales = "free_y") +
-      theme_bw() + theme(strip.text.x = element_text(size = 5), legend.position = "none") + 
-      ggsci::scale_fill_jama())
+                       aes(x = as.factor(feature_of_interest), y = log(value)) +
+                       geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
+                       geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
+                       facet_wrap( ~ variable, scales = "free_y") +
+                       theme_bw() + theme(strip.text.x = element_text(size = 5), legend.position = "none") + 
+                       ggsci::scale_fill_jama())
     
     ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 12, height = 8, units = "in")
     
   } else {
     suppressWarnings(ggplot(data = figure_data) +
-      aes(x = feature_of_interest, y = log(value)) +
-      geom_point() +
-      geom_smooth(method = "lm") +
-      facet_wrap( ~ variable, scales = "free_y") +
-      theme_bw() + theme(strip.text.x = element_text(size = 5)))
+                       aes(x = feature_of_interest, y = log(value)) +
+                       geom_point() +
+                       geom_smooth(method = "lm") +
+                       facet_wrap( ~ variable, scales = "free_y") +
+                       theme_bw() + theme(strip.text.x = element_text(size = 5)))
     
     ggsave(filename = paste0(tools::file_path_sans_ext(opt$output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 12, height = 8, units = "in")
     
@@ -1166,4 +1166,3 @@ readr::write_delim(file = opt$output, x = output, delim = "\t")
 readr::write_delim(file = paste0(tools::file_path_sans_ext(opt$output), "_taxa_list.txt"), x = taxa_only_split, delim = "\t")
 save.image(file = paste0(tools::file_path_sans_ext(opt$output), ".RData"))
 cat("\n","Output written.  ")
-
