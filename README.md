@@ -32,8 +32,9 @@ $ docker build -t nutrition_tools:1.0 .
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
-
+## pull image from internet
 $ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
+## run image
 $ singularity run -w -W /path/to/working/directory nutrition_tools.sif bash
 
 ## to run
