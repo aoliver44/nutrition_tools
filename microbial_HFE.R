@@ -56,6 +56,7 @@ library(reshape2, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 library(ggsci, quietly = T, verbose = F, warn.conflicts = F)
 library(vegan, quietly = T, verbose = F, warn.conflicts = F)
+library(progress, quietly = T, verbose = F, warn.conflicts = F)
 
 ## set random seed if needed
 set.seed(42)
@@ -199,13 +200,17 @@ specieses <- taxa_only_split %>%
   dplyr::group_by(., species) %>%
   dplyr::summarize(., count = n_distinct(type)) %>% tidyr::drop_na()
 
+## start progress bar
+pb <- progress_bar$new( format = " Species vs Strains [:bar] :percent in :elapsed", total = length(specieses[specieses$count > 1, ]$species), clear = FALSE, width= 60) 
+
 ## start a counter to keep track of each for-loop 
 count = 1
 
 ## loop through all the species with greater than 1 sub-species. If species
 ## has only itself, it will automatically be kept and used in the genus step.
 for (parent_trial in specieses[specieses$count > 1, ]$species) {
-  
+  ## progress bar tick
+  pb$tick()
   ## create a dataframe of the parent and children. In this case the abundance
   ## of a species and the subspecies across samples.
   metaphlan_parent <- metaphlan %>%
@@ -335,8 +340,7 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(specieses[specieses$count > 1, ]$species))
-  if (count == length(specieses[specieses$count > 1, ]$species)) message("Done with Species!")
+  if (count == length(specieses[specieses$count > 1, ]$species)) message("  Done with Species!")
   count = count + 1
 }
 
@@ -350,9 +354,12 @@ genera <- taxa_only_split %>%
   dplyr::group_by(., genus) %>%
   dplyr::summarize(., count = n_distinct(species)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Genus vs Species [:bar] :percent in :elapsed", total = length(genera[genera$count > 1, ]$genus), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in genera[genera$count > 1, ]$genus) {
+  pb$tick() 
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -450,8 +457,7 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(genera[genera$count > 1, ]$genus))
-  if (count == length(genera[genera$count > 1, ]$genus)) message("Done with Genus!")
+  if (count == length(genera[genera$count > 1, ]$genus)) message("  Done with Genus!")
   count = count + 1
 }
 
@@ -468,9 +474,12 @@ families <- taxa_only_split %>%
   dplyr::group_by(., family) %>%
   dplyr::summarize(., count = n_distinct(genus)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Family vs Genus [:bar] :percent in :elapsed", total = length(families[families$count > 1, ]$family), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in families[families$count > 1, ]$family) {
+  pb$tick() 
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -568,8 +577,7 @@ for (parent_trial in families[families$count > 1, ]$family) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(families[families$count > 1, ]$family))
-  if (count == length(families[families$count > 1, ]$family)) message("Done with Family!")
+  if (count == length(families[families$count > 1, ]$family)) message("  Done with Family!")
   count = count + 1
 }
 
@@ -586,9 +594,12 @@ orders <- taxa_only_split %>%
   dplyr::group_by(., order) %>%
   dplyr::summarize(., count = n_distinct(family)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Order vs Family [:bar] :percent in :elapsed", total = length(orders[orders$count > 1, ]$order), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in orders[orders$count > 1, ]$order) {
+  pb$tick() 
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -686,8 +697,7 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(orders[orders$count > 1, ]$order))
-  if (count == length(orders[orders$count > 1, ]$order)) message("Done with Order!")
+  if (count == length(orders[orders$count > 1, ]$order)) message("  Done with Order!")
   count = count + 1
 }
 
@@ -704,9 +714,12 @@ classes <- taxa_only_split %>%
   dplyr::group_by(., class) %>%
   dplyr::summarize(., count = n_distinct(order)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Class vs Order [:bar] :percent in :elapsed", total = length(classes[classes$count > 1, ]$class), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in classes[classes$count > 1, ]$class) {
+  pb$tick() 
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -806,8 +819,7 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(classes[classes$count > 1, ]$class))
-  if (count == length(classes[classes$count > 1, ]$class)) message("Done with Class!")
+  if (count == length(classes[classes$count > 1, ]$class)) message("  Done with Class!")
   count = count + 1
 }
 
@@ -824,9 +836,12 @@ phyla <- taxa_only_split %>%
   dplyr::group_by(., phylum) %>%
   dplyr::summarize(., count = n_distinct(class)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Phylum vs Class [:bar] :percent in :elapsed", total = length(phyla[phyla$count > 1, ]$phylum), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
+  pb$tick()
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -926,8 +941,7 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(phyla[phyla$count > 1, ]$phylum))
-  if (count == length(phyla[phyla$count > 1, ]$phylum)) message("Done with Phyla!")
+  if (count == length(phyla[phyla$count > 1, ]$phylum)) message("  Done with Phyla!")
   count = count + 1
 }
 
@@ -944,9 +958,12 @@ kingdoms <- taxa_only_split %>%
   dplyr::group_by(., kingdom) %>%
   dplyr::summarize(., count = n_distinct(phylum)) %>% tidyr::drop_na()
 
+pb <- progress_bar$new( format = " Kingdom vs Phylum [:bar] :percent in :elapsed", total = length(kingdoms[kingdoms$count > 1, ]$kingdom), clear = FALSE, width= 60) 
+
 count = 1
 
 for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
+  pb$tick() 
   
   metaphlan_parent <- metaphlan %>%
     dplyr::filter(., grepl(pattern = parent_trial, clade_name)) %>%
@@ -1045,8 +1062,7 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
     }
   }
   ### PROGRESS ####
-  svMisc::progress(count, length(kingdoms[kingdoms$count > 1, ]$kingdom))
-  if (count == length(kingdoms[kingdoms$count > 1, ]$kingdom)) message("Done with Kingdoms!")
+  if (count == length(kingdoms[kingdoms$count > 1, ]$kingdom)) message("  Done with Kingdoms!")
   count = count + 1
 }
 
