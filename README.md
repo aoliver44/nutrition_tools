@@ -23,14 +23,14 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 ### **2. Build the Docker Environment**
 
  ```
-## Option 1 (preferred):
+## Option 1 (preferred), local installation:
 $ docker pull aoliver44/nutrition_tools:1.0
 
-## Option 2: Build it yourself!
+## Option 2: Build it yourself! Still local installation.
 $ docker build -t nutrition_tools:1.0 .
 
 ## Option 3: You are using singularity (assuming its in your path.
-## you might need to load a module or something).
+## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 
 $ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
