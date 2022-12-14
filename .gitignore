@@ -2,4 +2,15 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rprofile
 scripts.Rproj
+make_hfe_files.R
+ml_short_test.R
+betaDiversity_SCFA.R
+dietM_h2o.R
+old_hfe_crc_reformat.R
+perimary_vs_secondary.R
+prepare_food_tree_for_hfe.R
+toy_example.R
+renv/
+*.pdf
