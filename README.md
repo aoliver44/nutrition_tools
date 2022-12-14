@@ -1,15 +1,20 @@
 # Nutrition Tools
  This repository contains useful scripts for taking data to ML analysis, especially with nutritionists in mind.
 
+```
+## download repository
+git clone https://github.com/aoliver44/nutrition_tools.git
+cd nutrition_tools
+```
 
- ### **Start the Docker Environment**
+ ### **Build the Docker Environment**
 
  ```
 ## If you need to build it first
 docker build -t nutrition_tools:1.0 .
 
 ## to run
-docker run --rm -it -v /path/to/data:/home/data -v /path/to/github/scripts:/home/ -v path/to/output:/home/output scripts nutriton_tools1.0 /bin/bash -c "cd /home"
+docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ -v path/to/output:/home/output scripts nutriton_tools1.0 /bin/bash -c "cd /home"
  ```
 
 
@@ -18,7 +23,6 @@ docker run --rm -it -v /path/to/data:/home/data -v /path/to/github/scripts:/home
 ```
 bash$ Rscript generic_read_in.R -h
 Usage: generic_read_in.R [options]
-
 
 Options:
 	-i CHARACTER, --input=CHARACTER
@@ -30,6 +34,9 @@ Options:
 	-h, --help
 		Show this help message and exit
 
+# Example 
+./generic_read_in.R --subject_identifier subject_id /home/path/data 
+
 ```
 
 This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx) and attempt to run some basic checks on them and basic cleaning. For example:
@@ -38,6 +45,8 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
 3. Check to see if there are duplicated column names
    1. Sub-check: if the column names are duplicated, is the data also duplicated?
 4. Keep a tally of columns that contain NAs.
+5. Check to see if you have time-series data and discourage htat
+   1. Note,  this program and many ML programs struggle with longitudinal data
    
 **Output:**
 
@@ -54,6 +63,26 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
  - **/clean_files**: new set of files that have been cleaned and checked for duplicate data
  - **/duplicate_colnames**: files that show where the column name was duplicated but the underlying data was different
  - **/duplicated_data**: files that show where the column name was duplicated and the data was also duplicated
+
+ ### **generic_combine.R**
+ ```
+Combine data from read_in step, prior to ML
+Usage:
+    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
+    
+Options:
+    -h --help  Show this screen.
+    -v --version  Show version.
+    --subject_identifier name of columns with subject IDs [default: subject_id]
+    --cor_level level of general feature correlation [default: 0.95]
+    --cor_choose choose which features are kept in correlation [default: FALSE]
+    --preserve_samples attempt to drop more features to keep samples [default: FALSE]
+    
+Arguments:
+    input  input directory containing files
+    output_file  output file name 
+ ```
+
 
  ### **microbial_hfe.R**
 
