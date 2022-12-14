@@ -14,3 +14,4 @@ prepare_food_tree_for_hfe.R
 toy_example.R
 renv/
 *.pdf
+.DS_Store
