@@ -1,24 +1,48 @@
 # Nutrition Tools
  This repository contains useful scripts for taking data to ML analysis, especially with nutritionists in mind.
 
+ Prerequisites
+- Basic knowledge of a shell terminal 
+- [git](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository#:~:text=Cloning%20an%20Existing,prev%20%7C%20next)  (or some other way to download/clone this repository)
+- [docker desktop](https://www.docker.com/products/docker-desktop/) for the Rstudio envirnoment
+- An internet connection
+
+
+### **1. Clone the environment from Github**
+
 ```
 ## download repository
-git clone https://github.com/aoliver44/nutrition_tools.git
-cd nutrition_tools
+$ git clone https://github.com/aoliver44/nutrition_tools.git
+$ cd nutrition_tools
 ```
 
- ### **Build the Docker Environment**
+### **2. Build the Docker Environment**
 
  ```
 ## If you need to build it first
-docker build -t nutrition_tools:1.0 .
+$docker build -t nutrition_tools:1.0 .
 
 ## to run
-docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ -v path/to/output:/home/output scripts nutriton_tools1.0 /bin/bash -c "cd /home"
+$ docker run --rm -it -v /path/to/data:/home/data \
+> -v /path/to/github_repo/nutrition_tools:/home/ \
+> nutriton_tools:1.0 bash
+
+## example:
+$ docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home nutrition_tools:1.0 bash
+$ cd /home/
  ```
 
+The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
 
- ### **generic_read_in.R**
+When you ``cd /home/``, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
+
+You are now operating inside a container, which contains the software necessary to run the following analyses.
+
+**NOTE:** To exit the terminal, run ```exit``` or press ctrl+d on a mac
+
+------------------------------------------
+
+### **3. Run generic_read_in.R**
 
 ```
 bash$ Rscript generic_read_in.R -h
@@ -34,8 +58,8 @@ Options:
 	-h, --help
 		Show this help message and exit
 
-# Example 
-./generic_read_in.R --subject_identifier subject_id /home/path/data 
+## example:
+./generic_read_in.R --subject_identifier subject_id /home/data/ 
 
 ```
 
@@ -43,10 +67,10 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
 1. Check to see if a key is present that will link all the data together if split in multiple files (i.e. "subject_id")
 2. Check to see if subject_id is unique across rows or if there are duplicated values
 3. Check to see if there are duplicated column names
-   1. Sub-check: if the column names are duplicated, is the data also duplicated?
+   - Sub-check: if the column names are duplicated, is the data also duplicated?
 4. Keep a tally of columns that contain NAs.
 5. Check to see if you have time-series data and discourage htat
-   1. Note,  this program and many ML programs struggle with longitudinal data
+   - Note,  this program and many ML programs struggle with longitudinal data
    
 **Output:**
 
@@ -64,7 +88,13 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
  - **/duplicate_colnames**: files that show where the column name was duplicated but the underlying data was different
  - **/duplicated_data**: files that show where the column name was duplicated and the data was also duplicated
 
- ### **generic_combine.R**
+**NOTES:** This program came about from large collaborations where many different datasets were being emailed around and subsequently combined for later analysis. It will still check a single file.
+
+Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. The program will error out if that happened to be the only dataset you provided.
+
+------------------------------------------
+
+### **4. Run generic_combine.R**
  ```
 Combine data from read_in step, prior to ML
 Usage:
@@ -84,30 +114,3 @@ Arguments:
  ```
 
 
- ### **microbial_hfe.R**
-
-```
- microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --var_control=<pct> --super_filter=<TRUE/FALSE>] <input_metadata> <input_metaphlan> <output_file>
-    
-Options:
-    -h --help  Show this screen.
-    -v --version  Show version.
-    --subject_identifier=<subject_colname> name of columns 
-          with subject IDs [default: subject_id]
-    --label response feature of interest for classification 
-          [default: cluster]
-    --feature_type of response i.e. numeric or factor [default: factor]
-    --var_control filter features that contain less than this 
-          threshold of percentage of unique features [default: 5]
-    --super_filter to run a final RF and only take positive 
-          values [default: FALSE]
-    
-Arguments:
-    input_meta path to metadata input (CSV)
-    input  path to input file from hierarchical data 
-           (i.e. metaphlan data) (TSV)
-    output_file  output file name 
-
-```
-
-This script will take a metaphlan-style file and perform hierarchical feature engineering on it (determine the most basic (highest taxonomic group) which contains discrimitory information for a given metadata variable, either continous or discreete):
