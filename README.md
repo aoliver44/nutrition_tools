@@ -7,6 +7,7 @@
 - [docker desktop](https://www.docker.com/products/docker-desktop/) for the Rstudio envirnoment
 - An internet connection
 
+--------------------------------------------------
 
 ### **1. Clone the environment from Github**
 
@@ -15,12 +16,25 @@
 $ git clone https://github.com/aoliver44/nutrition_tools.git
 $ cd nutrition_tools
 ```
+This will pull down the scripts and dockerbuild files necessary to run these scripts
+
+--------------------------------------------------
 
 ### **2. Build the Docker Environment**
 
  ```
-## If you need to build it first
-$docker build -t nutrition_tools:1.0 .
+## Option 1 (preferred):
+$ docker pull aoliver44/nutrition_tools:1.0
+
+## Option 2: Build it yourself!
+$ docker build -t nutrition_tools:1.0 .
+
+## Option 3: You are using singularity (assuming its in your path.
+## you might need to load a module or something).
+## **NOTE:** I do not know much about singularity
+
+$ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
+$ singularity run -w -W /path/to/working/directory nutrition_tools.sif bash
 
 ## to run
 $ docker run --rm -it -v /path/to/data:/home/data \
