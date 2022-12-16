@@ -65,13 +65,13 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-opt <- data.frame(subject_identifier=character(),
-                                cor_level=numeric(),
-                                cor_choose=logical(),
-                                preserve_samples=logical(),
-                                input=character(),
-                                output_file=character())
-opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+# opt <- data.frame(subject_identifier=character(),
+#                                 cor_level=numeric(),
+#                                 cor_choose=logical(),
+#                                 preserve_samples=logical(),
+#                                 input=character(),
+#                                 output_file=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## check for inputs ============================================================
 

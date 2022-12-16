@@ -33,7 +33,7 @@ docker build -t nutrition_tools:1.0 .
 docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:1.0 bash
 
 ## example:
-docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
 cd /home/
 
 ## Option 3: You are using singularity (assuming its in your path.
@@ -73,7 +73,7 @@ Options:
 		Show this help message and exit
 
 ## example:
-./generic_read_in.R --subject_identifier subject_id /home/data/ 
+./generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
 
 ```
 
@@ -126,6 +126,9 @@ Options:
 Arguments:
     input  input directory containing files
     output_file  output file name 
+
+## example:
+./generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE simulated_output/ merged_data.csv 
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
@@ -133,3 +136,10 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high. In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
 3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
    - Note: If your response var of interest is correlated with another feature(s) at > 0.99, please take care to make sure you choose the response var to end up in the final dataset.
+  
+  **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete, the version of this pipeline does not impute missing data.
+
+
+### **5. Run diet_ML.R**
+
+...coming soon....
