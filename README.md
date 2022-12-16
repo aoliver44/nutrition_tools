@@ -32,10 +32,6 @@ docker build -t nutrition_tools:1.0 .
 ## to run
 docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:1.0 bash
 
-## example:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
-cd /home/
-
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
@@ -44,6 +40,10 @@ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
 cd /home
+
+## example (local installation):
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
+cd /home/
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
