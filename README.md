@@ -75,7 +75,7 @@ Options:
 		Show this help message and exit
 
 ## example:
-./generic_read_in.R --subject_identifier subject_id /home/data/ 
+$ ./generic_read_in.R --subject_identifier subject_id /home/data/ 
 
 ```
 

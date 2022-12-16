@@ -420,7 +420,7 @@ na_figure <- na_count_features %>%
 cat("Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
 cat("Saving NA counts table to file, see /output/na_counts.csv", "\n\n")
 cat("####################################################", "\n")
-cat("Saving a summary_problems file, see /output/summary_dataset_problems.csv", "\n")
+cat("Saving a summary_problems file", "\n" ,"see /output/summary_dataset_problems.csv", "\n")
 cat("####################################################", "\n\n")
 cat("Explainations of the summary_problems columns are as follows:", "\n\n")
 cat(as.vector(t(summary_problems[1,])))

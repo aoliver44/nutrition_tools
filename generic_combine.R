@@ -33,7 +33,7 @@ Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
-    --cor_level level of general feature correlation [default: 0.95]
+    --cor_level level of general feature correlation [default: 0.99]
     --cor_choose choose which features are kept in correlation [default: FALSE]
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
@@ -238,10 +238,10 @@ full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>%
 
 ## check correlation level
 
-if (as.numeric(opt$cor_level) < 0.95) {
+if (as.numeric(opt$cor_level) < 0.99) {
   cat("\n","################################################", "\n\n")
   cat("WARNING:", "\n\n")
-  cat("Your correlation level is below 0.95. This is a global correlation check, 
+  cat("Your correlation level is below 0.99. This is a global correlation check, 
   mainly for PURELY redundant features. For feature engineering, PROPER correlation-based 
   feature selection should happen inside a Train-Test split or a cross-validation 
   procedure. Not doing so constitutes DATA LEAKAGE. You risk overfitting and 
