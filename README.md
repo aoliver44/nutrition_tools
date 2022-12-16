@@ -32,10 +32,10 @@ docker build -t nutrition_tools:1.0 .
 ## to run
 docker run --rm -it -v /path/to/data:/home/data \
 > -v /path/to/github_repo/nutrition_tools:/home/ \
-> nutriton_tools:1.0 bash
+> aoliver44/nutrition_tools:1.0 bash
 
 ## example:
-docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home nutrition_tools:1.0 bash
+docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
 cd /home/
 
 ## Option 3: You are using singularity (assuming its in your path.
