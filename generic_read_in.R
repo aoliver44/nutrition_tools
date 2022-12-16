@@ -422,8 +422,7 @@ cat("Saving NA counts table to file, see /output/na_counts.csv", "\n\n")
 cat("####################################################", "\n")
 cat("Saving a summary_problems file", "\n" ,"see /output/summary_dataset_problems.csv", "\n")
 cat("####################################################", "\n\n")
-cat("Explainations of the summary_problems columns are as follows:", "\n\n")
-cat(as.vector(t(summary_problems[1,])))
+
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",")
 ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL)
 
