@@ -1,0 +1,394 @@
+subject_id,tobacco_use,recent_tobacco,sleep_weeknight,sleep_weekend,tanning,tanning_freq,sleepavg_h,actical_d,pa_recall_score,pal_cat,cmvigg_bd1,cmv_react
+5801,0,NA,7,9,0,NA,9.92,6,1.6,Moderate Active,0.15,0
+5833,0,NA,7,8,0,NA,10.64,6,1.4,Moderate Active,0.15,0
+5822,0,NA,7,7,0,NA,8.08,6,1.3,Low Active,0.15,0
+7801,0,NA,6,7,0,NA,6.92,11,1.6,Active,0.15,2
+5890,0,NA,7,6,0,NA,7.42,7,1.7,Active,0.15,0
+7767,0,NA,7,9,0,NA,7.83,6,1.6,Active,0.15,2
+5871,0,NA,7.5,7,0,NA,6.83,6,1.6,Moderate Active,0.15,2
+6847,0,NA,7,7,0,NA,7.08,NA,1.5,Moderate Active,220.4,0
+5850,0,NA,6,9,0,NA,7.07,9,NA,Low Active,87.43,0
+4855,0,NA,7.5,7,0,NA,7.92,6,1.6,Very Active,0.15,0
+7771,0,NA,6.5,7,0,NA,13.39,6,NA,Moderate Active,0.15,2
+7807,0,NA,7.5,8,0,NA,8.96,9,1.5,Very Active,287.2,0
+5873,0,NA,8,8,0,NA,6.92,7,NA,Low Active,3.52,0
+4823,0,NA,8,6,0,NA,8.14,6,1.6,Moderate Active,0.15,1
+4796,0,NA,7,7,0,NA,7.92,8,1.7,Low Active,575.3,1
+4816,0,NA,6,8,0,NA,8.33,8,1.5,Low Active,227.4,2
+4825,0,4/17/18,7,6,0,NA,NA,7,1.5,Active,NA,0
+6873,0,NA,6.5,8,0,NA,7.67,8,NA,Active,NA,2
+5854,0,NA,6.5,8,0,NA,7.92,6,1.7,Very Active,949.2,0
+5859,0,NA,7,8,0,NA,8.42,7,1.5,Active,NA,2
+5831,0,NA,6,6,0,NA,7.75,6,1.7,Active,630.8,2
+5776,0,NA,8,7,0,NA,8.63,8,1.6,Active,0.15,2
+5853,0,NA,8,7,0,NA,6.96,10,1.6,Low Active,0.15,2
+6816,0,NA,7,8,0,NA,7.75,6,1.6,Low Active,90.71,0
+5768,0,NA,8,8,0,NA,7.42,7,NA,Moderate Active,680.2,NA
+7800,0,NA,7.5,7.5,0,NA,8.71,NA,1.5,Low Active,0.15,0
+4865,0,NA,4,7,0,NA,7.36,6,1.6,Moderate Active,0.15,2
+4804,1,NA,6.5,7,0,NA,NA,6,1.4,Moderate Active,395.2,2
+7787,0,NA,9,9,0,NA,8.63,6,1.6,Active,0.15,0
+7768,0,NA,8,9,0,NA,NA,6,NA,Active,0.15,2
+5814,0,NA,7,7,0,NA,7.42,7,1.7,Active,90.71,0
+4801,0,NA,4,7,0,NA,7.79,8,1.7,Very Active,498.7,0
+6777,0,NA,7,6,0,NA,9.29,10,1.6,Very Active,201.1,2
+3818,0,NA,8,8,0,NA,7.08,7,1.3,Very Active,0.15,0
+7820,0,NA,8,7,0,NA,7.9,6,1.4,Moderate Active,0.15,0
+6768,NA,NA,7,8,0,NA,7.34,4,1.7,Moderate Active,0.15,2
+5830,0,7,8.5,7,0,NA,8.35,7,1.6,Sedentary,0.15,2
+6816,0,NA,7,7.5,0,NA,NA,7,NA,Low Active,436.8,NA
+7797,0,NA,7,8,0,NA,8.08,7,1.5,Very Active,787.4,2
+5845,0,2/1/19,7,8,0,NA,8.58,7,1.7,Moderate Active,0.15,0
+5799,0,NA,6,6,0,NA,7.88,7,1.5,Low Active,0.15,0
+5848,0,NA,7,9,0,NA,NA,7,1.5,Very Active,897,2
+6814,0,NA,9,8,0,NA,8.63,6,1.4,Active,25.28,2
+3798,0,NA,7,9,0,NA,6,8,NA,Very Active,0.15,2
+5839,0,NA,7.5,9,0,NA,7.13,7,1.4,Very Active,0.56,0
+6784,0,NA,8,8,0,NA,7.42,7,1.6,Moderate Active,0.15,2
+4770,0,NA,5,8,0,NA,6.54,6,1.5,Low Active,0.15,2
+6777,0,NA,6,0,0,NA,5.32,8,NA,Low Active,342.5,2
+6805,0,NA,9,7.5,0,NA,8.92,13,NA,Sedentary,641,0
+6782,0,NA,8,7,0,NA,8.09,6,1.5,Active,0.15,2
+6849,0,2/23/18,8,8,0,NA,8.14,6,1.5,Low Active,0.15,0
+5891,0,NA,7,6,0,NA,6.96,6,1.6,Moderate Active,201.1,0
+5810,0,NA,7,7,0,NA,6.79,7,1.6,NA,373.3,2
+4791,0,NA,7,7,0,NA,10.33,7,1.5,Low Active,0.15,2
+7782,1,NA,7,7,0,NA,NA,6,1.7,Moderate Active,11.5,0
+4805,0,NA,7,9.5,0,NA,10,6,1.5,Low Active,0.15,0
+7782,0,NA,7,8,0,NA,6.11,NA,1.5,Low Active,0.15,0
+4812,0,NA,7,12,0,NA,NA,6,1.4,Low Active,434.7,0
+4795,0,NA,7,9,0,NA,9.19,7,1.6,Active,253.1,2
+6871,0,NA,8,8,0,NA,NA,6,1.5,NA,342.5,2
+3773,0,NA,6,7,0,NA,7,8,1.5,Moderate Active,0.15,2
+4847,0,NA,8,8,0,NA,8.86,613.1884444,NA,NA,0.15,0
+5868,0,NA,7,7,0,NA,6.7,8,1.4,Moderate Active,0.15,2
+4851,1,NA,7.5,7,0,NA,6,7,1.7,Moderate Active,NA,NA
+6785,1,NA,6,8,0,NA,NA,6,NA,Active,53.81,0
+5775,0,NA,7,7,0,NA,9.33,7,1.6,Moderate Active,NA,2
+5871,0,NA,7,8,0,NA,NA,6,1.6,Moderate Active,241.7,0
+7809,0,NA,8,9,0,NA,8.86,7,1.5,Active,0.15,0
+4812,0,NA,6.5,8,0,NA,7.17,6,1.5,Moderate Active,0.15,2
+3815,0,NA,9,7,0,NA,NA,7,1.5,Very Active,369.2,2
+6854,0,NA,7,8,0,NA,8.68,7,1.4,Moderate Active,0.15,0
+4825,0,NA,6,6,0,NA,7.85,6,1.4,Active,0.15,0
+5856,0,NA,8,9,0,NA,NA,6,1.4,Low Active,0.15,0
+3823,0,NA,7,7,0,NA,8.83,4,1.6,Low Active,0.15,0
+7790,0,NA,8,8,0,NA,6.25,9,1.6,Active,134.5,2
+6844,0,NA,8,8,0,NA,7.75,7,1.5,Moderate Active,126.5,0
+4797,0,NA,7,7,0,NA,8.58,4,1.4,Moderate Active,0.15,2
+5831,0,NA,5,10,0,NA,8.14,7,1.7,Moderate Active,343,0
+7803,0,NA,8,8,0,NA,7.08,6,1.6,Low Active,NA,0
+6822,0,NA,7,8,0,NA,8,7,1.4,None,434.7,2
+4867,0,NA,9,8,0,NA,9.08,6,1.5,NA,0.15,0
+3812,0,NA,7,6,0,NA,8,6,1.4,Low Active,220.4,2
+5842,0,NA,6,8,0,NA,8.13,7,1.4,NA,0.15,0
+6874,0,NA,7,8,0,NA,8.77,6,1.7,Moderate Active,0.15,0
+6871,0,NA,8,7,0,NA,7.71,7,1.4,Moderate Active,NA,0
+6783,0,NA,7.5,8,0,NA,7.83,5,1.6,Moderate Active,0.15,2
+4831,0,NA,7,7.5,0,NA,9,6,1.7,Active,503.3,2
+3773,0,NA,6,10,0,NA,8.79,6,1.5,Very Active,426.6,0
+6800,0,NA,7.5,7,0,NA,NA,7,1.6,Very Active,0.15,2
+3776,0,NA,7,9,0,NA,7.42,NA,1.6,Moderate Active,531.9,0
+7819,0,NA,7,9,0,NA,8.33,7,1.6,Moderate Active,303.7,0
+5862,0,NA,7,8,0,NA,6.25,6,NA,Very Active,0.15,2
+6849,0,NA,7,7.5,0,NA,7.92,6,1.4,Active,395.2,2
+5886,1,NA,6.5,6,0,NA,8.06,6,1.7,Low Active,163.5,2
+3776,1,NA,8,9,0,NA,7.08,12,1.7,Moderate Active,519.8,0
+5804,0,NA,6,8,0,NA,6.88,6,1.4,Moderate Active,307,2
+7807,1,NA,7,8,0,NA,9.67,6,1.6,Active,0.15,2
+5850,0,NA,7,7,0,NA,10.64,7,1.6,Moderate Active,201.1,2
+4821,0,NA,7.5,8,0,NA,7.07,7,1.6,Very Active,379.7,2
+4866,0,NA,7,9,0,NA,NA,6,1.4,Active,602.2,2
+6800,0,NA,6,7,0,NA,NA,NA,1.6,Moderate Active,0.15,2
+5777,0,NA,6.5,7,0,NA,6.83,6,NA,Active,592.8,2
+6863,0,NA,8,9,0,NA,NA,7,1.4,Very Active,0.15,0
+4829,0,NA,8,7.5,0,NA,7,6,1.5,Moderate Active,343,2
+5883,0,NA,7,7,0,NA,8.02,7,1.4,Very Active,293,2
+6775,0,NA,7,0,0,NA,5.67,6,1.4,Moderate Active,0.15,0
+7820,0,NA,7,10,0,NA,8.33,7,1.5,Active,0.15,2
+6808,0,NA,7.5,9.5,0,NA,7.14,6,1.5,Active,227.4,2
+4852,1,NA,8,7,0,NA,7.54,6,1.6,Very Active,88.78,0
+4808,0,NA,6,7,0,NA,8.21,6,1.7,Low Active,NA,2
+6790,0,NA,7,9,0,NA,7.92,6,1.6,Active,0.15,2
+3823,0,NA,7,8,0,NA,NA,7,1.6,Moderate Active,0.15,2
+5800,0,NA,7,6,0,NA,7.75,7,1.5,Very Active,310.6,0
+6843,0,NA,7,8,0,NA,7.39,7,1.4,Low Active,3.52,2
+6780,0,NA,8,7,0,NA,6.54,7,NA,NA,0.15,2
+6780,0,NA,7,8,0,NA,NA,6,1.5,Low Active,422.5,2
+5862,0,NA,7,8,0,NA,8.21,6,1.6,Active,0.15,0
+4854,0,6/28/19,8,7,0,NA,9.29,7,1.5,Moderate Active,542.7,0
+4841,0,NA,8.5,10,0,NA,8.46,6,1.6,Low Active,177.4,2
+4868,0,NA,8,7,0,NA,6.83,6,1.5,Low Active,73.02,0
+5802,0,NA,7,7,0,NA,9.29,7,1.5,NA,0.15,0
+6807,0,NA,8,8,0,NA,7.03,12,1.6,Active,414.7,2
+5789,0,5/7/19,9,9,0,NA,8.58,8,1.5,Active,0.15,2
+6773,0,NA,8,8.5,0,NA,6.54,6,NA,Low Active,356.6,0
+5846,0,NA,8,7,0,NA,7.85,7,1.4,Low Active,306.5,2
+3829,0,NA,7.5,8,0,NA,7.75,6,1.4,Moderate Active,434.7,0
+6783,0,NA,8,7.5,0,NA,7.07,6,1.4,Moderate Active,NA,0
+7806,0,NA,7,12,0,NA,7.88,6,1.4,Very Active,90.71,0
+4796,0,NA,7,9,0,NA,6,7,1.4,Low Active,NA,0
+4789,0,NA,7.5,8,0,NA,7.17,7,1.5,Very Active,33.83,0
+5843,0,NA,7,8,0,NA,6.64,6,1.4,Moderate Active,0.15,2
+5813,0,NA,7,6.5,0,NA,8.43,7,1.6,Very Active,1053,2
+4790,0,NA,9,6,0,NA,8.63,6,1.5,Active,367.5,2
+4778,0,NA,6.5,8,0,NA,8.33,NA,1.5,Very Active,28.75,NA
+5790,0,NA,7,7,0,NA,7.26,19,1.5,Active,38.99,0
+7777,0,NA,7.5,6,0,NA,8.06,6,1.5,Active,620.8,0
+5840,0,NA,7,8,0,NA,NA,7,1.5,Low Active,367.5,2
+7789,0,NA,7,8,0,NA,8.14,6,1.5,Low Active,0.15,2
+4825,0,NA,7,8,0,NA,NA,6,1.7,Active,426.6,2
+7825,0,2/23/18,6,9,0,NA,7.88,11,1.6,Low Active,0.15,2
+6780,0,NA,7,7,0,NA,6.83,6,1.5,Active,641,0
+5871,0,NA,7,6,0,NA,7.4,9,1.6,Low Active,0.15,2
+6790,0,NA,6,8,0,NA,8.63,6,1.4,Active,65.49,2
+7785,1,NA,6,7,0,NA,NA,6,1.5,Low Active,546.1,2
+5871,0,5/7/19,7,7,0,NA,8.63,7,1.7,Low Active,0.15,0
+5796,0,NA,6,7,0,NA,NA,7,1.6,Very Active,0.15,0
+6774,0,NA,7,8,0,NA,8.08,8,1.5,Moderate Active,73.02,0
+6866,0,NA,7,8,0,NA,NA,NA,1.7,Low Active,0.15,2
+4838,0,NA,7,6,0,NA,7.08,6,NA,Low Active,0.15,NA
+4829,0,NA,6,8,0,NA,8.79,6,1.5,Sedentary,345.5,NA
+3803,1,NA,7,8,0,NA,8.33,7,1.6,Low Active,599.2,2
+5854,0,NA,7,9,0,NA,7.86,7,1.6,Moderate Active,0.15,NA
+4778,0,NA,6,9,0,NA,7.58,7,1.4,Very Active,0.15,0
+6789,0,NA,8,7,0,NA,6.79,8,1.4,Low Active,0.15,2
+7806,0,NA,7,6,0,NA,7.46,6,1.4,Moderate Active,0.15,2
+6819,0,NA,7,10,0,NA,7.17,6,1.6,Low Active,0.15,2
+5836,0,NA,6.5,9,0,NA,9.67,7,1.4,Sedentary,0.15,2
+6867,0,NA,6,8,NA,NA,NA,3,1.6,Low Active,0.15,0
+3812,0,NA,8,9,0,NA,7.13,6,NA,Moderate Active,174.6,0
+3774,0,NA,8,8,0,NA,8.08,4,1.5,Active,1194,0
+6807,0,NA,7.5,7,0,NA,7.5,6,1.7,Very Active,343,NA
+6868,0,NA,7,8,0,NA,7.25,7,1.7,Moderate Active,0.15,2
+7781,0,NA,8,7,0,NA,6.54,6,1.5,Moderate Active,0.15,0
+7812,0,NA,7,7,0,NA,7.92,7,1.7,Active,345.5,NA
+4790,0,NA,7,7,0,NA,7.18,7,1.4,Active,88.78,2
+5813,0,NA,6,7.5,0,NA,7.67,7,1.4,Low Active,NA,2
+4866,0,NA,6,10,0,NA,7.25,NA,NA,Active,0.15,0
+7797,1,NA,8,8,0,NA,9.32,7,1.4,Low Active,602.2,2
+5870,0,NA,6.5,8,0,NA,5.67,6,1.6,Moderate Active,0.15,2
+6797,0,NA,6,6,0,NA,7.67,7,1.6,Active,158.5,NA
+5867,0,NA,7,9,0,NA,7.08,6,1.5,Active,0.15,0
+5779,0,NA,7,8,1,NA,8.04,6,1.4,Very Active,599.2,0
+6811,0,NA,6,6.5,0,NA,8.58,7,1.4,Low Active,NA,0
+4828,0,NA,6.5,8,0,NA,NA,6,1.5,NA,340.7,NA
+3789,0,NA,7,6,0,NA,NA,6,1.6,Moderate Active,241.7,2
+3815,1,NA,5,7,0,NA,7.57,5,1.5,Active,NA,2
+7833,0,NA,7,7,0,NA,NA,6,1.4,Very Active,739.2,2
+4771,0,NA,7.5,7,0,NA,8.21,7,1.6,Moderate Active,NA,2
+5881,0,NA,7,7,0,NA,7.13,7,NA,Active,0.15,0
+3778,0,NA,7,7,0,NA,9.86,6,1.7,Low Active,180.4,2
+6771,0,NA,7.5,7,0,NA,8,6,1.4,Very Active,0.15,0
+5868,0,NA,8,8,0,NA,6.83,6,1.4,Moderate Active,662.2,0
+5772,0,NA,8,8,0,NA,8.08,7,1.4,Moderate Active,0.15,0
+4771,0,NA,5.5,6,0,NA,8.36,3,1.7,Moderate Active,0.15,2
+5880,0,NA,6.5,8,0,NA,8.14,NA,1.7,Moderate Active,0.15,0
+4841,0,NA,7,7.5,0,NA,8.08,NA,1.6,Active,0.15,NA
+5891,0,NA,7,7,0,NA,7.86,11,1.4,Moderate Active,130.6,0
+6812,0,NA,8,7,0,NA,7.54,7,1.5,Moderate Active,0.15,1
+4830,0,NA,7,8,0,NA,7.7,7,1.6,Very Active,0.15,0
+6788,0,NA,6,8,0,NA,7.71,7,1.6,Low Active,0.15,0
+5843,0,NA,6,12,0,NA,7.17,7,1.6,Moderate Active,0.15,0
+5843,1,NA,8,8,0,NA,NA,NA,1.4,Moderate Active,345.5,2
+4806,0,NA,6,6,0,NA,8.63,7,1.4,Low Active,0.15,0
+3781,0,NA,7.5,7,0,NA,7.14,8,1.5,Active,0.15,0
+6857,0,NA,8,8,0,NA,6.96,6,1.5,Moderate Active,0.15,0
+7819,0,NA,8,8,0,NA,6.54,7,1.5,Low Active,0.15,0
+4790,0,NA,7,7.5,0,NA,7.67,6,1.7,Low Active,428.3,0
+4773,0,NA,7,9,0,NA,NA,6,1.7,Moderate Active,0.15,0
+5863,0,NA,8,7,0,NA,8.17,8,1.5,Moderate Active,441.5,0
+3788,0,NA,8,7,0,NA,8.58,7,1.7,Sedentary,134.5,2
+5888,0,NA,7,7,0,NA,6.75,4,1.7,Moderate Active,111.5,2
+4830,0,NA,8,7,0,NA,8.22,7,1.6,Very Active,0.15,2
+4853,0,NA,7,8,0,NA,7.96,6,1.6,Low Active,417.8,2
+4868,0,NA,8,7,0,NA,7.88,7,1.6,Moderate Active,422.5,0
+4781,NA,NA,6,7,0,NA,8,7,1.6,Sedentary,NA,2
+4833,0,5/7/19,7,8,0,NA,8.17,8,1.5,Very Active,0.15,0
+3767,0,NA,7,8,0,NA,7.96,6,1.5,Low Active,265.4,2
+6828,0,NA,6,7,0,NA,7.83,7,1.6,Low Active,0.15,2
+5769,1,4/17/18,7.5,8,0,NA,8.4,8,1.6,Active,0.15,2
+4828,0,NA,8,7,0,NA,NA,6,1.4,Moderate Active,0.15,0
+4851,0,NA,9,7,0,NA,8.25,6,1.4,Active,0.15,2
+6773,0,NA,7.5,8,0,NA,NA,6,1.7,Moderate Active,894.7,0
+5797,0,NA,5,6,0,NA,7.57,6,1.7,Low Active,0.15,2
+4863,0,NA,7,9,0,NA,8,6,1.7,Moderate Active,0.15,0
+5814,0,NA,7,8,0,NA,8.75,4,1.7,Very Active,273.9,0
+6772,0,NA,5,8,0,NA,8.93,7,1.5,Very Active,0.15,2
+5802,0,NA,8,7,0,NA,7.75,7,1.7,Moderate Active,0.15,2
+7768,0,NA,7,7,0,NA,8,6,NA,Moderate Active,394.1,0
+3793,0,NA,8,7,0,NA,8.21,7,1.7,Moderate Active,0.15,2
+5831,0,NA,6,7,0,NA,8.13,7,1.4,Low Active,0.15,0
+4863,0,NA,7,8,0,NA,9.32,6,1.7,Very Active,NA,0
+7789,0,NA,5,6,0,NA,9.92,7,1.4,Moderate Active,831.4,0
+5848,0,NA,8,7,0,NA,NA,6,1.7,Low Active,598.4,NA
+6802,0,NA,7,7.5,0,NA,NA,7,1.5,Low Active,498.7,0
+4846,0,NA,8,8,0,NA,NA,7,1.4,Sedentary,0.15,2
+5854,0,NA,8,8,0,NA,6.75,7,1.5,Moderate Active,158.5,2
+6803,0,NA,6.5,9,0,NA,8.63,6,1.4,Low Active,340.7,2
+5851,0,4/17/18,6,9,NA,NA,6.69,7,1.4,Active,0.15,0
+4858,0,NA,9,7,0,NA,7.84,7,1.7,Low Active,803.8,0
+5853,0,NA,8,9,0,NA,8.35,6,1.5,Low Active,NA,0
+4869,0,NA,7,7,0,NA,9.08,6,1.5,Active,87.4,0
+5788,0,NA,7,8.5,0,NA,9,6,1.5,Moderate Active,417.8,0
+4849,0,NA,7,12,0,NA,8.63,7,1.4,Very Active,0.15,2
+4836,0,NA,6,7,0,4,7.33,7,1.4,Low Active,366.8,2
+4792,0,NA,6.5,8,0,NA,6.92,6,1.5,Low Active,0.15,2
+4770,0,NA,8,6.5,0,NA,6.79,6,1.6,Active,0.15,0
+7789,0,NA,8,9,0,NA,7.71,9,1.6,Low Active,12.24,0
+6828,0,NA,8,14,0,NA,7.54,6,1.4,Low Active,0.15,2
+6779,1,NA,7,8,0,NA,NA,6,1.5,Low Active,0.15,0
+6814,0,NA,9,8,0,NA,8.63,6,1.6,Very Active,0.15,2
+4861,0,NA,7,8,0,NA,8.58,6,1.5,Very Active,NA,0
+6819,0,NA,6,14,0,NA,7.67,6,1.5,None,0.15,2
+5891,0,NA,6.5,8,0,NA,8.61,6,1.6,Very Active,476.4,0
+5852,0,NA,7,10,0,NA,7.71,6,1.5,Low Active,0.15,0
+4820,0,NA,5,8,0,NA,7.54,6,1.5,Active,89.8,0
+3768,0,NA,9,8,0,NA,7.58,7,1.5,Low Active,0.15,2
+7774,0,NA,7,7,0,NA,8.33,7,1.4,Very Active,0.15,NA
+6795,0,NA,6.5,7.5,0,NA,9.14,6,1.4,Very Active,962.4,2
+4790,0,NA,6,7,0,NA,7.67,6,1.4,Very Active,394.1,0
+4861,0,NA,6,8,0,NA,8.43,7,1.6,Very Active,55.72,0
+5797,0,NA,7,7,0,NA,NA,7,1.4,Moderate Active,174.6,0
+4785,0,NA,7,8,0,NA,8.89,7,1.5,Moderate Active,524.2,2
+6879,0,NA,6,6.5,0,NA,NA,6,1.4,Active,307,0
+4794,0,NA,8,7,0,NA,9,5,NA,Low Active,305.9,NA
+5805,0,NA,7,7,0,NA,8.86,6,1.4,Low Active,12.24,2
+4800,0,NA,8,7,0,NA,8.71,10,1.7,Moderate Active,NA,2
+7768,0,NA,8,7,0,NA,8.17,8,1.4,Moderate Active,224.8,0
+6849,0,NA,7,8,0,NA,7.5,6,1.4,Moderate Active,0.15,0
+5856,0,NA,6,8,0,NA,NA,6,1.7,Active,0.15,0
+5885,0,NA,6,8,0,NA,8.58,6,1.5,Active,417.8,0
+4776,0,NA,6.5,7,0,NA,7.61,6,NA,Active,0.15,2
+5864,0,NA,6,7,0,NA,7.83,6,1.6,Active,287.2,2
+6841,0,NA,6.5,10,0,NA,8.75,6,1.6,Active,562.2,0
+7835,0,NA,6,7,0,NA,8.58,7,1.6,Low Active,0.15,0
+5847,0,NA,8,9,0,0,8.71,NA,1.7,Moderate Active,0.15,2
+4814,0,NA,7.5,8,0,NA,7.13,6,1.7,Low Active,0.15,2
+4838,0,NA,7,9,0,NA,7.29,6,1.7,Low Active,NA,2
+6840,0,8/7/18,8,7,0,NA,9.25,6,1.6,Very Active,304.6,2
+6787,0,NA,8,7,1,NA,8.29,6,1.7,Active,256,2
+3784,0,NA,6,7,0,NA,8.86,6,1.5,Moderate Active,87.43,2
+5821,0,NA,8,8,0,NA,6.79,6,1.5,Very Active,459.1,2
+5779,0,NA,9,8,0,NA,8.39,9,1.4,Active,0.15,0
+6862,0,NA,8,7,0,NA,NA,7,1.7,Moderate Active,0.15,0
+7790,0,NA,7,7,0,NA,8.63,6,1.4,Very Active,831.4,0
+5776,0,NA,8,7,0,NA,7.71,6,1.6,Moderate Active,0.15,0
+6813,0,NA,7,8,0,NA,7.79,6,1.7,Moderate Active,379.7,2
+5794,0,NA,4,8,0,NA,6.75,7,1.7,Low Active,515.9,0
+6868,0,NA,6.5,8,0,NA,7.96,7,1.5,Very Active,0.15,0
+5802,0,NA,8,7.5,0,NA,NA,7,1.5,Active,0.15,2
+4779,0,NA,7,6,0,NA,8.71,6,1.6,Low Active,0.15,2
+3773,0,NA,7.5,8,0,NA,7.07,6,NA,NA,0.15,0
+5839,0,NA,7,10,0,NA,8,7,1.7,Moderate Active,0.15,2
+5861,0,NA,8,8,0,NA,NA,8,1.4,Low Active,899.9,0
+5836,0,NA,7.5,7,0,NA,8.92,7,1.6,Moderate Active,455.2,2
+4777,0,NA,7.5,6,0,NA,8.86,3,1.6,Moderate Active,838.5,0
+5802,0,NA,7.5,7,0,NA,8.71,6,1.5,Low Active,282.4,0
+4823,0,NA,7,7,0,NA,7,23,1.7,Active,0.15,2
+6869,0,NA,6.5,8,0,NA,7.88,7,1.4,Low Active,0.15,NA
+7800,0,NA,6,7,0,NA,NA,7,1.4,Moderate Active,0.15,2
+3786,0,NA,9,8,0,NA,7.91,6,1.3,Active,0.15,0
+4771,0,NA,8,8,0,NA,8.75,9,1.7,Very Active,721.9,0
+4814,0,NA,7,7,0,NA,8.5,7,1.6,Very Active,567.5,2
+4866,0,NA,8,8,0,NA,8.04,6,1.7,Moderate Active,30.35,0
+6863,1,NA,7,7,0,NA,10.33,7,1.4,Moderate Active,0.15,0
+4869,0,NA,6,5,0,NA,7.18,7,1.6,Moderate Active,0.15,2
+4851,0,NA,7,6,0,NA,9.14,6,1.7,Moderate Active,0.15,2
+4790,0,NA,7,7,0,NA,7.14,7,1.7,NA,0.25,2
+4809,0,NA,7,7,0,NA,7.71,6,1.4,Active,NA,0
+4798,0,6/28/19,7.5,7,0,NA,6.11,7,1.7,Active,0.15,0
+7767,0,NA,8,8,0,NA,8.71,NA,1.3,Moderate Active,0.4,2
+5844,0,NA,7.5,7,0,NA,8.25,6,1.4,Active,0.15,2
+7816,0,NA,7,9,0,NA,8.04,6,1.7,Low Active,NA,2
+7806,0,1/25/16,6.5,6,0,NA,8.86,6,1.7,Active,0.15,0
+6797,0,NA,8,8,0,NA,7.85,6,1.5,Very Active,0.15,2
+6832,0,NA,6,7,0,NA,6.88,6,1.6,Very Active,307,2
+7775,0,NA,6,6,0,NA,7.26,7,1.4,Active,366.8,2
+6809,0,NA,6.5,8,0,NA,6,4,1.7,Low Active,628.1,2
+4848,0,NA,8.5,9,0,NA,6.88,7,1.7,Low Active,NA,2
+5826,0,NA,8,8,0,NA,8.43,11,NA,Moderate Active,0.15,2
+5836,0,NA,8,8,0,NA,NA,6,1.4,Very Active,0.15,2
+4846,1,NA,7,8,1,NA,7.42,7,1.4,Moderate Active,NA,0
+4841,0,NA,7,7,0,NA,7.67,6,1.5,Moderate Active,0.15,0
+7823,1,NA,8,7,0,NA,8.33,7,1.4,Low Active,434.7,0
+7797,0,NA,7,8,0,NA,6.7,6,1.5,Very Active,66.97,2
+7786,0,NA,5,8,0,NA,7.25,13,1.4,Active,897,2
+6806,0,NA,6,8.5,0,NA,9,7,1.4,Very Active,1227,0
+7790,0,NA,7,8,0,NA,7.88,6,1.7,Moderate Active,0.15,2
+3767,0,NA,6.5,7,0,NA,5.71,6,1.5,Very Active,0.15,2
+4838,0,NA,8,6.5,0,NA,9.58,7,1.7,Moderate Active,0.15,2
+6776,0,NA,7,7,0,NA,7.71,7,1.6,Very Active,NA,2
+5790,0,NA,8,7,0,NA,9.64,6,1.7,NA,435.9,NA
+5849,0,NA,8,7,0,NA,NA,11,1.4,Low Active,89.8,2
+5854,0,NA,6,7,0,NA,6.96,7,1.5,Very Active,0.15,0
+7776,0,NA,5,6,0,NA,9.25,7,1.5,NA,0.15,2
+3789,0,NA,9,8,0,NA,9,9,1.7,Moderate Active,0.15,0
+4852,0,NA,8,8,0,NA,7.67,6,1.5,Moderate Active,0.15,2
+7809,0,NA,8,9.5,0,NA,9.86,NA,1.4,Active,106.2,0
+6784,0,NA,7,8,0,NA,NA,7,1.6,Moderate Active,NA,0
+5783,0,NA,8,10,0,NA,7.54,7,1.5,Low Active,562.2,0
+6827,0,NA,7,7,0,NA,8.79,6,1.5,Low Active,343,0
+4869,0,NA,7,7.5,0,NA,7.48,8,1.7,Very Active,785.8,2
+6847,0,NA,6.5,7,0,NA,NA,6,1.4,Moderate Active,NA,0
+5848,0,NA,5,9,0,NA,7.58,5,1.6,Low Active,NA,NA
+4779,0,NA,6,6,0,NA,9,7,1.5,NA,0.15,2
+5875,0,NA,5,8,0,NA,9,6,1.6,Low Active,0.15,0
+4802,0,NA,7,5,0,NA,9.13,6,NA,Sedentary,899.9,0
+7813,0,NA,7,56,0,NA,8.89,10,1.5,Very Active,271.3,0
+5778,0,NA,8,7,0,NA,6.83,7,1.4,Moderate Active,0.15,0
+6782,0,NA,6,8,0,NA,6.52,6,1.6,Moderate Active,0.15,2
+7833,0,NA,8.5,6,0,NA,7.57,6,1.7,Low Active,0.15,0
+4820,0,4/17/18,6,6.5,0,NA,7.4,6,1.5,Moderate Active,0.15,0
+5821,0,NA,6,6,0,NA,7.5,6,NA,Active,0.15,NA
+7816,0,NA,7.5,9,0,NA,NA,6,1.5,NA,739.2,2
+7771,0,NA,7.5,9,0,NA,7.85,10,1.5,Low Active,899.9,2
+3792,0,NA,6,8.5,0,NA,NA,7,1.6,Active,739.2,2
+3792,0,NA,8,7,0,NA,5.7,6,1.4,Low Active,0.15,2
+4846,0,NA,6.5,9,0,NA,NA,7,1.6,Moderate Active,0.15,2
+4866,0,NA,7,7,0,NA,8.33,6,1.5,Low Active,0.15,0
+7767,0,NA,7,7,0,NA,6.83,7,1.7,Active,NA,2
+6809,0,5/5/18,7.5,7,0,NA,7.71,7,1.6,Active,962.4,2
+7801,0,NA,7,8,0,NA,8.61,5,1.7,Moderate Active,171.9,2
+5860,0,NA,6.5,8,0,NA,6.57,6,1.6,Low Active,168.6,0
+3776,0,NA,5,8,0,NA,8.77,6,1.5,Active,NA,NA
+4856,0,NA,5,8,0,12,11.04,6,1.4,Active,NA,0
+5820,0,NA,7,9,0,NA,9.08,7,1.7,Moderate Active,0.15,0
+6849,0,NA,6,7,1,NA,8.86,6,1.6,Low Active,NA,2
+5851,0,NA,6,7,0,NA,NA,7,1.4,Very Active,158.8,2
+4824,0,NA,7.5,7.5,0,NA,8.17,6,1.6,Very Active,0.15,2
+4843,0,NA,7,8,0,NA,NA,10,1.7,Moderate Active,NA,2
+3789,0,NA,6,7,0,NA,6.92,9,1.7,Low Active,0.15,0
+5834,1,NA,8,12,0,NA,10.58,8,1.4,Active,0.15,0
+7816,0,NA,7,7,0,NA,7.92,7,1.7,Low Active,0.15,2
+5873,0,NA,7,9,0,NA,8.61,6,1.5,Moderate Active,0.15,0
+6788,0,NA,7,8,0,NA,7.53,6,1.6,Moderate Active,0.15,2
+5791,0,NA,6,7,0,NA,7.92,6,1.4,Low Active,22.32,NA
+6847,0,NA,8,9,0,NA,7.92,6,1.6,Low Active,0.15,2
+7787,0,NA,5,8,0,NA,7.36,7,1.6,Very Active,0.15,NA
+3789,0,NA,6,8,0,NA,8.21,NA,1.5,NA,0.15,0
+4857,0,NA,7,9,0,NA,8.46,7,1.4,Moderate Active,1227,0
+4804,0,NA,7.5,7,0,NA,6.11,6,1.4,Moderate Active,435.9,0
+4828,0,NA,7,9,0,NA,NA,8,NA,Moderate Active,369.2,2
+4803,0,NA,7,7,0,NA,8.71,6,NA,Active,0.15,0
+4859,0,NA,8,8,0,NA,7.96,6,1.5,Low Active,304.6,2
+6823,0,NA,7,7,0,NA,6.79,6,1.4,Moderate Active,777,2
+4863,1,NA,8,8,0,NA,7.92,7,1.4,Very Active,306.5,0
+4849,0,NA,8,8,0,NA,7.25,8,1.6,Very Active,22.32,2
+3780,0,NA,6,7,0,NA,8.36,7,1.7,Active,0.15,2
+4828,0,NA,7,8,0,NA,8.17,6,1.6,Low Active,0.15,0
+4787,0,NA,7,8,0,NA,8.46,6,1.4,Moderate Active,785.8,2
+5844,0,NA,6,6,0,NA,8.89,6,1.5,Active,NA,0
+4835,1,NA,7,9,0,NA,6.92,6,1.4,Moderate Active,0.15,0
+3789,0,NA,7,10,0,NA,9.25,6,1.4,Moderate Active,39.96,2
+5782,0,NA,7,6,0,NA,7.71,6,NA,Moderate Active,38.99,2
+6817,0,NA,7,6,0,NA,NA,6,1.5,Active,0.15,2
+5836,0,NA,7,6,0,NA,7.08,7,1.6,Very Active,201,2
+5854,0,NA,7,8,0,NA,9.5,6,1.5,Very Active,0.15,0
+7796,0,NA,8,8,0,NA,8.92,6,1.4,Moderate Active,NA,0
+6787,0,NA,8,8,0,NA,6.92,7,1.7,Active,0.15,2
+4809,0,6/20/19,7,8,0,NA,7.63,NA,1.7,NA,0.15,0
+5816,0,8/7/18,6,9,0,NA,NA,7,1.5,NA,45.35,0
+3824,0,NA,7.5,7,0,NA,7.63,7,1.5,Low Active,0.15,2
+4778,0,NA,7,7,0,NA,6.79,6,1.5,Sedentary,112.9,2
+5845,0,NA,6.5,9,0,NA,7.58,9,1.6,Moderate Active,1177,2
