@@ -91,8 +91,6 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
    - Note,  this program and many ML programs struggle with longitudinal data
    
 **Output:**
-
-**/home/output_DATESTAMP/:**
  - **na_counts.csv**: counts of nas found in the input data
  - **na_counts.pdf**: vizualization of the nas
  - **summary_problems.csv**: summarizing where problems occured during import, which may cause downstream problems. The columns are as follows:
