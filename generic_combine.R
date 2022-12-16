@@ -65,13 +65,13 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-# opt <- data.frame(subject_identifier=character(),
-#                                 cor_level=numeric(),
-#                                 cor_choose=logical(),
-#                                 preserve_samples=logical(),
-#                                 input=character(),
-#                                 output_file=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.98, cor_choose = FALSE, preserve_samples = FALSE, input = c("/home/output_tmp/"), output_file="pipeline_nutrition_test.csv")
+opt <- data.frame(subject_identifier=character(),
+                                cor_level=numeric(),
+                                cor_choose=logical(),
+                                preserve_samples=logical(),
+                                input=character(),
+                                output_file=character())
+opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## check for inputs ============================================================
 
@@ -107,7 +107,10 @@ if (file.exists("summary_dataset_problems.csv")) {
 
 for (fil in summary_problems$dataset) {
     ## copy into a tmp directory
-    file.copy(from = paste0("clean_files/", fil, ".csv"), to = "problem_check/", recursive = F) 
+    print(fil)
+    if (file.exists(paste0("clean_files/", fil, ".csv"))) {
+      file.copy(from = paste0("clean_files/", fil, ".csv"), to = "problem_check/", recursive = F) 
+    }
 }
 
 ## run generic_read_in.R on this problem subset and see if any problems occur
@@ -146,7 +149,7 @@ if (length(fils) > 0) {
 }
 
 ## merge them all together
-full_merge <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all.x = TRUE), myfiles)
+full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all.x = TRUE), myfiles))
 
 ## check sample size here ======================================================
 
@@ -283,77 +286,82 @@ co_corr_list_add <- c(high_cor$keep[!is.na(high_cor$`co-correlated`)])
 co_corr_list <- c(co_corr_list_add, co_corr_list)
 
 ## co-correlate these vars
-correlate_figure <- corr_raw_data$dat_transformed %>% 
-  dplyr::select(., any_of(co_corr_list), -dummy_var) %>%
-  corrr::correlate(method = "pearson") %>% 
-  tibble::column_to_rownames(., var = "term") %>% abs()
-
-## set anything below cor threshold to zero
-v1 <- colnames(correlate_figure)
-correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (as.numeric(opt$cor_level) - 0.000001)), 0))
-
-## remove cols and rows that are NAs
-correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
-correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
-
-if (NROW(correlate_figure) > 5) {
-  ## write interactive heatmap of correlation
-  cor_figure <- heatmaply::heatmaply_cor(
-    as.matrix(correlate_figure),
-    #node_type = "scatter",
-    #point_size_mat = -log10(p), 
-    #point_size_name = "-log10(p-value)",
-    label_names = c("x", "y", "Correlation"),
-    file = "correlation_heatmap.html",
-    #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
-    main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
-  )
-} else {
-  cat("\n", "You have too few correlated variables for the heatmap function to probably work", "\n\n")
-  cat("We printed the correlation matrix to file, might help!", "\n\n")
-  readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
-}
-
-
-## decide which co-correlated vars to keep =====================================
-
-if (opt$cor_choose == TRUE) {
-  corr_decision_list = c()
+if (length(co_corr_list) > 0) {
   
-  corr_choices <- high_cor %>%
-    tidyr::drop_na() %>%
-    dplyr::pull(var = keep)
-  for (keep_var in corr_choices) {
-    ## get vars that are co-correlated
-    corr_choose <- subset(high_cor, high_cor$keep == keep_var)
-    
-    ## get rid of the | and make list
-    corr_choose_list <- c(corr_choose$`co-correlated`)
-    corr_choose_list <- gsub(pattern = "\\|", replacement = " ", x = corr_choose_list)
-    corr_choose_list <- unlist(strsplit( corr_choose_list, " " ))
-    
-    ## put into dataframe with the auto-kept var
-    #corr_choose_df <- as.data.frame(c(corr_choose$keep, corr_choose_list))
-    corr_options <- c(corr_choose$keep, corr_choose_list)
-    corr_choose_df <- as.data.frame(sq = seq_along(corr_options), corr_options)
-    
-    ## interactive decision 
-    print(corr_choose_df)
-    cat("Which corr_option (select the number) do you want included in the model?")
-    corr_decision <- readLines("stdin", n = 1)
-    corr_decision_list <- append(x = corr_decision_list, values = corr_choose_df$corr_options[as.numeric(corr_decision)])
-    
+  correlate_figure <- corr_raw_data$dat_transformed %>% 
+    dplyr::select(., any_of(co_corr_list), -dummy_var)
+  correlate_figure <- corrr::correlate(x = correlate_figure, method = "pearson") %>% 
+    tibble::column_to_rownames(., var = "term") %>% abs()
+  
+  ## set anything below cor threshold to zero
+  v1 <- colnames(correlate_figure)
+  correlate_figure[v1] <- lapply(correlate_figure[v1], function(x) replace(x,  (x < (as.numeric(opt$cor_level) - 0.000001)), 0))
+  
+  ## remove cols and rows that are NAs
+  correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
+  correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
+  
+  if (NROW(correlate_figure) > 5) {
+    ## write interactive heatmap of correlation
+    cor_figure <- heatmaply::heatmaply_cor(
+      as.matrix(correlate_figure),
+      #node_type = "scatter",
+      #point_size_mat = -log10(p), 
+      #point_size_name = "-log10(p-value)",
+      label_names = c("x", "y", "Correlation"),
+      file = "correlation_heatmap.html",
+      #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
+      main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
+    )
+  } else {
+    cat("\n", "You have too few correlated variables for the heatmap function to probably work", "\n\n")
+    cat("We printed the correlation matrix to file, might help!", "\n\n")
+    readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
   }
   
-  ## add in the non-co-correlated vars
-  full_decision_list <- c(un_corr_list, corr_decision_list)
   
+  ## decide which co-correlated vars to keep =====================================
+  
+  if (opt$cor_choose == TRUE) {
+    corr_decision_list = c()
+    
+    corr_choices <- high_cor %>%
+      tidyr::drop_na() %>%
+      dplyr::pull(var = keep)
+    for (keep_var in corr_choices) {
+      ## get vars that are co-correlated
+      corr_choose <- subset(high_cor, high_cor$keep == keep_var)
+      
+      ## get rid of the | and make list
+      corr_choose_list <- c(corr_choose$`co-correlated`)
+      corr_choose_list <- gsub(pattern = "\\|", replacement = " ", x = corr_choose_list)
+      corr_choose_list <- unlist(strsplit( corr_choose_list, " " ))
+      
+      ## put into dataframe with the auto-kept var
+      #corr_choose_df <- as.data.frame(c(corr_choose$keep, corr_choose_list))
+      corr_options <- c(corr_choose$keep, corr_choose_list)
+      corr_choose_df <- as.data.frame(sq = seq_along(corr_options), corr_options)
+      
+      ## interactive decision 
+      print(corr_choose_df)
+      cat("Which corr_option (select the number) do you want included in the model?")
+      corr_decision <- readLines("stdin", n = 1)
+      corr_decision_list <- append(x = corr_decision_list, values = corr_choose_df$corr_options[as.numeric(corr_decision)])
+      
+    }
+    
+    ## add in the non-co-correlated vars
+    full_decision_list <- c(un_corr_list, corr_decision_list)
+  } else {
+    
+    full_decision_list <- high_cor$keep
+    
+  }
 } else {
   
   full_decision_list <- high_cor$keep
   
 }
-
 
 ## summarize features kept =====================================================
 
