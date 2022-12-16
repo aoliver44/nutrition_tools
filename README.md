@@ -78,6 +78,7 @@ Options:
 ./generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
 
 ```
+**Desired input:** A flat-file(s) where each row has a unique identifier (a subject or sample ID) and each column is some feature measured. Should multiple files exist, the unique identifier will be present in all files.
 
 This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx) and attempt to run some basic checks on them and basic cleaning. For example:
 1. Check to see if a key is present that will link all the data together if split in multiple files (i.e. "subject_id")
