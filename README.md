@@ -41,7 +41,7 @@ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
 cd /home
 
-## example (local installation):
+########### example (local installation): ###########
 docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
 cd /home/
  ```
@@ -72,7 +72,8 @@ Options:
 	-h, --help
 		Show this help message and exit
 
-## example:
+########### example: ###########
+
 ./generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
 
 ```
@@ -127,7 +128,8 @@ Arguments:
     input  input directory containing files
     output_file  output file name 
 
-## example:
+########### example: ###########
+
 ./generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE simulated_output/ merged_data.csv 
  ```
 
