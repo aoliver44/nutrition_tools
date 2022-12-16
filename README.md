@@ -13,8 +13,8 @@
 
 ```
 ## download repository
-$ git clone https://github.com/aoliver44/nutrition_tools.git
-$ cd nutrition_tools
+git clone https://github.com/aoliver44/nutrition_tools.git
+cd nutrition_tools
 ```
 This will pull down the scripts and dockerbuild files necessary to run these scripts
 
@@ -24,28 +24,28 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 
  ```
 ## Option 1 (preferred), local installation:
-$ docker pull aoliver44/nutrition_tools:1.0
+docker pull aoliver44/nutrition_tools:1.0
 
 ## Option 2: Build it yourself! Still local installation.
-$ docker build -t nutrition_tools:1.0 .
+docker build -t nutrition_tools:1.0 .
 
 ## to run
-$ docker run --rm -it -v /path/to/data:/home/data \
+docker run --rm -it -v /path/to/data:/home/data \
 > -v /path/to/github_repo/nutrition_tools:/home/ \
 > nutriton_tools:1.0 bash
 
 ## example:
-$ docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home nutrition_tools:1.0 bash
-$ cd /home/
+docker run --rm -it -v /User/$USER/Downloads/nutrition_tools/:/home nutrition_tools:1.0 bash
+cd /home/
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 ## pull image from internet
-$ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
+singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
 ## run image
-$ singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
-$ cd /home
+singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
+cd /home
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
@@ -61,7 +61,7 @@ You are now operating inside a container, which contains the software necessary 
 ### **3. Run generic_read_in.R**
 
 ```
-bash$ Rscript generic_read_in.R -h
+bashRscript generic_read_in.R -h
 Usage: generic_read_in.R [options]
 
 Options:
@@ -75,7 +75,7 @@ Options:
 		Show this help message and exit
 
 ## example:
-$ ./generic_read_in.R --subject_identifier subject_id /home/data/ 
+./generic_read_in.R --subject_identifier subject_id /home/data/ 
 
 ```
 
