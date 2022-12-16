@@ -77,6 +77,7 @@ set.seed(1)
 
 ## set working dir to /home for the docker container
 setwd(opt$input)
+full_path <- getwd()
 
 ## check and see if clean_files directory exists
 cat("Checking for clean_files directory and summary_dataset_problems.csv", "\n\n")
@@ -107,7 +108,6 @@ if (file.exists("summary_dataset_problems.csv")) {
 
 for (fil in summary_problems$dataset) {
     ## copy into a tmp directory
-    print(fil)
     if (file.exists(paste0("clean_files/", fil, ".csv"))) {
       file.copy(from = paste0("clean_files/", fil, ".csv"), to = "problem_check/", recursive = F) 
     }
@@ -385,11 +385,11 @@ kept_features_summary <- kept_features_summary %>%
   tibble::add_row(features = full_decision_list) %>% 
   dplyr::mutate(., category = ifelse(is.na(category), "final_feature_list", category))
 
-readr::write_delim(x = kept_features_summary, file = paste0(opt$input, "feature_summary.csv"), delim = ",", quote = NULL)
+readr::write_delim(x = kept_features_summary, file = paste0(full_path, "/feature_summary.csv"), delim = ",", quote = NULL)
 
 ## write final file for ML =====================================================
 
 for_ml <- corr_raw_data$dat_transformed %>% 
   dplyr::select(., any_of(full_decision_list))
 
-readr::write_delim(for_ml, file = paste0(opt$input, opt$output_file), delim = ",", quote = NULL)
+readr::write_delim(for_ml, file = paste0(full_path, "/", opt$output_file), delim = ",", quote = NULL)
