@@ -82,6 +82,7 @@ $ ./generic_read_in.R --subject_identifier subject_id /home/data/
 This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx) and attempt to run some basic checks on them and basic cleaning. For example:
 1. Check to see if a key is present that will link all the data together if split in multiple files (i.e. "subject_id")
 2. Check to see if subject_id is unique across rows or if there are duplicated values
+   - Duplicated subject ids suggest longitudinal data. The downstream ML methods in this work does not work well with longitudinal data 
 3. Check to see if there are duplicated column names
    - Sub-check: if the column names are duplicated, is the data also duplicated?
 4. Keep a tally of columns that contain NAs.
@@ -120,7 +121,7 @@ Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
-    --cor_level level of general feature correlation [default: 0.95]
+    --cor_level level of general feature correlation [default: 0.99]
     --cor_choose choose which features are kept in correlation [default: FALSE]
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
@@ -129,4 +130,8 @@ Arguments:
     output_file  output file name 
  ```
 
-
+This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
+1. Check and see if problems identified in generic_read_in.R step were addressed. If they were not addressed, these problematic datasets will be DROPPED.
+2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high. In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
+3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
+   - Note: If your response var of interest is correlated with another feature(s) at > 0.99, please take care to make sure you choose the response var to end up in the final dataset.
