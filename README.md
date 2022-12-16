@@ -42,6 +42,7 @@ singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/r
 cd /home
 
 ########### example (local installation): ###########
+
 docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
 cd /home/
  ```
