@@ -48,7 +48,6 @@ opt <- docopt(doc, version = 'generic_read_in.R v1.0\n\n')
 library(tibble, quietly = T, verbose = F, warn.conflicts = F)
 library(janitor, quietly = T, verbose = F, warn.conflicts = F)
 library(readr, quietly = T, verbose = F, warn.conflicts = F)
-library(readxl, quietly = T, verbose = F, warn.conflicts = F)
 library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
 library(reshape2, quietly = T, verbose = F, warn.conflicts = F)
 library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
@@ -133,11 +132,13 @@ for (file in fils) {
                            name_repair = "minimal", na = na_possibilities) %>%
       suppressMessages() %>% suppressWarnings()
     
-  } else if (strsplit(basename(file), split="\\.")[[1]][2] == "xls") {
-    f <- suppressMessages(readxl::read_xls(file, .name_repair = "minimal", na = na_possibilities))
-  } else if (strsplit(basename(file), split="\\.")[[1]][2] == "xlsx") {
-    f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal", na = na_possibilities))
-  }
+  } # else if (strsplit(basename(file), split="\\.")[[1]][2] == "xls") {
+  #   f <- suppressMessages(readxl::read_xls(file, .name_repair = "minimal", na = na_possibilities))
+  # } else if (strsplit(basename(file), split="\\.")[[1]][2] == "xlsx") {
+  #   f <- suppressMessages(readxl::read_xlsx(file, .name_repair = "minimal", na = na_possibilities))
+  # }
+  ## commented out because alpine doesnt install readxl
+  ## and it might be a little dumb to read in xlsx 
   
   ## assign file name to variable/column
   f$dataset <- file_name
