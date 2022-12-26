@@ -24,7 +24,7 @@ setwd("/home")
 
 ## add commandline options =====================================================
 
-library(docopt)
+library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Combine data from read_in step, prior to ML
 Usage:
     generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
@@ -47,15 +47,14 @@ opt <- docopt::docopt(doc, version = 'generic_combine.R v1.1\n\n')
 
 ## load libraries ==============================================================
 
-library(dplyr)
-library(tibble)
-library(tidyr)
-library(readr)
-library(janitor)
-library(mikropml)
-library(Hmisc)
-library(heatmaply)
-library(corrr)
+library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
+library(tibble, quietly = T, verbose = F, warn.conflicts = F)
+library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
+library(readr, quietly = T, verbose = F, warn.conflicts = F)
+library(janitor, quietly = T, verbose = F, warn.conflicts = F)
+library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
+library(Hmisc, quietly = T, verbose = F, warn.conflicts = F)
+library(corrr, quietly = T, verbose = F, warn.conflicts = F)
 
 ## set random seed if needed
 set.seed(1)
@@ -92,39 +91,41 @@ if (length(fils) >= 1) {
 
 ## check and make sure summary_dataset_problems exists
 if (file.exists("summary_dataset_problems.csv")) {
-  cat(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"), "\n\n")
-  cat("Using file to check if clean_files have been fixed...", "\n\n")
   
   ## use summary_problems to check and see if problems still exist in data
   summary_problems <- read.csv("summary_dataset_problems.csv")
+  summary_problems <- summary_problems %>% tidyr::drop_na()
+
+  if (NROW(summary_problems > 1) && rowSums(summary_problems[,2:NCOL(summary_problems)]) > 0) {
   
+  ## output messages
+  cat(paste0("summary_dataset_problems file found: ", opt$input, "summary_dataset_problems.csv"), "\n\n")
+  cat("Using file to check if clean_files have been fixed...", "\n\n")
   cat(paste0("Checking all files that were previously identified as problems"), "\n\n")
-  
+    
   ## make a tmp directory and copy problem files into
   dir.create(file.path(paste0("problem_check/")))
-}
-
-## check if problem files are fixed ============================================
-
-for (fil in summary_problems$dataset) {
+  ## check if problem files are fixed ============================================
+  
+  for (fil in summary_problems$dataset) {
     ## copy into a tmp directory
     if (file.exists(paste0("clean_files/", fil, ".csv"))) {
       file.copy(from = paste0("clean_files/", fil, ".csv"), to = "problem_check/", recursive = F) 
     }
-}
-
-## run generic_read_in.R on this problem subset and see if any problems occur
-system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
-
-## check and see if summary_dataset_problems got written  
-if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
-    summary_problems_recheck <- read.csv(paste0(opt$input,"problem_check/output/summary_dataset_problems.csv"))
-    summary_problems_recheck <- summary_problems_recheck %>% 
-      dplyr::filter(., dataset != "Name of dataset") %>%
-      dplyr::filter(., dataset != "NA")
-    
-  if (NROW(summary_problems_recheck >= 1)) {
-    
+  }
+  
+  ## run generic_read_in.R on this problem subset and see if any problems occur
+  system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  
+  ## check and see if summary_dataset_problems got written  
+    if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
+      summary_problems_recheck <- read.csv(paste0(opt$input,"problem_check/output/summary_dataset_problems.csv"))
+      summary_problems_recheck <- summary_problems_recheck %>% 
+        dplyr::filter(., dataset != "Name of dataset") %>%
+        dplyr::filter(., dataset != "NA")
+      
+      if (NROW(summary_problems_recheck >= 1)) {
+        
         problem_check_dataset <- summary_problems_recheck[1,]$dataset
         problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
         
@@ -139,13 +140,18 @@ if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
         fils <- as.data.frame(fils) %>% 
           dplyr::filter(., !grepl(pattern = paste(summary_problems_recheck$dataset, collapse = "|"), x = fils)) %>%
           pull(., var = "fils")
+      }
+    }
   }
 }
+
 ## read in & merge clean files =================================================
 
 ## read in the files that passed muster
 if (length(fils) > 0) {
-    myfiles = lapply(fils, read_csv)
+    myfiles = lapply(fils, read_csv) %>%
+      suppressMessages() %>%
+      suppressWarnings() 
 }
 
 ## merge them all together
@@ -161,16 +167,16 @@ if (NROW(full_merge) < 200) {
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
-  x <- readLines(file("stdin"),1)
-  
+  x <- suppressWarnings(readLines(file("stdin"),1))
+
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
   cat("\n", "Note:", "\n\n")
   cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
-  x <- readLines(file("stdin"),1)
-
+  x <- suppressWarnings(readLines(file("stdin"),1))
+  
 }
 
 ## de-duplicate based on NA count ==============================================
@@ -185,7 +191,9 @@ full_merge_dedup <- full_merge %>%
   tibble::column_to_rownames(., var = "feature") %>%
   t() %>%
   as.data.frame() %>%
-  readr::type_convert(.)
+  readr::type_convert(.) %>%
+  suppressMessages() %>%
+  suppressWarnings()
 
 ## pre-corr col drop ===========================================================
 
@@ -252,16 +260,16 @@ if (as.numeric(opt$cor_level) < 0.99) {
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
-  x <- readLines(file("stdin"),1)
+  x <- suppressWarnings(readLines(file("stdin"),1))
 
 }
 
 ## prepare the data for correlation (one-hot encode, remove zero-variance)
-corr_raw_data <- mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
+corr_raw_data <- suppressMessages(suppressWarnings(mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
                                          method = NULL,
                                          outcome_colname = "dummy_var", ## meaningless var
                                          collapse_corr_feats = F, 
-                                         remove_var = "zv")
+                                         remove_var = "zv")))
 
 ## co-correlate features at specified threshold
 high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed, 
@@ -270,7 +278,8 @@ high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed,
 ## make dataframe of what is correlated at specified threshold.
 high_cor <- as.data.frame(high_cor) %>% 
   tidyr::separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge") %>%
-  dplyr::filter(., keep != "dummy_var")
+  dplyr::filter(., keep != "dummy_var") %>%
+  suppressWarnings()
 
 
 ## write correlation figure ====================================================
@@ -291,7 +300,8 @@ if (length(co_corr_list) > 0) {
   correlate_figure <- corr_raw_data$dat_transformed %>% 
     dplyr::select(., any_of(co_corr_list), -dummy_var)
   correlate_figure <- corrr::correlate(x = correlate_figure, method = "pearson") %>% 
-    tibble::column_to_rownames(., var = "term") %>% abs()
+    tibble::column_to_rownames(., var = "term") %>% abs() %>%
+    suppressMessages()
   
   ## set anything below cor threshold to zero
   v1 <- colnames(correlate_figure)
@@ -301,18 +311,12 @@ if (length(co_corr_list) > 0) {
   correlate_figure <- correlate_figure[ , colSums(correlate_figure, na.rm = T) > 0]
   correlate_figure <- correlate_figure[ rowSums(correlate_figure, na.rm = T) > 0, ]
   
-  if (NROW(correlate_figure) > 5) {
-    ## write interactive heatmap of correlation
-    cor_figure <- heatmaply::heatmaply_cor(
-      as.matrix(correlate_figure),
-      #node_type = "scatter",
-      #point_size_mat = -log10(p), 
-      #point_size_name = "-log10(p-value)",
-      label_names = c("x", "y", "Correlation"),
-      file = "correlation_heatmap.html",
-      #colors = viridis(n = 256, alpha = 1, begin = 0, end = 1, option = "plasma"),
-      main = paste0("Absolute Pearson Correlations that are above r= ", as.numeric(opt$cor_level), "\nAll other correlations set to 0 for vizualization purposes"),
-    )
+  if (NROW(correlate_figure) > 3) {
+    
+    pdf("correlation_heatmap.pdf")
+    heatmap(as.matrix(correlate_figure), keep.dendro = TRUE)
+    dev.off()
+    
   } else {
     cat("\n", "You have too few correlated variables for the heatmap function to probably work", "\n\n")
     cat("We printed the correlation matrix to file, might help!", "\n\n")
