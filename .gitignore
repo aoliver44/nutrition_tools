@@ -16,3 +16,4 @@ renv/
 *.pdf
 .DS_Store
 prepare_foodtree_for_hfe.R
+shuffle_data.R
