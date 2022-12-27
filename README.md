@@ -142,6 +142,8 @@ This script will take the output of ```./generic_read_in``` and combine all the 
   **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
 
 
+------------------------------------------
+
 ### **5. Run diet_ML.R**
 
 ```
