@@ -1,16 +1,20 @@
-FROM rocker/rstudio:4.2
+FROM rhub/r-minimal:4.2.0-patched
 
 ENV RENV_VERSION=0.16.0
 
-RUN apt update
 # install some things that R needs
-RUN apt install -y libz-dev libxml2-dev
+RUN apk add libressl-dev libpng-dev build-base jpeg-dev gfortran libexecinfo-dev linux-headers
 
 # install RENV, which will then install all R project packages
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
 RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
 
-# should be in the same directory as this file
+# bootstrap RENV environment
 COPY renv.lock ./
 RUN R -e 'renv::consent(provided = TRUE)'
-RUN R -e 'renv::restore()'
+RUN R -e 'renv::restore(lockfile="renv.lock")'
+
+# copy in scripts so they are part of container
+COPY generic_read_in.R ./scripts/
+COPY generic_combine.R ./scripts/
+COPY dietML.R ./scripts/
