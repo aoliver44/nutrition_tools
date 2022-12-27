@@ -8,12 +8,7 @@
 ## the generic_read_in.R script
 
 ## docker info =================================================================
-
-## docker command:
-#docker run --rm -it -p 8787:8787 
-#-e PASSWORD=yourpasswordhere 
-#-v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home 
-#amr_r_env:3.1.0
+#docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.1 bash
 
 ## general command:
 ## /home/scripts/generic_combine.R --cor_level 0.8 --cor_choose TRUE /home/output/ combined_ml_data.csv
