@@ -24,26 +24,26 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 
  ```
 ## Option 1 (preferred), local installation:
-docker pull aoliver44/nutrition_tools:1.0
+docker pull aoliver44/nutrition_tools:1.1
 
 ## Option 2: Build it yourself! Still local installation.
-docker build -t nutrition_tools:1.0 .
+docker build -t nutrition_tools:1.1 .
 
 ## to run
-docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:1.0 bash
+docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:1.1 bash
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 ## pull image from internet
-singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.0
+singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:1.1
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
 cd /home
 
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.0 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.1 bash
 cd /home/
  ```
 
@@ -75,7 +75,7 @@ Options:
 
 ########### example: ###########
 
-./generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
+~/scripts/generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
 
 ```
 **Desired input:** A flat-file(s) where each row has a unique identifier (a subject or sample ID) and each column is some feature measured. Should multiple files exist, the unique identifier will be present in all files.
@@ -130,7 +130,7 @@ Arguments:
 
 ########### example: ###########
 
-./generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE simulated_output/ merged_data.csv 
+~/scripts/generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE simulated_output/ merged_data.csv 
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
@@ -144,4 +144,33 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 
 ### **5. Run diet_ML.R**
 
-...coming soon....
+```
+Run random forest regression or classification on a dataframe
+Usage:
+    dietML.R [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type>] <input> <output>
+    
+Options:
+    -h --help  Show this screen.
+    -v --version  Show version.
+    --label=<label> name of column that you are prediction [default: label]
+    --cor_level level to group features together [default: 0.80]
+    --train_split what percentage of samples should be used in training [default: 0.70]
+    --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
+    
+Arguments:
+    input  path to input file for ML (output from generic_combine.R)
+    output path where results should be written 
+
+########### example: ###########
+~/scripts/dietML.R --label cluster --cor_level 0.80 --train_split 0.7 --type classification merged_data.csv ml_results/
+```
+
+The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
+
+If your factor of interest in discrete (categorical), this analysis will be Random Forest classification. RF classification has shown to generally outperform many other single model algorithms and be fairly robust against over-fitting. 
+
+If your factor is continouous, this analysis will be a Random Forest regression. RF regression has similar benefits as RF classification. 
+
+For both analyses, data will default to a train-test split of 0.70 (70% of data will be used to train the model, and 30% will be COMPLETELY left out in order to test final model). Inside model building, a 10-fold repeated (3x) cross-validation procedure will be used to evaluate pre-processessing steps and hyperparameters. 
+   - Preprocessing steps: Near-zero variance filtering, and correlation filtering (default: 0.8 pearson correlation)
+   - Hyperparameter tuning: an exhaustive grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. 
