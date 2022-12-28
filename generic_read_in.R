@@ -79,6 +79,11 @@ options(warn=-1)
 
 outdir_name <- opt$outdir
 
+## check to see if outdir already exists, if so break
+if (dir.exists(opt$outdir) == TRUE) {
+  stop("Output directory already exists, overwrite behavior not available")
+}
+
 dir.create(file.path(paste0(outdir_name)))
 dir.create(file.path(paste0(outdir_name, "/duplicated_data")))
 dir.create(file.path(paste0(outdir_name, "/duplicated_colnames")))
