@@ -22,12 +22,13 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Combine data from read_in step, prior to ML
 Usage:
-    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
+    generic_combine.R [--subject_identifier=<subject_colname> --label=<label> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
+    --label label of column for use in ML [default: label]
     --cor_level level of general feature correlation [default: 0.99]
     --cor_choose choose which features are kept in correlation [default: FALSE]
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
@@ -60,12 +61,13 @@ set.seed(1)
 `%!in%` <- Negate(`%in%`)
 
 # opt <- data.frame(subject_identifier=character(),
+#                                 label=character(),
 #                                 cor_level=numeric(),
 #                                 cor_choose=logical(),
 #                                 preserve_samples=logical(),
 #                                 input=character(),
 #                                 output_file=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -113,7 +115,7 @@ if (file.exists("summary_dataset_problems.csv")) {
   }
   
   ## run generic_read_in.R on this problem subset and see if any problems occur
-  system(paste0("/root/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
   
   ## check and see if summary_dataset_problems got written  
     if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
@@ -194,8 +196,7 @@ full_merge_dedup <- full_merge %>%
   t() %>%
   as.data.frame() %>%
   readr::type_convert(.) %>%
-  suppressMessages() %>%
-  suppressWarnings()
+  suppressMessages() 
 
 ## pre-corr col drop ===========================================================
 
@@ -261,7 +262,7 @@ full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_n
 ## this dummy var is meaningless. We are using the next steps for 
 ## co-correlation of features and for one-hot-encoding.
 full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>% 
-  dplyr::mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
+  #dplyr::mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
   tibble::rownames_to_column(., var = "subject_id")
 
 ## check correlation level
@@ -285,9 +286,16 @@ if (as.numeric(opt$cor_level) < 0.99) {
 ## prepare the data for correlation (one-hot encode, remove zero-variance)
 corr_raw_data <- suppressMessages(suppressWarnings(mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
                                          method = NULL,
-                                         outcome_colname = "dummy_var", ## meaningless var
+                                         outcome_colname = as.character(opt$label), 
                                          collapse_corr_feats = F, 
                                          remove_var = "zv")))
+post_mikrop_data <- corr_raw_data$dat_transformed 
+
+## correlation will not happen if label is non-numeric
+if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
+  label_df <- corr_raw_data$dat_transformed %>% dplyr::select(., opt$label, subject_id)
+  corr_raw_data$dat_transformed <- corr_raw_data$dat_transformed %>% dplyr::select(., -opt$label, -subject_id)
+}
 
 ## co-correlate features at specified threshold
 high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed, 
@@ -295,9 +303,7 @@ high_cor <- mikropml:::group_correlated_features(corr_raw_data$dat_transformed,
 
 ## make dataframe of what is correlated at specified threshold.
 high_cor <- as.data.frame(high_cor) %>% 
-  tidyr::separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge") %>%
-  dplyr::filter(., keep != "dummy_var") %>%
-  suppressWarnings()
+  tidyr::separate(., col = high_cor, into = c("keep", "co-correlated"), sep = "\\|", extra = "merge")
 
 
 ## write correlation figure ====================================================
@@ -336,7 +342,7 @@ if (length(co_corr_list) > 0) {
     dev.off()
     
   } else {
-    cat("\n", "You have too few correlated variables for the heatmap function to probably work", "\n\n")
+    cat("\n", "You have too few correlated variables for correlation figure to work", "\n\n")
     cat("We printed the correlation matrix to file, might help!", "\n\n")
     readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
   }
@@ -373,15 +379,25 @@ if (length(co_corr_list) > 0) {
     }
     
     ## add in the non-co-correlated vars
-    full_decision_list <- c(un_corr_list, corr_decision_list)
+    if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
+      full_decision_list <- c(un_corr_list, corr_decision_list, opt$label)
+    } else {
+      full_decision_list <- c(un_corr_list, corr_decision_list)
+    }
   } else {
-    
-    full_decision_list <- high_cor$keep
-    
+    if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
+      full_decision_list <- c(high_cor$keep, opt$label)
+    } else {
+      full_decision_list <- high_cor$keep
+    }
   }
 } else {
   
-  full_decision_list <- high_cor$keep
+  if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
+    full_decision_list <- c(high_cor$keep, opt$label)
+  } else {
+    full_decision_list <- high_cor$keep
+  }
   
 }
 
@@ -411,7 +427,7 @@ readr::write_delim(x = kept_features_summary, file = paste0(full_path, "/feature
 
 ## write final file for ML =====================================================
 
-for_ml <- corr_raw_data$dat_transformed %>% 
+for_ml <- post_mikrop_data %>% 
   dplyr::select(., any_of(full_decision_list))
 
 readr::write_delim(for_ml, file = paste0(full_path, "/", opt$output_file), delim = ",", quote = NULL)
