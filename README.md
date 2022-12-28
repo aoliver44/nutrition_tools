@@ -132,7 +132,7 @@ Arguments:
 
 ########### example: ###########
 
-~/scripts/generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv 
+~/scripts/generic_combine.R --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
@@ -141,7 +141,7 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
    - Note: If your response var of interest is correlated with another feature(s) at > 0.99, please take care to make sure you choose the response var to end up in the final dataset.
 4. One-hot encode factors
-    - Note: the method for one-hot-encoding here creates new factors with new names. For example, if a factor named "label" has 2 levels (Treatment, Control), the one hot encoded new column will be label_Treatment, and will contain will contain the values 0 or 1 (1 for Treatment, 0 for Control). 
+    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because the core of downstream ML (dietML.R) is the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does).
   
   **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
 
