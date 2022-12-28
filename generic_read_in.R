@@ -51,20 +51,6 @@ library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
 library(digest, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 
-## create output directories ===================================================
-
-outdir_name <- opt$outdir
-
-dir.create(file.path(paste0(outdir_name)))
-dir.create(file.path(paste0(outdir_name, "/duplicated_data")))
-dir.create(file.path(paste0(outdir_name, "/duplicated_colnames")))
-dir.create(file.path(paste0(outdir_name, "/duplicated_rows")))
-dir.create(file.path(paste0(outdir_name, "/clean_files")))
-
-## set random seed if needed
-set.seed(1)
-
-
 ## helper functions ============================================================
 
 ## Negate function ("not in"):
@@ -79,6 +65,28 @@ na_possibilities <- c("NA", "N A", "N/A", "#N/A", " NA", "NA ", "N / A",
                       "N /A", "N / A ", "na", "n a", "n/a", " na", "na ", 
                       "n /a", "n / a", "a / a", "n / a ", "NULL", "null", "", 
                       ".", "*", "?", "-", " - ")
+
+## suppress warnings
+options(warn=-1)
+
+## practice flags
+# opt <- data.frame(subject_identifier=character(),
+#                   input=character(),
+#                   outdir=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), input = c("/home/scripts/simulated_data/"), outdir="/home/simulated_output")
+
+## create output directories ===================================================
+
+outdir_name <- opt$outdir
+
+dir.create(file.path(paste0(outdir_name)))
+dir.create(file.path(paste0(outdir_name, "/duplicated_data")))
+dir.create(file.path(paste0(outdir_name, "/duplicated_colnames")))
+dir.create(file.path(paste0(outdir_name, "/duplicated_rows")))
+dir.create(file.path(paste0(outdir_name, "/clean_files")))
+
+## set random seed if needed
+set.seed(1)
 
 ## check input dir not empty ===================================================
 
@@ -122,12 +130,12 @@ for (file in fils) {
   if (strsplit(basename(file), split="\\.")[[1]][2] == "csv") {
     f <- readr::read_delim(file, delim = ",", 
                            name_repair = "minimal", na = na_possibilities) %>%
-      suppressMessages() %>% suppressWarnings()
+      suppressMessages() 
     
   } else if (strsplit(basename(file), split="\\.")[[1]][2] %in% c("tsv","txt")){
     f <- readr::read_delim(file, delim = "\t",
                            name_repair = "minimal", na = na_possibilities) %>%
-      suppressMessages() %>% suppressWarnings()
+      suppressMessages() 
     
   } # else if (strsplit(basename(file), split="\\.")[[1]][2] == "xls") {
   #   f <- suppressMessages(readxl::read_xls(file, .name_repair = "minimal", na = na_possibilities))
@@ -273,7 +281,7 @@ for (file in fils) {
     dplyr::group_by(., dataset, feature, data_feature_hash) %>%
     dplyr::summarise(., na_count = sum(is.na(value)), have_data = sum(!is.na(value))) %>%
     dplyr::arrange(desc(na_count)) %>%
-    suppressMessages() %>% suppressWarnings()
+    suppressMessages() 
   
   na_count_features <- rbind(na_count_features, na_count_features_tmp)
   
@@ -305,7 +313,7 @@ for (file in fils) {
         dplyr::select(-n) %>%
         readr::type_convert(.) %>%
         tidyr::drop_na() %>%
-        suppressMessages() %>% suppressWarnings()
+        suppressMessages() 
       
       ## for each feature, round numerics and convert character
       if (is.numeric(tmp$value) == TRUE) { tmp$value  <- round(tmp$value, 2) 
@@ -326,7 +334,7 @@ for (file in fils) {
         tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
           dplyr::arrange(., subject_id) %>% 
           readr::write_delim(., file = paste0(outdir_name, "/duplicated_data/", file_name, "_", f_duplicated, ".csv"), delim = ",") %>%
-          suppressMessages() %>% suppressWarnings()
+          suppressMessages() 
         
         cat(paste0("Printing ", f_duplicated, " data to file for manual checks. See outputs/duplicated_data/"), "\n\n")
         ## keeping a superset of the distinct values and dropping from g
@@ -369,7 +377,7 @@ for (file in fils) {
         tmp %>% tidyr::pivot_wider(.,names_from = data_feature_hash, values_from = value) %>% 
           dplyr::arrange(., subject_id) %>% 
           readr::write_delim(., file = paste0(outdir_name, "/duplicated_colnames/", file_name, "_", f_duplicated, ".csv"), delim = ",") %>%
-          suppressMessages() %>% suppressWarnings()
+          suppressMessages() 
         
         cat("Press [enter] to continue ")
         
@@ -390,7 +398,7 @@ for (file in fils) {
   ## Add back in the date data
   tmp <- g %>% tidyr::pivot_wider(.,names_from = feature, values_from = value, id_cols = subject_id) %>%
     readr::type_convert(., na = c("na", "nan", "NA")) %>%
-    suppressMessages() %>% suppressWarnings()
+    suppressMessages() 
   
   if (exists("date_dataframe")) {
     colnames(date_dataframe) <- gsub(pattern = "_x", "", colnames(date_dataframe))
@@ -405,7 +413,7 @@ for (file in fils) {
   ## remove unique identifiers for repeated subject_ids
   tmp$subject_id <- gsub("_[0-9]{1,2}$", "", perl = T, x = tmp$subject_id) 
   readr::write_delim(tmp, file = paste0(outdir_name, "/clean_files/", file_name,".csv"), delim = ",") %>%
-    suppressMessages() %>% suppressWarnings()
+    suppressMessages() 
   
 }
 
@@ -427,11 +435,11 @@ cat("Saving a summary_problems file", "\n" ,"see /output/summary_dataset_problem
 cat("####################################################", "\n\n")
 
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",") %>%
-  suppressMessages() %>% suppressWarnings()
+  suppressMessages() 
 
 suppressWarnings(ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL))
 
 ## write summary problems dataframe to file 
-summary_problems_tmp <- summary_problems[2:NROW(summary_problems), ] %>% dplyr::group_by(dataset) %>% dplyr::summarise(across(everything(), ~n_distinct(., na.rm = T)))
+summary_problems_tmp <- summary_problems[1:NROW(summary_problems), ] %>% dplyr::group_by(dataset) %>% dplyr::summarise(across(everything(), ~n_distinct(., na.rm = T)))
 readr::write_delim(summary_problems_tmp, file = paste0(outdir_name, "/summary_dataset_problems.csv"), delim = ",") %>%
-  suppressMessages() %>% suppressWarnings()
+  suppressMessages() 
