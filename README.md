@@ -75,12 +75,12 @@ Options:
 
 ########### example: ###########
 
-~/scripts/generic_read_in.R --subject_identifier subject_id simulated_data/ simulated_output 
+~/scripts/generic_read_in.R --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
 
 ```
 **Desired input:** A flat-file(s) where each row has a unique identifier (a subject or sample ID) and each column is some feature measured. Should multiple files exist, the unique identifier will be present in all files.
 
-This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx) and attempt to run some basic checks on them and basic cleaning. For example:
+This script will read in a directory of files (.csv | .txt | .tsv) and attempt to run some basic checks on them and basic cleaning. For example:
 1. Check to see if a key is present that will link all the data together if split in multiple files (i.e. "subject_id")
 2. Check to see if subject_id is unique across rows or if there are duplicated values
    - Duplicated subject ids suggest longitudinal data. The downstream ML methods in this work does not work well with longitudinal data 
@@ -108,6 +108,8 @@ This script will read in a directory of files (.csv | .txt | .tsv | .xls | .xlsx
 
 Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. The program will error out if that happened to be the only dataset you provided.
 
+It is good practice generally, and vital for these scripts to work properly, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
+
 ------------------------------------------
 
 ### **4. Run generic_combine.R**
@@ -130,7 +132,7 @@ Arguments:
 
 ########### example: ###########
 
-~/scripts/generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE simulated_output/ merged_data.csv 
+~/scripts/generic_combine.R --subject_identifier subject_id --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv 
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
