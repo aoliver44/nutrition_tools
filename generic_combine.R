@@ -113,7 +113,7 @@ if (file.exists("summary_dataset_problems.csv")) {
   }
   
   ## run generic_read_in.R on this problem subset and see if any problems occur
-  system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  system(paste0("/root/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
   
   ## check and see if summary_dataset_problems got written  
     if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
