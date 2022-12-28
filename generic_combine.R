@@ -67,6 +67,9 @@ set.seed(1)
 #                                 output_file=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
+## suppress warnings
+options(warn=-1)
+
 ## check for inputs ============================================================
 
 ## set working dir to /home for the docker container
@@ -110,7 +113,7 @@ if (file.exists("summary_dataset_problems.csv")) {
   }
   
   ## run generic_read_in.R on this problem subset and see if any problems occur
-  system(paste0("/root/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
   
   ## check and see if summary_dataset_problems got written  
     if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
@@ -124,8 +127,11 @@ if (file.exists("summary_dataset_problems.csv")) {
         problem_check_dataset <- summary_problems_recheck[1,]$dataset
         problem_check_problem <- apply(summary_problems_recheck[1,], 1, function(x) last(colnames(summary_problems_recheck[1,])[x==1]))
         
-        cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"), "\n\n")
-        cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses", "\n\n")
+        cat("\n","################################################", "\n")
+        cat("WARNING:", "\n")
+        cat(paste0("This program still thinks problems exist with the data. For example, did you fix ", problem_check_problem, " in ", problem_check_dataset, " dataset??"), "\n")
+        cat("Since you didnt fix these problems (we worked so hard to tell you about them!!) we will remove these datasets from downstream analyses", "\n")
+        cat("################################################", "\n\n")
         
         ## get interactive acknowledgment 
         cat("  Press [enter] to continue  ")
@@ -145,8 +151,7 @@ if (file.exists("summary_dataset_problems.csv")) {
 ## read in the files that passed muster
 if (length(fils) > 0) {
     myfiles = lapply(fils, read_csv) %>%
-      suppressMessages() %>%
-      suppressWarnings() 
+      suppressMessages() 
 }
 
 ## merge them all together
@@ -155,9 +160,9 @@ full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by 
 ## check sample size here ======================================================
 
 if (NROW(full_merge) < 200) {
-  cat("\n","################################################", "\n\n")
-  cat("WARNING:", "\n\n")
-  cat("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is made much worse if you have a multiclass problem (> 2 classes for classification).", "\n\n")
+  cat("\n","################################################", "\n")
+  cat("WARNING:", "\n")
+  cat("You have VERY few samples. Overfitting is a major concern. Your results might only be applicable to your sample set. This problem is made much worse if you have a multiclass problem (> 2 classes for classification).", "\n")
   cat("################################################", "\n\n")
   
   ## get interactive acknowledgment 
@@ -165,8 +170,10 @@ if (NROW(full_merge) < 200) {
   x <- suppressWarnings(readLines(file("stdin"),1))
 
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
-  cat("\n", "Note:", "\n\n")
-  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.", "\n\n")
+  cat("\n","################################################", "\n")
+  cat("NOTE:", "\n")
+  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.", "\n")
+  cat("################################################", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
@@ -204,25 +211,40 @@ preserve_samples_cutoff<- mean(c(as.numeric(quantile(colSums(is.na(full_merge_de
 
 ## drop columns with a lot of NAs
 if (opt$preserve_samples == TRUE) {
+  ## notify user of cutoffs
+  cat("\n","################################################", "\n")
+  cat("NOTE:", "\n")
+  cat("(preserve_samples=TRUE) Automatic sample preservation guess: If features have greater than", preserve_samples_cutoff, "NAs they will be dropped...\n")
+  cat("################################################", "\n\n")
   full_merge_dedup_tmp_col_drop <- full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_samples_cutoff)]
   
   ## Notify user about what columns were dropped
   if (((NCOL(full_merge_dedup_init_filt)) - (NCOL(full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_samples_cutoff)]))) > 0) {
-    cat("\n", "For correlation purposes, we drop some NA-replete features prior to 
-      row drops. We will next row-drop in order to have a NA-free dataset. 
+    cat("\n","################################################", "\n")
+    cat("NOTE:", "\n")
+    cat("In order to have a complete dataset, we dropped some NA-replete features. 
+    We will next row-drop (drop samples) in order to have a NA-free dataset. 
       This is only for a global correlation check. We will write both a NA and 
-      NA-free file, its up to you if you want to use interpolation methods.", "\n\n")
+      NA-free file, its up to you if you want to use interpolation methods.", "\n")
+    cat("################################################", "\n\n")
   }
 } else {
-  
+  ## notify user of cutoffs
+  cat("\n","################################################", "\n")
+  cat("NOTE:", "\n")
+  cat("(preserve_samples=FALSE) Automatic feature preservation guess: If features have greater than", preserve_features_cutoff, " NAs they will be dropped...\n")
+  cat("################################################", "\n\n")
   full_merge_dedup_tmp_col_drop <- full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_features_cutoff)]
   
   ## Notify user about what columns were dropped
   if (((NCOL(full_merge_dedup_init_filt)) - (NCOL(full_merge_dedup_init_filt[ , colSums(is.na(full_merge_dedup_init_filt)) <= (preserve_features_cutoff)]))) > 0) {
-    cat("\n", "For correlation purposes, we drop some NA-replete features prior to 
-      row drops. We will next row-drop in order to have a NA-free dataset. 
+    cat("\n","################################################", "\n")
+    cat("NOTE:", "\n")
+    cat("In order to have a complete dataset, we dropped some NA-replete features. 
+    We will next row-drop (drop samples) in order to have a NA-free dataset. 
       This is only for a global correlation check. We will write both a NA and 
-      NA-free file, its up to you if you want to use interpolation methods.", "\n\n")
+      NA-free file, its up to you if you want to use interpolation methods.", "\n")
+    cat("################################################", "\n\n")
   }
 }
 
@@ -245,13 +267,14 @@ full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>%
 ## check correlation level
 
 if (as.numeric(opt$cor_level) < 0.99) {
-  cat("\n","################################################", "\n\n")
-  cat("WARNING:", "\n\n")
+  cat("\n","################################################", "\n")
+  cat("WARNING:", "\n")
   cat("Your correlation level is below 0.99. This is a global correlation check, 
   mainly for PURELY redundant features. For feature engineering, PROPER correlation-based 
   feature selection should happen inside a Train-Test split or a cross-validation 
   procedure. Not doing so constitutes DATA LEAKAGE. You risk overfitting and 
-  reporting results that look better than they probably are.", "\n\n")
+  reporting results that look better than they probably are.", "\n")
+  cat("################################################", "\n\n")
   
   ## get interactive acknowledgment 
   cat("  Press [enter] to continue  ")
