@@ -122,13 +122,14 @@ Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
+    --label label of column for use in ML [default: label]
     --cor_level level of general feature correlation [default: 0.99]
     --cor_choose choose which features are kept in correlation [default: FALSE]
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
 Arguments:
     input  input directory containing files
-    output_file  output file name 
+    output_file  output file name  
 
 ########### example: ###########
 
