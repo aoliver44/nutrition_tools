@@ -425,14 +425,25 @@ for (file in fils) {
 ## write figures and files  ====================================================
 
 ## print na figure and data to file
-na_figure <- na_count_features %>%
-  dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
-  dplyr::filter(., na_count > 0) %>%
-  ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
-  geom_bar() +
-  labs(y = "NA Count", x = "Features with NAs") +
-  facet_grid(~ dataset, scales = "free") +
-  theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+if (length(fils) == 1) {
+  na_figure <- na_count_features %>%
+    dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
+    dplyr::filter(., na_count > 0) %>%
+    ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
+    geom_bar() +
+    labs(y = "NA Count", x = "Features with NAs") +
+    theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+} else {
+  na_figure <- na_count_features %>%
+    dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
+    dplyr::filter(., na_count > 0) %>%
+    ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
+    geom_bar() +
+    labs(y = "NA Count", x = "Features with NAs") +
+    facet_grid(~ dataset, scales = "free") +
+    theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+}
+
 cat("\n\n", "Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
 cat("Saving NA counts table to file, see /output/na_counts.csv", "\n\n")
 cat("####################################################", "\n")
