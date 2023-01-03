@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript 
+#!/usr/bin/env Rscript
 
 ## SCRIPT: dietML.R ===================================================
 ## AUTHOR: Andrew Oliver
@@ -8,94 +8,100 @@
 ## the dietML.R script
 
 ## docker info =================================================================
-
-## docker command:
-#docker run --rm -it -p 8787:8787 
-#-e PASSWORD=yourpasswordhere 
-#-v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home 
-#amr_r_env:3.1.0
-
-## general command:
-## 
+#docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.1 bash
 
 ## set working dir to /home for the docker container
 setwd("/home")
 
-
 ## add commandline options =====================================================
 
-library(docopt)
+library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run random forest regression or classification on a dataframe
 Usage:
-    dietML.R [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type>] <input> <output>
+    dietML.R [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --label=<label> name of column that you are prediction [default: diet_feature]
-    --cor_level level to group features together [default: 0.85]
+    --label=<label> name of column that you are prediction [default: label]
+    --cor_level level to group features together [default: 0.80]
     --train_split what percentage of samples should be used in training [default: 0.70]
     --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
+    --seed random seed for reproducible results [default: 42]
+    --ncores number of processesing cores for parallel computing [defualt: 2]
     
 Arguments:
-    input  path to input file for ML
-    output path where results should be written
+    input  path to input file for ML (output from generic_combine.R)
+    outdir path where results should be written
 " -> doc
 
 opt <- docopt::docopt(doc, version = 'dietML.R v1.0\n\n')
 
 ## load libraries ==============================================================
 
-library(readr)
-library(dplyr)
-
-## set random seed if needed
-set.seed(1)
+library(readr, quietly = T, verbose = F, warn.conflicts = F)
+library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
+library(ranger, quietly = T, verbose = F, warn.conflicts = F)
+library(doParallel, quietly = T, verbose = F, warn.conflicts = F)
+library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 
 ## helper functions ============================================================
-
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-opt <- data.frame(subject_identifier=character(),
-                  cor_level=numeric(),
-                  label=character(),
-                  train_split=numeric(),
-                  input=character(),
-                  type=character(),
-                  output=character())
-opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, label = c("cluster"), type= c("classification"), input = c("/home/output_tmp/pipeline_nutrition_test.csv"), output="/home/output_tmp/ml_results/")
+## suppress warnings
+options(warn=-1)
+
+# opt <- data.frame(subject_identifier=character(),
+#                   cor_level=numeric(),
+#                   label=character(),
+#                   train_split=numeric(),
+#                   seed=numeric(),
+#                   type=character(),
+#                   ncores=numeric(),
+#                   input=character(),
+#                   outdir=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_output/iris.csv"), outdir="/home/simulated_output/ml_results")
 
 
 ## check for inputs ============================================================
 
-## check for output dir and make if not there
-if (dir.exists(opt$output) == TRUE) {
-  setwd(opt$output)
+## check for outdir and make if not there
+if (dir.exists(opt$outdir) == TRUE) {
+  setwd(opt$outdir)
 } else {
-  dir.create(path = opt$output)
-  setwd(opt$output)
+  dir.create(path = opt$outdir)
+  setwd(opt$outdir)
 }
 
 cat("Checking for input file...", "\n\n")
 
 ## check for input and break if not found
 if (file.exists(opt$input) == TRUE) { 
-  cat(paste0(opt$input), " is being used as input.", "\n\n")
+  cat("\n#########################\n")
+  cat(paste0(opt$input), " is being used as input.", "\n")
+  cat("#########################\n\n")
+  
 } else {
   stop("Input file not found.")
 }
 
 ## read in input ===============================================================
 
-input <- readr::read_csv(file = opt$input) %>% janitor::clean_names()
-colnames(input) <- make.names(colnames(input))
+input <- readr::read_delim(file = opt$input, delim = ",") %>% 
+  janitor::clean_names() %>% tidyr::drop_na() %>% 
+  dplyr::select(., -dplyr::any_of("subject_id")) %>%
+  suppressMessages()
 
-input$id_tmp <- seq(1:NROW(input))
+## make colnames appropriate for ML (ranger is picky)
+colnames(input) <- make.names(colnames(input))
 
 ## check for label
 if (opt$label %in% colnames(input) == TRUE) {
-  cat(paste0(opt$label), " label is being used for ", paste0(opt$type), ".\n\n")
+  cat("\n#########################\n")
+  cat(paste0(opt$label), " label is being used for ", paste0(opt$type), ".\n")
+  cat("#########################\n\n")
+  
   input <- input %>% dplyr::rename(., "label" = opt$label)
 } else {
   stop(paste0(opt$label, " not found in input."))
@@ -103,31 +109,148 @@ if (opt$label %in% colnames(input) == TRUE) {
 
 ## test train split ============================================================
 
+cat("\n#########################\n")
+cat("Note: Train test split at: ", opt$train_split, "% of train data.", "\n")
+cat("#########################\n\n")
+
+## create a row id to train test split on
+input$id_tmp <- seq(1:NROW(input))
+
+## create training data 
 train <- input %>% dplyr::sample_frac(as.numeric(opt$train_split))
 train_data <- train %>% dplyr::select(., -label)
 train_label <- train %>% dplyr::select(., label)
+
+## create testing data
 test  <- dplyr::anti_join(input, train, by = 'id_tmp')
 test_data  <- test %>% dplyr::select(., -label)
 test_label <- test %>% dplyr::select(., label)
-input$id_tmp <- NULL
+
+## remove row id
+train_data$id_tmp <- NULL
+test_data$id_tmp <- NULL
+
+## set seed for reproducibility ================================================
+
+#create a list of seed, here change the seed for each resampling
+set.seed(opt$seed)
+
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 31)
+
+#(3 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:30) seeds[[i]]<- sample.int(n=1000, 132)
+
+#for the last model
+seeds[[31]]<-sample.int(NROW(train_data), 1)
 
 ## CV on training data =========================================================
 
-tuneGrid <-  expand.grid(.mtry = 2:8, 
-                         .splitrule = c("gini", "extratrees"), 
-                         .min.node.size = c(5, 10, 15, 20, 25))
+cat("\n#########################\n")
+cat("Note: Beginning ML (", opt$type, ") ...", "\n")
+cat("Preprocessesing includes near-zero variance filter and correlation threshold at ", opt$cor_level, "pearson.", "\n")
+cat("#########################\n\n")
 
-fit_control <- caret::trainControl(method = "oob", 
-                                   preProcOptions = list(cutoff = 0.85), 
-                                   #classProbs = TRUE,
-                                   search = "grid")
 
-training_fit <- caret::train(x = train_data, y = as.factor(train_label$label), 
-                             method = "ranger", 
-                             trControl = fit_control, 
-                             #metric = "ROC", 
-                             preProcess = c("nzv", "corr"),
-                             tuneGrid = tuneGrid)
+## create hyper parameter grid and train control 
+tuneGrid <-  expand.grid(.mtry = 2:pmin(NCOL(train_data), 12),
+                         .splitrule = c("gini", "extratrees"),
+                         .min.node.size = seq(2, pmin(12, NCOL(train_data)), by = 2))
 
-caret::plot.train(training_fit)
-confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label))
+fit_control <- caret::trainControl(method = "repeatedcv",
+                                   number = 10,
+                                   repeats = 3,
+                                   preProcOptions = list(cutoff = as.numeric(opt$cor_level)),
+                                   classProbs = TRUE,
+                                   search = "grid",
+                                   seeds=seeds,
+                                   savePredictions = T,
+                                   allowParallel = TRUE,
+                                   verboseIter = TRUE)
+
+cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+doParallel::registerDoParallel(cl)
+
+if (opt$type == "classification") {
+  
+  ## build models
+  training_fit <- caret::train(x = train_data, y = as.factor(train_label$label), 
+                               preProcess = c("nzv","corr"),
+                               method = "ranger", 
+                               trControl = fit_control, 
+                               tuneGrid = tuneGrid,
+                               importance = "permutation"
+  )
+  parallel::stopCluster(cl)
+  
+  ## make training fit plots
+  png(filename = paste0(opt$outdir, "/training_fit.png"), width=7, height=5, units="in", res=300)
+  caret::plot.train(training_fit)
+  suppressMessages(dev.off())
+  caret::confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label))
+  
+  if (length(levels(as.factor(train_label$label))) == 2) {
+    ## run MLeval
+    png(filename = paste0(opt$outdir, "/roc_auc_curve.png"), width=5, height=5, units="in", res=300)
+    res <- MLeval::evalm(training_fit, plots = "r")
+    suppressMessages(dev.off())
+    
+  }
+} else if (opt$type == "regression") {
+  
+  ## build models
+  training_fit <- caret::train(x = train_data, y = as.numeric(train_label$label), 
+                               preProcess = c("nzv","corr"),
+                               method = "ranger", 
+                               trControl = fit_control, 
+                               tuneGrid = tuneGrid,
+                               importance = "permutation"
+  )
+  parallel::stopCluster(cl)
+  
+  ## make training fit plots
+  png(filename = paste0(opt$outdir, "/training_fit.png"), width=7, height=5, units="in", res=300)
+  caret::plot.train(training_fit)
+  suppressMessages(dev.off())
+  
+  ## For regression:
+  hfe_pred <- predict(training_fit, test_data)
+  caret::postResample(pred = hfe_pred, obs = test_label$label)
+  
+} else {
+  ## error out
+  stop("--type <classification/regression> not found.")
+  
+}
+
+cat("\n#########################\n")
+cat("Done! Results written to outdir.", "\n")
+cat("#########################\n\n")
+
+
+## VIP Plots ===================================================================
+## For all:
+vip <- caret::varImp(object = training_fit)
+
+png(filename = paste0(opt$outdir, "/vip_plot.png"), width=7, height=5, units="in", res=300)
+plot(vip, top = pmin(10, NROW(vip$importance)))
+suppressMessages(dev.off())
+
+## shap explaination ===========================================================
+
+# explainer <- shapr::shapr(train_data, training_fit$finalModel, n_combinations = 10000)
+# explanation_largesigma <- shapr::explain(test_data, explainer, approach = "empirical", prediction_zero = p)
+# plot(explanation_largesigma)
+# 
+# #create a list of seed, here change the seed for each resampling
+# set.seed(123)
+# 
+# #length is = (n_repeats*nresampling)+1
+# seeds <- vector(mode = "list", length = 11)
+# 
+# #(3 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+# for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 3)
+# 
+# #for the last model
+# seeds[[11]]<-sample.int(1000, 1)
+# length(seeds[[10]])
