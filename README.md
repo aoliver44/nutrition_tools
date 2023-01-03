@@ -134,7 +134,7 @@ Arguments:
 
 ########### example: ###########
 
-~/scripts/generic_combine.R --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
+generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
