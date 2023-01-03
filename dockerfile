@@ -1,3 +1,7 @@
+## Author: Andrew Oliver
+## Date updated: 1.3.2023
+## Version: aoliver44/nutrition_tools:1.2
+
 FROM rhub/r-minimal:4.2.0-patched
 
 ENV RENV_VERSION=0.16.0
@@ -15,6 +19,8 @@ RUN R -e 'renv::consent(provided = TRUE)'
 RUN R -e 'renv::restore(lockfile="renv.lock")'
 
 # copy in scripts so they are part of container
-COPY generic_read_in.R ./scripts/
-COPY generic_combine.R ./scripts/
-COPY dietML.R ./scripts/
+COPY generic_read_in.R ./scripts/generic_read_in
+COPY generic_combine.R ./scripts/generic_combine
+COPY dietML.R ./scripts/dietML
+
+ENV PATH="${PATH}:/root/scripts/"
