@@ -22,7 +22,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Combine data from read_in step, prior to ML
 Usage:
-    generic_combine.R [--subject_identifier=<subject_colname> --label=<label> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
+    generic_combine [--subject_identifier=<subject_colname> --label=<label> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
     
 Options:
     -h --help  Show this screen.
@@ -115,7 +115,7 @@ if (file.exists("summary_dataset_problems.csv")) {
   }
   
   ## run generic_read_in.R on this problem subset and see if any problems occur
-  system(paste0("/home/scripts/generic_read_in.R --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  system(paste0("generic_read_in --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
   
   ## check and see if summary_dataset_problems got written  
     if (file.exists("problem_check/output/summary_dataset_problems.csv")) {

@@ -25,7 +25,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Read in a directory of data and make checks prior to ML
 Usage:
-    generic_read_in.R [--subject_identifier=<subject_colname>] <input> <outdir>
+    generic_read_in [--subject_identifier=<subject_colname>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.

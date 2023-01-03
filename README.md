@@ -27,7 +27,8 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 docker pull aoliver44/nutrition_tools:1.1
 
 ## Option 2: Build it yourself! Still local installation.
-docker build -t nutrition_tools:1.1 .
+## On my quad-core i7 2020 macbook pro, took 43 minutes. 
+docker build -t nutrition_tools:latest .
 
 ## to run
 docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:1.1 bash
@@ -57,11 +58,11 @@ You are now operating inside a container, which contains the software necessary 
 
 ------------------------------------------
 
-### **3. Run generic_read_in.R**
+### **3. Run generic_read_in**
 
 ```
-bashRscript generic_read_in.R -h
-Usage: generic_read_in.R [options]
+generic_read_in -h
+Usage: generic_read_in [options]
 
 Options:
 	-i CHARACTER, --input=CHARACTER
@@ -75,7 +76,7 @@ Options:
 
 ########### example: ###########
 
-~/scripts/generic_read_in.R --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
+generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
 
 ```
 **Desired input:** A flat-file(s) where each row has a unique identifier (a subject or sample ID) and each column is some feature measured. Should multiple files exist, the unique identifier will be present in all files.
@@ -112,11 +113,11 @@ It is good practice generally, and vital for these scripts to work properly, for
 
 ------------------------------------------
 
-### **4. Run generic_combine.R**
+### **4. Run generic_combine**
  ```
 Combine data from read_in step, prior to ML
 Usage:
-    generic_combine.R [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
+    generic_combine [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
     
 Options:
     -h --help  Show this screen.
@@ -144,17 +145,19 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 4. One-hot encode factors
     - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because the core of downstream ML (dietML.R) is the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does).
   
+**OUTPUT:** (1) A .csv file for use in ML in the directory of the input. (2) a feature_summary.csv file which tells you what features you started with
+  
   **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
 
 
 ------------------------------------------
 
-### **5. Run diet_ML.R**
+### **5. Run diet_ML**
 
 ```
 Run random forest regression or classification on a dataframe
 Usage:
-    dietML.R [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type>] <input> <output>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type>] <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -169,7 +172,7 @@ Arguments:
     output path where results should be written 
 
 ########### example: ###########
-~/scripts/dietML.R --label cluster --cor_level 0.80 --train_split 0.7 --type classification merged_data.csv ml_results/
+dietML --label cluster --cor_level 0.80 --train_split 0.7 --type classification merged_data.csv ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
