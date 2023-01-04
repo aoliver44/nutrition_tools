@@ -60,14 +60,14 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-opt <- data.frame(subject_identifier=character(),
-                                label=character(),
-                                cor_level=numeric(),
-                                cor_choose=logical(),
-                                preserve_samples=logical(),
-                                input=character(),
-                                output_file=character())
-opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.60, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+# opt <- data.frame(subject_identifier=character(),
+#                                 label=character(),
+#                                 cor_level=numeric(),
+#                                 cor_choose=logical(),
+#                                 preserve_samples=logical(),
+#                                 input=character(),
+#                                 output_file=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.60, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -340,8 +340,11 @@ if (length(co_corr_list) > 0) {
     dev.off()
     
   } else {
-    cat("\n", "You have too few correlated variables for correlation figure to work", "\n\n")
-    cat("We printed the correlation matrix to file, might help!", "\n\n")
+    cat("\n","################################################", "\n")
+    cat("WARNING:", "\n")
+    cat("You have too few correlated variables for correlation figure to work", "\n")
+    cat("We printed the correlation matrix to file, might help!", "\n")
+    cat("################################################", "\n\n")
     readr::write_delim(x = correlate_figure, file = paste0(opt$input, "correlated_features_matrix.csv"), delim = ",", quote = NULL)
   }
   
@@ -349,6 +352,12 @@ if (length(co_corr_list) > 0) {
   ## decide which co-correlated vars to keep =====================================
   
   if (opt$cor_choose == TRUE) {
+    cat("\n","################################################", "\n")
+    cat("NOTE:", "\n")
+    cat("You have --corr_choose TRUE.", "\n")
+    cat("The following features are correlated at --cor_level.", "\n") 
+    cat("Please chose which one you want in the final dataset by selecting the corresponding nymber", "\n")
+    cat("################################################", "\n\n")
     corr_decision_list = c()
     
     corr_choices <- high_cor %>%
