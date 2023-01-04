@@ -258,8 +258,6 @@ full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_n
 
 ## co-correlate features =======================================================
 
-## add in a dummy var for correlation purpose
-## this dummy var is meaningless. We are using the next steps for 
 ## co-correlation of features and for one-hot-encoding.
 full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>% 
   #dplyr::mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
