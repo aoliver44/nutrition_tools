@@ -264,18 +264,19 @@ if (opt$preserve_samples == TRUE) {
 ## ok lets remove rows that are mostly NA (admittedly a much smaller dataset)...but no NAs left!
 full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_na()
 
-## add back in label if dropped ================================================
-
-if (as.character(opt$label) %!in% colnames(full_merge_dedup_tmp_row_drop)) {
-  full_merge_dedup_tmp_row_drop <- merge(pre_corr_label_df, full_merge_dedup_tmp_row_drop, by = as.character(opt$subject_identifier))
-}
-
 ## co-correlate features =======================================================
 
 ## co-correlation of features and for one-hot-encoding.
 full_merge_dedup_pre_cor <- full_merge_dedup_tmp_row_drop %>% 
   #dplyr::mutate(., dummy_var = sample(c(0,1), size = NROW(.), replace = T)) %>%
-  tibble::rownames_to_column(., var = "subject_id")
+  tibble::rownames_to_column(., var = as.character(opt$subject_identifier))
+
+## add back in label if dropped ================================================
+
+if (as.character(opt$label) %!in% colnames(full_merge_dedup_pre_cor)) {
+  full_merge_dedup_pre_cor <- merge(pre_corr_label_df, full_merge_dedup_pre_cor, by = as.character(opt$subject_identifier))
+  full_merge_dedup_pre_cor <- full_merge_dedup_pre_cor %>% tidyr::drop_na()
+  }
 
 ## check correlation level
 
