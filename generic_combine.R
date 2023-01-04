@@ -201,7 +201,9 @@ full_merge_dedup <- full_merge %>%
 ## keep a dataframe seperately with just the subject id and label
 ## sometimes people have labels with tons of NAs, which will get dropped
 
-pre_corr_label_df <- full_merge_dedup %>% dplyr::select(., as.character(opt$label), as.character(opt$subject_identifier)) %>%
+pre_corr_label_df <- full_merge_dedup %>% 
+  tibble::rownames_to_column(., var = opt$subject_identifier) %>% 
+  dplyr::select(., as.character(opt$label), as.character(opt$subject_identifier)) %>%
   tidyr::drop_na()
 
 ## pre-corr col drop ===========================================================
