@@ -67,7 +67,7 @@ set.seed(1)
 #                                 preserve_samples=logical(),
 #                                 input=character(),
 #                                 output_file=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.60, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("ratio_quartile"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -198,6 +198,12 @@ full_merge_dedup <- full_merge %>%
   readr::type_convert(.) %>%
   suppressMessages() 
 
+## keep a dataframe seperately with just the subject id and label
+## sometimes people have labels with tons of NAs, which will get dropped
+
+pre_corr_label_df <- full_merge_dedup %>% dplyr::select(., as.character(opt$label), as.character(opt$subject_identifier)) %>%
+  tidyr::drop_na()
+
 ## pre-corr col drop ===========================================================
 
 ## lets initally drop columns that are mostly NA already (50% or greater)
@@ -255,6 +261,12 @@ if (opt$preserve_samples == TRUE) {
 
 ## ok lets remove rows that are mostly NA (admittedly a much smaller dataset)...but no NAs left!
 full_merge_dedup_tmp_row_drop <- full_merge_dedup_tmp_col_drop %>% tidyr::drop_na()
+
+## add back in label if dropped ================================================
+
+if (as.character(opt$label) %!in% colnames(full_merge_dedup_tmp_row_drop)) {
+  full_merge_dedup_tmp_row_drop <- merge(pre_corr_label_df, full_merge_dedup_tmp_row_drop, by = as.character(opt$subject_identifier))
+}
 
 ## co-correlate features =======================================================
 
