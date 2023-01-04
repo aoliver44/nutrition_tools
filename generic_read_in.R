@@ -433,7 +433,7 @@ if (length(fils) == 1) {
     geom_bar() +
     labs(y = "NA Count", x = "Features with NAs") +
     theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
-} else {
+} else { # facet by dataset
   na_figure <- na_count_features %>%
     dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
     dplyr::filter(., na_count > 0) %>%
