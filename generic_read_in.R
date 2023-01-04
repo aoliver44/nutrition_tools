@@ -99,7 +99,7 @@ set.seed(1)
 fils <- list.files(opt$input, full.names = TRUE, recursive = TRUE)
 ## check and make sure there are files in the path
 if (length(fils) < 1) {
-  cat(paste0("We did not detect any files in ", opt$path, " please check your path or folder."), "\n\n")
+  cat(paste0("ERROR: We did not detect any files in ", opt$path, " please check your path or folder."), "\n\n")
 }
 
 ## create NA count file ========================================================
@@ -165,8 +165,9 @@ for (file in fils) {
   cat(paste0("Checking to see if ", opt$subject_identifier," is in dataset..."), "\n")
   if (paste0(opt$subject_identifier, "_x") %in% names(f) == FALSE) { 
     
-    cat(paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis."), "\n\n") 
-    
+    cat("\n","################################################", "\n")
+    cat("WARNING:", paste0(opt$subject_identifier, " not found in ", file_name, " dataset. That data will not be included in the analysis."), "\n\n") 
+    cat("################################################", "\n\n")
     cat("Press [enter] to acknowledge ")
     
     ## add to a summary problem file
@@ -185,10 +186,11 @@ for (file in fils) {
   
   ## checking to see if there are duplicate subject_ids in the file - Make unique
   if (NROW(f %>% janitor::get_dupes(., c(subject_id_x))) > 1) {
-    cat(paste("We detected rows in", file_name, "with the same subject_id."), "\n\n")
-    cat("We will rename the subjects for now", "\n\n")
-    cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!", "\n\n")
-    
+    cat("\n","################################################", "\n")
+    cat("WARNING:",paste("We detected rows in", file_name, "with the same subject_id."), "\n\n")
+    cat("We will rename the subjects for now", "\n")
+    cat("Note: if this is longitudinal data, (i.e patient is measured multiple times), take care in choosing the approrpiate ML method and CV strategy. Lme4 and other models may be more useful, but you have the power to decide!", "\n")
+    cat("################################################", "\n\n")
     cat(" Press [enter] to acknowledge  ")
     
     ## add to a summary problem file
@@ -233,9 +235,9 @@ for (file in fils) {
     
     rm( list = base::Filter( exists, c("date_features", "date_dataframe") ) )
     
-    cat("\n", "I think you have POSIXct time/date data included. 
-        These often mess up downstream analyses. You should try and 
-        convert it to a UNIX timestamp.", "\n\n")
+    cat("\n","################################################", "\n")
+    cat("WARNING: I think you have POSIXct time/date data included. These often mess up downstream analyses. You should try and convert it to a UNIX timestamp.", "\n")
+    cat("################################################", "\n\n")
     
     print(g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull(.))
     date_features <- g %>% dplyr::filter(., date == "TRUE") %>% dplyr::select(., feature) %>% base::unique() %>% dplyr::pull()
@@ -264,10 +266,12 @@ for (file in fils) {
   g_tmp$alpha_numeric <- grepl("^([A-Z])|([a-z]|[0-9])", g_tmp$value, ignore.case = TRUE)
   g_tmp <- dplyr::filter(g_tmp, alpha_numeric == FALSE)
   if (NROW(g_tmp) > 0) {
-    cat("You have cells in your data that contain only a symbol. 
-        We cant do anything with that.", "\n\n")
-    cat("We check against a large list of possible NAs. 
-        Are you using a really weird NA symbol?", "\n\n")
+    
+    cat("\n","################################################", "\n")
+    cat("WARNING: You have cells in your data that contain only a symbol. We cant do anything with that.", "\n")
+    cat("We check against a large list of possible NAs. Are you using a really weird NA symbol?", "\n")
+    cat("################################################", "\n\n")
+    
     cat("Press [enter] to acknowledge ")
     
     ## add to a summary problem file
