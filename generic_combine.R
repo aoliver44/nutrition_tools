@@ -60,14 +60,14 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-# opt <- data.frame(subject_identifier=character(),
-#                                 label=character(),
-#                                 cor_level=numeric(),
-#                                 cor_choose=logical(),
-#                                 preserve_samples=logical(),
-#                                 input=character(),
-#                                 output_file=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+opt <- data.frame(subject_identifier=character(),
+                                label=character(),
+                                cor_level=numeric(),
+                                cor_choose=logical(),
+                                preserve_samples=logical(),
+                                input=character(),
+                                output_file=character())
+opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("acar"), cor_level = 0.60, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -174,7 +174,7 @@ if (NROW(full_merge) < 200) {
 } else if (NROW(full_merge) > 200 && NROW(full_merge) < 400) {
   cat("\n","################################################", "\n")
   cat("NOTE:", "\n")
-  cat("This is a reasonably small ML dataset. But depending on what you are doing, it might work! We will assume you're an expert.", "\n")
+  cat("This is a reasonably small ML dataset (sample-wise). But depending on what you are doing, it might work! We will assume you're an expert.", "\n")
   cat("################################################", "\n\n")
   
   ## get interactive acknowledgment 
@@ -322,7 +322,7 @@ co_corr_list <- c(co_corr_list_add, co_corr_list)
 if (length(co_corr_list) > 0) {
   
   correlate_figure <- corr_raw_data$dat_transformed %>% 
-    dplyr::select(., any_of(co_corr_list), -dummy_var)
+    dplyr::select(., any_of(co_corr_list))
   correlate_figure <- corrr::correlate(x = correlate_figure, method = "pearson") %>% 
     tibble::column_to_rownames(., var = "term") %>% abs() %>%
     suppressMessages()
