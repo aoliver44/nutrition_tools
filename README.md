@@ -61,19 +61,18 @@ You are now operating inside a container, which contains the software necessary 
 ### **3. Run generic_read_in**
 
 ```
-generic_read_in -h
-Usage: generic_read_in [options]
-
+Read in a directory of data and make checks prior to ML
+Usage:
+    generic_read_in [--subject_identifier=<subject_colname>] <input> <outdir>
+    
 Options:
-	-i CHARACTER, --input=CHARACTER
-		path to folder with data to import [default= /home/data/]
+    -h --help  Show this screen.
+    -v --version  Show version.
+    --subject_identifier name of columns with subject IDs [default: subject_id]
 
-	-s CHARACTER, --subject_identifier=CHARACTER
-		subject key (column name) found in all files [default= subject_id]
-
-	-h, --help
-		Show this help message and exit
-
+Arguments:
+    input  FULL path of input directory containing files
+    outdir  FULL path of output directory name 
 ########### example: ###########
 
 generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
@@ -117,7 +116,7 @@ It is good practice generally, and vital for these scripts to work properly, for
  ```
 Combine data from read_in step, prior to ML
 Usage:
-    generic_combine [--subject_identifier=<subject_colname> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
+    generic_combine [--subject_identifier=<subject_colname> --label=<label> --cor_level=<cor_level> --cor_choose=<cor_choose> --preserve_samples=<preserve_samples>] <input> <output_file>
     
 Options:
     -h --help  Show this screen.
@@ -129,8 +128,8 @@ Options:
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
 Arguments:
-    input  input directory containing files
-    output_file  output file name  
+    input  FULL path of input directory containing files
+    output_file  output file name
 
 ########### example: ###########
 
@@ -157,7 +156,7 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 ```
 Run random forest regression or classification on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --ncores=<ncores>] <input> <outdir>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -167,14 +166,15 @@ Options:
     --train_split what percentage of samples should be used in training [default: 0.70]
     --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
     --seed random seed for reproducible results [default: 42]
+    --tune_length number of hyperparameter combinations to sample [default: 30]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
-    input  path to input file for ML (output from generic_combine.R)
-    outdir path where results should be written 
+    input  FULL path to input file for ML (output from generic_combine.R)
+    outdir FULL path where results should be written  
 
 ########### example: ###########
-dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 /home/simulated_output/merged_data.csv ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
