@@ -157,7 +157,7 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 ```
 Run random forest regression or classification on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type>] <input> <output>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -166,13 +166,15 @@ Options:
     --cor_level level to group features together [default: 0.80]
     --train_split what percentage of samples should be used in training [default: 0.70]
     --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
+    --seed random seed for reproducible results [default: 42]
+    --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
     input  path to input file for ML (output from generic_combine.R)
-    output path where results should be written 
+    outdir path where results should be written 
 
 ########### example: ###########
-dietML --label cluster --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 /home/simulated_output/merged_data.csv ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 /home/simulated_output/merged_data.csv ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
