@@ -18,7 +18,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run random forest regression or classification on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --ncores=<ncores>] <input> <outdir>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -28,11 +28,12 @@ Options:
     --train_split what percentage of samples should be used in training [default: 0.70]
     --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
     --seed random seed for reproducible results [default: 42]
+    --tune_length number of hyperparameter combinations to sample [default: 30]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
-    input  path to input file for ML (output from generic_combine.R)
-    outdir path where results should be written
+    input  FULL path to input file for ML (output from generic_combine.R)
+    outdir FULL path where results should be written
 " -> doc
 
 opt <- docopt::docopt(doc, version = 'dietML.R v1.0\n\n')
@@ -52,16 +53,16 @@ library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 ## suppress warnings
 options(warn=-1)
 
-# opt <- data.frame(subject_identifier=character(),
-#                   cor_level=numeric(),
-#                   label=character(),
-#                   train_split=numeric(),
-#                   seed=numeric(),
-#                   type=character(),
-#                   ncores=numeric(),
-#                   input=character(),
-#                   outdir=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
+opt <- data.frame(subject_identifier=character(),
+                  cor_level=numeric(),
+                  label=character(),
+                  train_split=numeric(),
+                  seed=numeric(),
+                  type=character(),
+                  ncores=numeric(),
+                  input=character(),
+                  outdir=character())
+opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
 
 
 ## check for inputs ============================================================
@@ -151,22 +152,36 @@ cat("Note: Beginning ML (", opt$type, ") ...", "\n")
 cat("Preprocessesing includes near-zero variance filter and correlation threshold at ", opt$cor_level, "pearson.", "\n")
 cat("#########################\n\n")
 
+## GRID SEARCH
 
-## create hyper parameter grid and train control 
-tuneGrid <-  expand.grid(.mtry = 2:pmin(NCOL(train_data), 12),
-                         .splitrule = c("gini", "extratrees"),
-                         .min.node.size = seq(2, pmin(12, NCOL(train_data)), by = 2))
+# ## create hyper parameter grid and train control 
+# # tuneGrid <-  expand.grid(.mtry = 2:pmin(NCOL(train_data), 12),
+# #                          .splitrule = c("gini", "extratrees"),
+# #                          .min.node.size = seq(2, pmin(NCOL(train_data), 12), by = 2))
+# 
+# fit_control <- caret::trainControl(method = "repeatedcv",
+#                                    number = 10,
+#                                    repeats = 3,
+#                                    preProcOptions = list(cutoff = as.numeric(opt$cor_level)),
+#                                    classProbs = TRUE,
+#                                    search = "grid",
+#                                    seeds=seeds,
+#                                    savePredictions = T,
+#                                    allowParallel = TRUE,
+#                                    verboseIter = TRUE)
+
+## RANDOM SEARCH
 
 fit_control <- caret::trainControl(method = "repeatedcv",
                                    number = 10,
                                    repeats = 3,
                                    preProcOptions = list(cutoff = as.numeric(opt$cor_level)),
                                    classProbs = TRUE,
-                                   search = "grid",
-                                   seeds=seeds,
+                                   search = "random",
                                    savePredictions = T,
                                    allowParallel = TRUE,
                                    verboseIter = TRUE)
+
 
 ## make parallel jobs for model training
 cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
@@ -179,7 +194,8 @@ if (opt$type == "classification") {
                                preProcess = c("nzv","corr"),
                                method = "ranger", 
                                trControl = fit_control, 
-                               tuneGrid = tuneGrid,
+                               #tuneGrid = tuneGrid,
+                               tuneLength = opt$tune_length,
                                importance = "permutation"
   )
   ## stop parallel jobs
@@ -201,7 +217,8 @@ if (opt$type == "classification") {
                                preProcess = c("nzv","corr"),
                                method = "ranger", 
                                trControl = fit_control, 
-                               tuneGrid = tuneGrid,
+                               #tuneGrid = tuneGrid,
+                               tuneLength = opt$tune_length,
                                importance = "permutation"
   )
   ## stop parallel jobs
