@@ -53,16 +53,16 @@ library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 ## suppress warnings
 options(warn=-1)
 
-opt <- data.frame(subject_identifier=character(),
-                  cor_level=numeric(),
-                  label=character(),
-                  train_split=numeric(),
-                  seed=numeric(),
-                  type=character(),
-                  ncores=numeric(),
-                  input=character(),
-                  outdir=character())
-opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
+# opt <- data.frame(subject_identifier=character(),
+#                   cor_level=numeric(),
+#                   label=character(),
+#                   train_split=numeric(),
+#                   seed=numeric(),
+#                   type=character(),
+#                   ncores=numeric(),
+#                   input=character(),
+#                   outdir=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
 
 
 ## check for inputs ============================================================
