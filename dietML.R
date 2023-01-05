@@ -28,7 +28,7 @@ Options:
     --train_split what percentage of samples should be used in training [default: 0.70]
     --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
     --seed random seed for reproducible results [default: 42]
-    --ncores number of processesing cores for parallel computing [defualt: 2]
+    --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
     input  path to input file for ML (output from generic_combine.R)
@@ -61,7 +61,7 @@ options(warn=-1)
 #                   ncores=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_output/iris.csv"), outdir="/home/simulated_output/ml_results")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
 
 
 ## check for inputs ============================================================
@@ -168,6 +168,7 @@ fit_control <- caret::trainControl(method = "repeatedcv",
                                    allowParallel = TRUE,
                                    verboseIter = TRUE)
 
+## make parallel jobs for model training
 cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
 doParallel::registerDoParallel(cl)
 
@@ -181,17 +182,14 @@ if (opt$type == "classification") {
                                tuneGrid = tuneGrid,
                                importance = "permutation"
   )
+  ## stop parallel jobs
   parallel::stopCluster(cl)
   
-  ## make training fit plots
-  png(filename = paste0(opt$outdir, "/training_fit.png"), width=7, height=5, units="in", res=300)
-  caret::plot.train(training_fit)
-  suppressMessages(dev.off())
-  caret::confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label))
+  print(caret::confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label)))
   
   if (length(levels(as.factor(train_label$label))) == 2) {
     ## run MLeval
-    png(filename = paste0(opt$outdir, "/roc_auc_curve.png"), width=5, height=5, units="in", res=300)
+    png(filename = paste0(opt$outdir, "roc_auc_curve.png"), width=5, height=5, units="in", res=300)
     res <- MLeval::evalm(training_fit, plots = "r")
     suppressMessages(dev.off())
     
@@ -206,12 +204,8 @@ if (opt$type == "classification") {
                                tuneGrid = tuneGrid,
                                importance = "permutation"
   )
+  ## stop parallel jobs
   parallel::stopCluster(cl)
-  
-  ## make training fit plots
-  png(filename = paste0(opt$outdir, "/training_fit.png"), width=7, height=5, units="in", res=300)
-  caret::plot.train(training_fit)
-  suppressMessages(dev.off())
   
   ## For regression:
   hfe_pred <- predict(training_fit, test_data)
@@ -223,6 +217,11 @@ if (opt$type == "classification") {
   
 }
 
+## make training fit plots
+png(filename = paste0(opt$outdir, "training_fit.png"), width=7, height=5, units="in", res=300, type = "cairo")
+plot(training_fit, plotType = "line")
+dev.off()
+
 cat("\n#########################\n")
 cat("Done! Results written to outdir.", "\n")
 cat("#########################\n\n")
@@ -231,8 +230,8 @@ cat("#########################\n\n")
 ## VIP Plots ===================================================================
 ## For all:
 vip <- caret::varImp(object = training_fit)
-
-png(filename = paste0(opt$outdir, "/vip_plot.png"), width=7, height=5, units="in", res=300)
+plot(vip)
+png(filename = paste0(opt$outdir, "vip_plot.png"), width=7, height=5, units="in", res=300)
 plot(vip, top = pmin(10, NROW(vip$importance)))
 suppressMessages(dev.off())
 
