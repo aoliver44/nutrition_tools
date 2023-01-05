@@ -247,9 +247,8 @@ cat("#########################\n\n")
 ## VIP Plots ===================================================================
 ## For all:
 vip <- caret::varImp(object = training_fit)
-plot(vip)
 png(filename = paste0(opt$outdir, "vip_plot.png"), width=7, height=5, units="in", res=300)
-plot(vip, top = pmin(10, NROW(vip$importance)))
+plot(vip, top = pmin(NROW(vip$importance), 20))
 suppressMessages(dev.off())
 
 ## shap explaination ===========================================================
