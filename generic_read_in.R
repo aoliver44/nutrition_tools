@@ -33,8 +33,8 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
 
 Arguments:
-    input  input directory containing files
-    outdir  output directory name
+    input  FULL path of input directory containing files
+    outdir  FULL path of output directory name
 
 " -> doc
 

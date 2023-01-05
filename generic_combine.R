@@ -34,7 +34,7 @@ Options:
     --preserve_samples attempt to drop more features to keep samples [default: FALSE]
     
 Arguments:
-    input  input directory containing files
+    input  FULL path of input directory containing files
     output_file  output file name
 
 " -> doc
