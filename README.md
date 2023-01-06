@@ -87,7 +87,7 @@ This script will read in a directory of files (.csv | .txt | .tsv) and attempt t
 3. Check to see if there are duplicated column names
    - Sub-check: if the column names are duplicated, is the data also duplicated?
 4. Keep a tally of columns that contain NAs.
-5. Check to see if you have time-series data and discourage htat
+5. Check to see if you have time-series data and discourage that
    - Note,  this program and many ML programs struggle with longitudinal data
    
 **Output:**
