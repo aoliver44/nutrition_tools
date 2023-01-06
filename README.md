@@ -8,7 +8,7 @@
 - An internet connection
 
 
-[EXAMPLE RUN THROUGH](https://github.com/aoliver44/nutrition_tools#example-run-through-1)
+[EXAMPLE RUN THROUGH](https://github.com/aoliver44/nutrition_tools#example-run-through)
 
 --------------------------------------------------
 
