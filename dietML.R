@@ -45,6 +45,7 @@ library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
 library(ranger, quietly = T, verbose = F, warn.conflicts = F)
 library(doParallel, quietly = T, verbose = F, warn.conflicts = F)
 library(parallel, quietly = T, verbose = F, warn.conflicts = F)
+library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
 
 ## helper functions ============================================================
 ## Negate function ("not in"):
@@ -53,16 +54,16 @@ library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 ## suppress warnings
 options(warn=-1)
 
-# opt <- data.frame(subject_identifier=character(),
-#                   cor_level=numeric(),
+# opt <- data.frame(cor_level=numeric(),
 #                   label=character(),
 #                   train_split=numeric(),
 #                   seed=numeric(),
 #                   type=character(),
 #                   ncores=numeric(),
+#                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, label = c("species"), type= c("classification"), input = c("/home/simulated_test/iris.csv"), outdir="/home/simulated_test/ml_results/")
+# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, seed= 42, ncores = 4, tune_length = 100, label = c("feature_of_interest"), type= c("regression"), input = c("/home/output_old/butyrate_metaphlan4.txt"), outdir="/home/simulated_output/ml_results/")
 
 
 ## check for inputs ============================================================
@@ -89,10 +90,19 @@ if (file.exists(opt$input) == TRUE) {
 
 ## read in input ===============================================================
 
-input <- readr::read_delim(file = opt$input, delim = ",") %>% 
-  janitor::clean_names() %>% tidyr::drop_na() %>% 
-  dplyr::select(., -dplyr::any_of("subject_id")) %>%
-  suppressMessages()
+if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
+  input <- readr::read_delim(file = opt$input, delim = ",") %>% 
+    janitor::clean_names() %>% tidyr::drop_na() %>% 
+    dplyr::select(., -dplyr::any_of("subject_id")) %>%
+    suppressMessages()
+  
+} else if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")){
+  input <- readr::read_delim(file = opt$input, delim = "\t") %>% 
+    janitor::clean_names() %>% tidyr::drop_na() %>% 
+    dplyr::select(., -dplyr::any_of("subject_id")) %>%
+    suppressMessages()
+  
+}
 
 ## make colnames appropriate for ML (ranger is picky)
 colnames(input) <- make.names(colnames(input))
@@ -131,19 +141,65 @@ test_label <- test %>% dplyr::select(., label)
 train_data$id_tmp <- NULL
 test_data$id_tmp <- NULL
 
-## set seed for reproducibility ================================================
+## set seed  ===================================================================
 
-#create a list of seed, here change the seed for each resampling
 set.seed(opt$seed)
 
-#length is = (n_repeats*nresampling)+1
-seeds <- vector(mode = "list", length = 31)
+## Determine if your data is highly correlated =================================
 
-#(3 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:30) seeds[[i]]<- sample.int(n=1000, 132)
+## This is necessary because if, during preprocessing, you lose a lot of samples
+## this can cause weird behavior in hyperparameter searches. We are gonna
+## hedge agaist this.
 
-#for the last model
-seeds[[31]]<-sample.int(NROW(train_data), 1)
+## co-correlate features at specified threshold
+training_cor <- mikropml:::group_correlated_features(train_data, 
+                                                 corr_thresh = as.numeric(opt$cor_level), group_neg_corr = T)
+
+## make dataframe of what is correlated at specified threshold.
+training_cor <- as.data.frame(training_cor) %>% 
+  tidyr::separate(., col = training_cor, into = c("keep", "co_correlated"), sep = "\\|", extra = "merge")
+
+## if we think a lot of samples (greater than 10% of all samples) will get 
+## dropped due to pre-processing steps, especially correlation, then we 
+## constrict the search space so that ranger doesnt error out
+
+## if you are dropping a lot due to correlation
+if (length(na.omit(training_cor$co_correlated)) > (NROW(training_cor) * 0.1)) {
+  if (opt$type == "classification") {
+    tuneGrid <-  expand.grid(.mtry = 2:((round((NROW(training_cor) * 0.9), digits = 0)) - (length(na.omit(training_cor$co_correlated)))),
+                             .splitrule = c("gini", "extratrees"),
+                             .min.node.size = 2:(min(20,(round((NROW(training_cor) * 0.9), digits = 0)) - (length(na.omit(training_cor$co_correlated))))))
+    
+    tuneGrid <- sample_n(tuneGrid, pmin(as.numeric(opt$tune_length), NROW(tuneGrid)))
+  } else {
+    
+    tuneGrid <-  expand.grid(.mtry = 2:((round((NROW(training_cor) * 0.9), digits = 0)) - (length(na.omit(training_cor$co_correlated)))),
+                             .splitrule = c("variance", "extratrees", "maxstat"),
+                             .min.node.size = 2:(min(20,(round((NROW(training_cor) * 0.9), digits = 0)) - (length(na.omit(training_cor$co_correlated))))))
+    
+    tuneGrid <- sample_n(tuneGrid, pmin(as.numeric(opt$tune_length), NROW(tuneGrid)))
+    
+  }
+  
+  ## else you are not dropping a lot due to correlation
+} else {
+  if (opt$type == "classification") {
+  tuneGrid <-  expand.grid(.mtry = 2:(round((NROW(training_cor) * 0.9), digits = 0)),
+                           .splitrule = c("gini", "extratrees"),
+                           .min.node.size = 2:(min(20,round((NROW(training_cor) * 0.9), digits = 0))))
+  
+  tuneGrid <- sample_n(tuneGrid, pmin(as.numeric(opt$tune_length), NROW(tuneGrid)))
+  } else {
+    
+    tuneGrid <-  expand.grid(.mtry = 2:(round((NROW(training_cor) * 0.9), digits = 0)),
+                             .splitrule = c("variance", "extratrees", "maxstat"),
+                             .min.node.size = 2:(min(20,round((NROW(training_cor) * 0.9), digits = 0))))
+    
+    tuneGrid <- sample_n(tuneGrid, pmin(as.numeric(opt$tune_length), NROW(tuneGrid)))
+    
+  }
+}
+
 
 ## CV on training data =========================================================
 
@@ -152,32 +208,14 @@ cat("Note: Beginning ML (", opt$type, ") ...", "\n")
 cat("Preprocessesing includes near-zero variance filter and correlation threshold at ", opt$cor_level, "pearson.", "\n")
 cat("#########################\n\n")
 
-## GRID SEARCH
-
-# ## create hyper parameter grid and train control 
-# # tuneGrid <-  expand.grid(.mtry = 2:pmin(NCOL(train_data), 12),
-# #                          .splitrule = c("gini", "extratrees"),
-# #                          .min.node.size = seq(2, pmin(NCOL(train_data), 12), by = 2))
-# 
-# fit_control <- caret::trainControl(method = "repeatedcv",
-#                                    number = 10,
-#                                    repeats = 3,
-#                                    preProcOptions = list(cutoff = as.numeric(opt$cor_level)),
-#                                    classProbs = TRUE,
-#                                    search = "grid",
-#                                    seeds=seeds,
-#                                    savePredictions = T,
-#                                    allowParallel = TRUE,
-#                                    verboseIter = TRUE)
-
-## RANDOM SEARCH
+## GRID SEARCH (of randomly defined grid)
 
 fit_control <- caret::trainControl(method = "repeatedcv",
                                    number = 10,
                                    repeats = 3,
                                    preProcOptions = list(cutoff = as.numeric(opt$cor_level)),
                                    classProbs = TRUE,
-                                   search = "random",
+                                   search = "grid",
                                    savePredictions = T,
                                    allowParallel = TRUE,
                                    verboseIter = TRUE)
@@ -194,8 +232,7 @@ if (opt$type == "classification") {
                                preProcess = c("nzv","corr"),
                                method = "ranger", 
                                trControl = fit_control, 
-                               #tuneGrid = tuneGrid,
-                               tuneLength = opt$tune_length,
+                               tuneGrid = tuneGrid,
                                importance = "permutation"
   )
   ## stop parallel jobs
@@ -205,7 +242,7 @@ if (opt$type == "classification") {
   
   if (length(levels(as.factor(train_label$label))) == 2) {
     ## run MLeval
-    png(filename = paste0(opt$outdir, "roc_auc_curve.png"), width=5, height=5, units="in", res=300)
+    pdf(file = paste0(opt$outdir, "roc_auc_curve.pdf"), width=5, height=5)
     res <- MLeval::evalm(training_fit, plots = "r")
     suppressMessages(dev.off())
     
@@ -217,8 +254,7 @@ if (opt$type == "classification") {
                                preProcess = c("nzv","corr"),
                                method = "ranger", 
                                trControl = fit_control, 
-                               #tuneGrid = tuneGrid,
-                               tuneLength = opt$tune_length,
+                               tuneGrid = tuneGrid,
                                importance = "permutation"
   )
   ## stop parallel jobs
@@ -235,7 +271,7 @@ if (opt$type == "classification") {
 }
 
 ## make training fit plots
-png(filename = paste0(opt$outdir, "training_fit.png"), width=7, height=5, units="in", res=300, type = "cairo")
+pdf(file = paste0(opt$outdir, "training_fit.pdf"), width=7, height=5)
 plot(training_fit, plotType = "line")
 dev.off()
 
@@ -247,7 +283,7 @@ cat("#########################\n\n")
 ## VIP Plots ===================================================================
 ## For all:
 vip <- caret::varImp(object = training_fit)
-png(filename = paste0(opt$outdir, "vip_plot.png"), width=7, height=5, units="in", res=300)
+pdf(file = paste0(opt$outdir, "vip_plot.pdf"), width=15, height=5)
 plot(vip, top = pmin(NROW(vip$importance), 20))
 suppressMessages(dev.off())
 
