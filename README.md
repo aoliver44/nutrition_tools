@@ -7,6 +7,7 @@
 - [docker desktop](https://www.docker.com/products/docker-desktop/) for the Rstudio envirnoment
 - An internet connection
 
+[EXAMPLE RUN THROUGH](https://www.docker.com/products/docker-desktop/)
 --------------------------------------------------
 
 ### **1. Clone the environment from Github**
@@ -88,7 +89,7 @@ This script will read in a directory of files (.csv | .txt | .tsv) and attempt t
    - Sub-check: if the column names are duplicated, is the data also duplicated?
 4. Keep a tally of columns that contain NAs.
 5. Check to see if you have time-series data and discourage that
-   - Note,  this program and many ML programs struggle with longitudinal data
+   - Note: this program and many ML programs struggle with longitudinal data. However, as long as all subject_ids are unique, the program will run.
    
 **Output:**
  - **na_counts.csv**: counts of nas found in the input data
@@ -106,7 +107,7 @@ This script will read in a directory of files (.csv | .txt | .tsv) and attempt t
 
 **NOTES:** This program came about from large collaborations where many different datasets were being emailed around and subsequently combined for later analysis. It will still check a single file.
 
-Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. The program will error out if that happened to be the only dataset you provided.
+Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. 
 
 It is good practice generally, and vital for these scripts to work properly, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
 
@@ -137,16 +138,15 @@ generic_combine --subject_identifier subject_id --label label --cor_level 0.99 -
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
-1. Check and see if problems identified in generic_read_in.R step were addressed. If they were not addressed, these problematic datasets will be DROPPED.
-2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high. In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
+1. Check and see if problems identified in generic_read_in step were addressed. If they were not addressed, these problematic datasets will be DROPPED. If all datasets get dropped, the program will error out.
+2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high (it is mainly looking for copied data that has different column names). In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
 3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
-   - Note: If your response var of interest is correlated with another feature(s) at > 0.99, please take care to make sure you choose the response var to end up in the final dataset.
 4. One-hot encode factors
-    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because the core of downstream ML (dietML.R) is the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does).
+    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because the core of downstream ML (dietML.R) is the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does). If your label is 0 or 1, and is a factor, please change to A,B or control, treatment, etc.
   
 **OUTPUT:** (1) A .csv file for use in ML in the directory of the input. (2) a feature_summary.csv file which tells you what features you started with
   
-  **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
+  **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. Initially, features are dropped if they have greater than 50% NAs, and samples are dropped if they have greater than 75% NAs. Next, the details of this flag is that it looks at the distribution of NAs across all features, and if ```--preserve_samples TRUE```, then it will take the min number of NAs as the threshold for dropping features. If ```--preserve_samples FALSE```, the 25% percentile of NAs will be set as threshold for dropping features. Finally, all samples with remaining NAs are dropped, thus making a complete dataset. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
 
 
 ------------------------------------------
@@ -181,8 +181,25 @@ The final script in this pipeline takes a clean (no missing data!) dataframe and
 
 If your factor of interest in discrete (categorical), this analysis will be Random Forest classification. RF classification has shown to generally outperform many other single model algorithms and be fairly robust against over-fitting. 
 
-If your factor is continouous, this analysis will be a Random Forest regression. RF regression has similar benefits as RF classification. 
+If your factor is continouous, this analysis will be a Random Forest regression. RF regression has similar benefits as RF classification. Both of these models are run through the Ranger package in R. Ranger is a much faster implementation of random forests in R, because the core of it was written in c++. 
 
 For both analyses, data will default to a train-test split of 0.70 (70% of data will be used to train the model, and 30% will be COMPLETELY left out in order to test final model). Inside model building, a 10-fold repeated (3x) cross-validation procedure will be used to evaluate pre-processessing steps and hyperparameters. 
    - Preprocessing steps: Near-zero variance filtering, and correlation filtering (default: 0.8 pearson correlation)
-   - Hyperparameter tuning: an exhaustive grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. 
+   - Hyperparameter tuning: an (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesnt error out.
+
+
+------------------------------------------
+
+### **EXAMPLE RUN THROUGH**
+
+```
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:base_1.0 bash
+cd /home/
+
+generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
+
+generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
+
+dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+
+```
