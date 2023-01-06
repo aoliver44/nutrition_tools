@@ -174,7 +174,7 @@ Arguments:
     outdir FULL path where results should be written  
 
 ########### example: ###########
-dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
