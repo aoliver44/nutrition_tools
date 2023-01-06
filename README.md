@@ -7,7 +7,9 @@
 - [docker desktop](https://www.docker.com/products/docker-desktop/) for the Rstudio envirnoment
 - An internet connection
 
-[EXAMPLE RUN THROUGH](https://www.docker.com/products/docker-desktop/)
+
+[EXAMPLE RUN THROUGH](https://github.com/aoliver44/nutrition_tools#example-run-through-1)
+
 --------------------------------------------------
 
 ### **1. Clone the environment from Github**
