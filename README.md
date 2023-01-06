@@ -195,13 +195,17 @@ For both analyses, data will default to a train-test split of 0.70 (70% of data 
 ### **EXAMPLE RUN THROUGH**
 
 ```
+## step 1:
 docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:base_1.0 bash
 cd /home/
 
+## step 2:
 generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
 
+## step 3:
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
 
+## step 4:
 dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 
 ```
