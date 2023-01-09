@@ -25,7 +25,8 @@ RUN R -e 'renv::restore()'
 COPY ./generic_read_in.R ./scripts/generic_read_in
 COPY ./generic_combine.R ./scripts/generic_combine
 COPY ./dietML.R ./scripts/dietML
-COPY ./models/* ./scripts/
+COPY models/dietML_ranger.R ./scripts/dietML_ranger.R
+COPY models/dietML_glmnet.R ./scripts/dietML_glmnet.R
 
 ENV PATH="${PATH}:/scripts/"
 
