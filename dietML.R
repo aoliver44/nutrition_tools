@@ -18,7 +18,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run random forest regression or classification on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
