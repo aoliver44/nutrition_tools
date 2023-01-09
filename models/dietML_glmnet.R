@@ -19,6 +19,13 @@ fit_control <- caret::trainControl(method = "repeatedcv",
                                    verboseIter = TRUE)
 
 ## set up regression vs classification =========================================
+
+cat("\n#########################\n")
+cat("Note: Beginning ML (", opt$type, ") using a ",opt$model," model...", "\n")
+cat("Preprocessesing includes near-zero variance filter and correlation threshold at ", opt$cor_level, "pearson.", "\n")
+cat("#########################\n\n")
+
+
 if (opt$type == "classification") {
   if (length(levels(as.factor(train_label$label))) == 2) {
     family = "binomial"

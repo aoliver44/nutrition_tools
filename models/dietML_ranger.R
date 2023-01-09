@@ -65,7 +65,7 @@ if (length(na.omit(training_cor$co_correlated)) > (NROW(training_cor) * 0.1)) {
 ## CV on training data =========================================================
 
 cat("\n#########################\n")
-cat("Note: Beginning ML (", opt$type, ") ...", "\n")
+cat("Note: Beginning ML (", opt$type, ") using a ",opt$model," model...", "\n")
 cat("Preprocessesing includes near-zero variance filter and correlation threshold at ", opt$cor_level, "pearson.", "\n")
 cat("#########################\n\n")
 
