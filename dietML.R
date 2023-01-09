@@ -160,12 +160,12 @@ if (opt$model %!in% models) {
 
 ## random forest
 if (opt$model %in% c("ranger", "rf", "randomforest")) {
-  source("/home/scripts/models/dietML_ranger.R")
+  source("dietML_ranger.R")
 }
 
 ## lasso/ridge/elastic net models
 if (opt$model %in% c("lasso", "ridge", "enet", "elasticnet")) {
-  source("/home/scripts/models/dietML_glmnet.R")
+  source("dietML_glmnet.R")
 }
 
 ## make training fit plots
