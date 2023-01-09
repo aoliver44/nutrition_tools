@@ -26,7 +26,7 @@ Options:
     --label=<label> name of column that you are prediction [default: label]
     --cor_level level to group features together [default: 0.80]
     --train_split what percentage of samples should be used in training [default: 0.70]
-    --model what model would you like run (options: rf,lasso,ridge,enet) [defualt: rf]
+    --model what model would you like run (options: rf,lasso,ridge,enet) [default: rf]
     --type for models that do both regression and classification [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 30]
@@ -66,7 +66,6 @@ options(warn=-1)
 #                   input=character(),
 #                   outdir=character())
 # opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 200, label = c("species"), type= c("classification"), input = c("/home/simulated_iris/iris.csv"), outdir="/home/simulated_iris/ml_results/")
-
 
 ## check for inputs ============================================================
 
