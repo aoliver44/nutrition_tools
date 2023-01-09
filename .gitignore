@@ -19,3 +19,4 @@ prepare_foodtree_for_hfe.R
 shuffle_data.R
 renv_no_heatmaply.lock
 renv_original.lock
+after_github_push_easy.sh
