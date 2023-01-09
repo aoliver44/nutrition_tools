@@ -123,7 +123,7 @@ if (opt$type == "classification") {
   
   ## For regression:
   pred <- predict(training_fit, test_data)
-  caret::postResample(pred = pred, obs = test_label$label)
+  print(caret::postResample(pred = pred, obs = test_label$label))
   
 } else {
   ## error out

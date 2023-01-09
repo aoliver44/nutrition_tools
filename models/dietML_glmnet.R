@@ -160,19 +160,26 @@ if (opt$model == "ridge") {
   
 }
 
+## assess models
+
 if (opt$type == "classification" ) {
   if (length(levels(as.factor(train_label$label))) == 2) {
     ## run MLeval
+    print(caret::confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label)))
+    
     pdf(file = paste0(opt$outdir, "roc_auc_curve.pdf"), width=5, height=5)
     res <- MLeval::evalm(training_fit, plots = "r")
     suppressMessages(dev.off())
   } else {
     print(caret::confusionMatrix(data = predict(training_fit, test_data), reference = as.factor(test_label$label)))
   }
-} else {
+} 
+
+if (opt$type == "regression") {
   ## For regression:
   pred <- predict(training_fit, test_data)
-  caret::postResample(pred = pred, obs = test_label$label)
+  print(caret::postResample(pred = pred, obs = test_label$label))
+  
 }
 
 
