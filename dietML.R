@@ -16,7 +16,7 @@ setwd("/home")
 ## add commandline options =====================================================
 
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
-"Run random forest regression or classification on a dataframe
+"Run regression or classification ML models on a dataframe
 Usage:
     dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
     

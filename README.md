@@ -156,9 +156,9 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 ### **5. Run diet_ML**
 
 ```
-Run random forest regression or classification on a dataframe
+Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
+    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -166,24 +166,23 @@ Options:
     --label=<label> name of column that you are prediction [default: label]
     --cor_level level to group features together [default: 0.80]
     --train_split what percentage of samples should be used in training [default: 0.70]
-    --type are you trying to do classification (discrete levels of label) or regression (continous) [default: classification]
-    --seed random seed for reproducible results [default: 42]
+    --model what model would you like run (options: rf,lasso,ridge,enet) [defualt: rf]
+    --type for models that do both regression and classification [default: classification]
+    --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 30]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
     input  FULL path to input file for ML (output from generic_combine.R)
-    outdir FULL path where results should be written  
+    outdir FULL path where results should be written 
 
 ########### example: ###########
-dietML --label label --cor_level 0.80 --train_split 0.7 --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
 
-If your factor of interest in discrete (categorical), this analysis will be Random Forest classification. RF classification has shown to generally outperform many other single model algorithms and be fairly robust against over-fitting. 
-
-If your factor is continouous, this analysis will be a Random Forest regression. RF regression has similar benefits as RF classification. Both of these models are run through the Ranger package in R. Ranger is a much faster implementation of random forests in R, because the core of it was written in c++. 
+Coming soon: info about models included (lasso, ridge, elastic net, random forest) 
 
 For both analyses, data will default to a train-test split of 0.70 (70% of data will be used to train the model, and 30% will be COMPLETELY left out in order to test final model). Inside model building, a 10-fold repeated (3x) cross-validation procedure will be used to evaluate pre-processessing steps and hyperparameters. 
    - Preprocessing steps: Near-zero variance filtering, and correlation filtering (default: 0.8 pearson correlation)
