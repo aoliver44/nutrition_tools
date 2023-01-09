@@ -205,6 +205,6 @@ generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simu
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
 
 ## step 4:
-dietML --label label --cor_level 0.80 --train_split 0.7  --model lasso --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 
 ```
