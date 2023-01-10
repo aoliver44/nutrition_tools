@@ -177,6 +177,9 @@ if (opt$type == "classification" ) {
 
 if (opt$type == "regression") {
   ## For regression:
+  cat("\n#########################\n")
+  cat("RESULTS on test data:", "\n")
+  cat("#########################\n\n")
   pred <- predict(training_fit, test_data)
   print(caret::postResample(pred = pred, obs = test_label$label))
   
