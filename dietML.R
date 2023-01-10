@@ -67,6 +67,11 @@ options(warn=-1)
 #                   outdir=character())
 # opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 200, label = c("species"), type= c("classification"), input = c("/home/simulated_iris/iris.csv"), outdir="/home/simulated_iris/ml_results/")
 
+
+## set seed  ===================================================================
+
+set.seed(opt$seed)
+
 ## check for inputs ============================================================
 
 ## check for outdir and make if not there
@@ -141,10 +146,6 @@ test_label <- test %>% dplyr::select(., label)
 ## remove row id
 train_data$id_tmp <- NULL
 test_data$id_tmp <- NULL
-
-## set seed  ===================================================================
-
-set.seed(opt$seed)
 
 ## run chosen model ============================================================
 
