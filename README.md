@@ -144,7 +144,7 @@ This script will take the output of ```./generic_read_in``` and combine all the 
 2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high (it is mainly looking for copied data that has different column names). In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
 3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
 4. One-hot encode factors
-    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because the core of downstream ML (dietML.R) is the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does). If your label is 0 or 1, and is a factor, please change to A,B or control, treatment, etc.
+    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because downstream ML (dietML.R) uses the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does). If your label is 0 or 1, and is a factor, please change to A,B or control, treatment, etc.
   
 **OUTPUT:** (1) A .csv file for use in ML in the directory of the input. (2) a feature_summary.csv file which tells you what features you started with
   
@@ -182,12 +182,33 @@ dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type cla
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
 
-Coming soon: info about models included (lasso, ridge, elastic net, random forest) 
+Info about the flags:
 
-For both analyses, data will default to a train-test split of 0.70 (70% of data will be used to train the model, and 30% will be COMPLETELY left out in order to test final model). Inside model building, a 10-fold repeated (3x) cross-validation procedure will be used to evaluate pre-processessing steps and hyperparameters. 
-   - Preprocessing steps: Near-zero variance filtering, and correlation filtering (default: 0.8 pearson correlation)
-   - Hyperparameter tuning: an (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesnt error out.
+--label: the name of the column in your input dataset (such as output from generic_combine) that you are trying to predict with ML
 
+--cor_level: the correlation level to use in feature engineering. This correlation takes place inside each resampling, which does not contribute to data leakage. An interesting discussion can be found [here](https://stats.stackexchange.com/questions/378426/parameter-tuning-with-vs-without-nested-cross-validation).
+
+--train_split: the percent of your entire dataset that is reserved for training and hyperparameter tuning. For example, a value of 0.7 would mean that 70% of the input data was used for training and optimizing the model, and 30% was left to test the model. This 30% is important: it is generally a good idea to leave out data that the model has NOT seen, in order to assess its performance. Alternative methods exist, but a true train-test split is a great way to prevent over-fitting. Inside model building, a 10-fold repeated (3x) cross-validation procedure will be used to evaluate pre-processessing steps and hyperparameters. 
+
+--model: The models availible currently are lasso, ridge, elastic net, random forest.
+
+- lasso: least absolute shrinkage and selection operator. This model uses L1 regularization, which in simple terms means that the penalties placed on feature coeffiecents are allowed to reduce the coefficent to zero (effectively removing the feature from the model). LASSO models can "inherently" feature select, meaning that the resulting model will only include the most informative features.
+  - Hyperparameter search space: alpha = 1 (L1 regularizaion), lambda values are chosen by running the training data through glmnet::cv.glmnet() 7 times, and creating a list of all lambda values tested. 7 times is used to create a lambda search space as large as the elastic net lambda search spaces (which searches for a set of lambdas for 7 different values of alpha). This search spaces is the grid for training the caret model.
+- ridge: If you understant LASSO, ridge is very similar. It fuctions similarly, except the penalties placed on feature coefficents are NOT allowed to reduce them to zero (L2 regularization). Therefore, all features exist in the final model. 
+  - Hyperparameter search space: same as LASSO, except alpha = 0 (L2 regularization). This search spaces is the grid for training the caret model.
+- Elastic net: This is a combination of LASSO and ridge. This model linearly combines L1 and L2 regularization. 
+  - Hyperparameter search space: For a range of alpha values (0.2-0.8, by 0.1), a list of lambda values is created using glmnet::cv.glmnet(). This search spaces is the grid for training the caret model.
+- Random forest: a ensemble model which uses a "forest" of decision trees to classify samples.
+  - Hyperparameter search space: an (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesnt error out.
+
+
+--type: whether the user is trying to accomplish classification (your label has discrete levels) or regression (your label is continous).
+
+--seed: there is a fair amount of stochasticity inside these models already (for instance, glmnet::cv.glmnet() "hot-starts" at a different place each time, resulting in slightly different lambdas assessed). The --seed flag lets you adjust the overall seed of the program. If the models are re-run many times, this is a good flag to interate.
+
+--tune_length: The hyperparameter grids this program auto-generates can be VERY large. This would mean the program runs for a very long time. Often times it doesnt make a large difference in the model performance by testing ALL the hyperparameter combinations. By setting this to a resonable number of combinations, the model will train faster! What is reasonable? That is hard to answer. In LASSO, the models train pretty fast...so testing 500 hyperparameter combinations does not take terribly long to do on a local machine. Alternatively, a random forest takes longer to train, so 500 hyperparameter combinations would take a very long time. If they user specifies a value larger than the size of the auto-generated grid, the search will default to the entire grid (an exhuastive grid search). 
+
+--ncores: number of parallel processes to use in model training. This can greatly speed up the time it takes to train. **NOTE:** use this at your own risk on an HPC system. In my brief testing, setting this to reasonable number, 16 cores, seemed to light up 64 cores. Im still not sure how the doParallel package in R translates to an HPC system. 
 
 ------------------------------------------
 
@@ -205,6 +226,6 @@ generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simu
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
 
 ## step 4:
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 30 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
 
 ```
