@@ -30,7 +30,7 @@ if (opt$type == "classification") {
   if (length(levels(as.factor(train_label$label))) == 2) {
     family = "binomial"
     cv_scorer = "auc"
-    label = as.factor(train_label$label)
+    train_label$label <- as.factor(train_label$label)
   } else {
     
     family = "multinomial"
@@ -41,7 +41,7 @@ if (opt$type == "classification") {
 if (opt$type == "regression") {
   family = "gaussian"
   cv_scorer = "mae"
-  label = as.numeric(train_label$label)
+  train_label$label <- as.numeric(train_label$label)
 }
 
 ## elastic net =================================================================
@@ -68,7 +68,7 @@ if (opt$model == "enet") {
   doParallel::registerDoParallel(cl)
   
   ## run elastic net model
-  training_fit <- caret::train(x = train_data, y = label, 
+  training_fit <- caret::train(x = train_data, y = train_label$label, 
                                preProcess = c("nzv","corr"),
                                method = "glmnet", 
                                trControl = fit_control, 
@@ -108,7 +108,7 @@ if (opt$model == "lasso") {
   set.seed(opt$seed)
   
   ## run lasso model
-  training_fit <- caret::train(x = train_data, y = label, 
+  training_fit <- caret::train(x = train_data, y = train_label$label, 
                                preProcess = c("nzv","corr"),
                                method = "glmnet", 
                                trControl = fit_control, 
@@ -148,7 +148,7 @@ if (opt$model == "ridge") {
   set.seed(opt$seed)
   
   ## run lasso model
-  training_fit <- caret::train(x = train_data, y = label, 
+  training_fit <- caret::train(x = train_data, y = train_label$label, 
                                preProcess = c("nzv","corr"),
                                method = "glmnet", 
                                trControl = fit_control, 
