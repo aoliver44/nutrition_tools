@@ -32,7 +32,7 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --super_filter to run a final RF and only take positive values [default: FALSE]
+    --super_filter to run a final RF and only take positive values [default: TRUE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
     --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into format [default: FALSE]
 Arguments:
@@ -98,10 +98,14 @@ if (file.exists(opt$input)) {
 ## read in data, should be in tab or comma separated format
 if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")) {
   metaphlan <- suppressMessages(readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
-  colnames(metaphlan)[1] <- "clade_name"
+  #colnames(metaphlan)[1] <- "clade_name"
 } else {
   metaphlan <- suppressMessages(readr::read_delim(file = opt$input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
-  colnames(metaphlan)[1] <- "clade_name"
+  #colnames(metaphlan)[1] <- "clade_name"
+}
+
+if ("clade_name" %!in% colnames(metaphlan)) {
+  stop("ERROR: clade_name column not found.")
 }
 
 original_taxa_count <- NROW(metaphlan)
