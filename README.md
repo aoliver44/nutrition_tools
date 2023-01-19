@@ -34,7 +34,7 @@ docker pull aoliver44/nutrition_tools:base_1.1
 docker build -t nutrition_tools:base_1.1 .
 
 ## to run
-docker run --rm -it -v /path/to/data:/home/data -v /path/to/github_repo/nutrition_tools:/home/ aoliver44/nutrition_tools:base_1.1 bash
+docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker aoliver44/nutrition_tools:base_1.1 bash
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
@@ -47,13 +47,13 @@ cd /home
 
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:base_1.1 bash
-cd /home/
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.1 bash
+cd /home/docker
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
 
-When you ``cd /home/``, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
+When you ``cd /home/docker``, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
 
 You are now operating inside a container, which contains the software necessary to run the following analyses.
 
@@ -78,7 +78,7 @@ Arguments:
     outdir  FULL path of output directory name 
 ########### example: ###########
 
-generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
+generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /home/docker/simulated_output 
 
 ```
 **Desired input:** A flat-file(s) where each row has a unique identifier (a subject or sample ID) and each column is some feature measured. Should multiple files exist, the unique identifier will be present in all files.
@@ -111,7 +111,7 @@ This script will read in a directory of files (.csv | .txt | .tsv) and attempt t
 
 Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. 
 
-It is good practice generally, and vital for these scripts to work properly, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
+It is good practice generally, and vital for these scripts to work properly, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/docker/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
 
 ------------------------------------------
 
@@ -136,7 +136,7 @@ Arguments:
 
 ########### example: ###########
 
-generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
+generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/docker/simulated_output/ merged_data.csv
  ```
 
 This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
@@ -177,7 +177,7 @@ Arguments:
     outdir FULL path where results should be written 
 
 ########### example: ###########
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
@@ -216,16 +216,16 @@ Info about the flags:
 
 ```
 ## step 1:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:base_1.1 bash
-cd /home/
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.1 bash
+cd /home/docker
 
 ## step 2:
-generic_read_in --subject_identifier subject_id /home/simulated_data/ /home/simulated_output 
+generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /home/docker/simulated_output 
 
 ## step 3:
-generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/simulated_output/ merged_data.csv
+generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/docker/simulated_output/ merged_data.csv
 
 ## step 4:
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 30 /home/simulated_output/merged_data.csv /home/simulated_output/ml_results/
+dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 30 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 
 ```
