@@ -27,27 +27,27 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 
  ```
 ## Option 1 (preferred), local installation:
-docker pull aoliver44/nutrition_tools:base_1.1
+docker pull aoliver44/nutrition_tools:base_1.2
 
 ## Option 2: Build it yourself! Still local installation.
 ## On my quad-core i7 2020 macbook pro, took 43 minutes. 
-docker build -t nutrition_tools:base_1.1 .
+docker build -t nutrition_tools:base_1.2 .
 
 ## to run
-docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker aoliver44/nutrition_tools:base_1.1 bash
+docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker aoliver44/nutrition_tools:base_1.2 bash
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 ## pull image from internet
-singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.1
+singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.2
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
 cd /home
 
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.1 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.2 bash
 cd /home/docker
  ```
 
@@ -216,7 +216,7 @@ Info about the flags:
 
 ```
 ## step 1:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.1 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.2 bash
 cd /home/docker
 
 ## step 2:
