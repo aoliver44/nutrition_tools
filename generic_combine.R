@@ -89,6 +89,14 @@ if (length(fils) >= 1) {
   stop("No files found.")
 }
 
+fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
+## check and make sure there are files clean_files dir
+if (length(fils) >= 1) {
+  cat(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"), "\n\n")
+} else {
+  stop("No files found.")
+}
+
 ## check and make sure summary_dataset_problems exists
 if (file.exists("summary_dataset_problems.csv")) {
   
@@ -158,6 +166,13 @@ if (length(fils) > 0) {
 
 ## merge them all together
 full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all.x = TRUE), myfiles))
+
+## check if label is in dataset ================================================
+
+if (opt$label %!in% colnames(full_merge)) {
+  cat(opt$label, " is specified for --label. Checking to make sure it's there...\n\n")
+  stop("Cannot find --label in datasets")
+}
 
 ## check sample size here ======================================================
 
