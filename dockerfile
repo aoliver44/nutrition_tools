@@ -30,5 +30,4 @@ COPY models/dietML_glmnet.R ./scripts/models/dietML_glmnet.R
 
 ENV PATH="${PATH}:/scripts/"
 
-RUN useradd -s /bin/bash precious_lil_pug
-USER precious_lil_pug
+USER docker
