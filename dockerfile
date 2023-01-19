@@ -1,6 +1,6 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:base_1.0
-## Date: Jan 3, 2023
+## Version: aoliver44/nutrition_tools:base_1.2
+## Date: Jan 19, 2023
 
 ## base image to start with
 FROM rocker/r-base:4.2.0
@@ -30,3 +30,5 @@ COPY models/dietML_glmnet.R ./scripts/models/dietML_glmnet.R
 
 ENV PATH="${PATH}:/scripts/"
 
+RUN useradd -ms /bin/bash precious_lil_pug
+USER precious_lil_pug
