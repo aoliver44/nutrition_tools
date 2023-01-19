@@ -65,7 +65,7 @@ options(warn=-1)
 #                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 200, label = c("species"), type= c("classification"), input = c("/home/simulated_iris/iris.csv"), outdir="/home/simulated_iris/ml_results/")
+# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 200, label = c("feature_of_interest"), type= c("classification"), input = c("/home/output_old/metaphlan_4_abx.txt"), outdir="/home/simulated_output/ml_results/")
 
 
 ## set seed  ===================================================================
@@ -73,6 +73,13 @@ options(warn=-1)
 set.seed(opt$seed)
 
 ## check for inputs ============================================================
+
+## quietly check to make sure /scripts wasn't overwritten
+if (file.exists("/scripts/dietML_ranger.R") == FALSE) {
+  stop("It appears you bind mounted docker to a virtual directory named /scripts. We
+       need to use that folder. Please restart the docker image and use a different
+       virtual directory name.")
+}
 
 ## check for outdir and make if not there
 if (dir.exists(opt$outdir) == TRUE) {
