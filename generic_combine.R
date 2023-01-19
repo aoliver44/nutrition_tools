@@ -89,14 +89,6 @@ if (length(fils) >= 1) {
   stop("No files found.")
 }
 
-fils <- list.files(paste0("clean_files"), full.names = TRUE, recursive = TRUE)
-## check and make sure there are files clean_files dir
-if (length(fils) >= 1) {
-  cat(paste0("clean_files directory exists and is not empty: ", opt$input, "clean_files/"), "\n\n")
-} else {
-  stop("No files found.")
-}
-
 ## check and make sure summary_dataset_problems exists
 if (file.exists("summary_dataset_problems.csv")) {
   
