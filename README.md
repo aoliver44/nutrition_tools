@@ -40,7 +40,7 @@ docker pull aoliver44/nutrition_tools:base_1.2
 docker build -t nutrition_tools:base_1.2 .
 
 ## to run
-docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker aoliver44/nutrition_tools:base_1.2 bash
+docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.2 bash
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
