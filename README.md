@@ -25,6 +25,10 @@ This will pull down the scripts and dockerbuild files necessary to run these scr
 
 ### **2. Build the Docker Environment**
 
+Prior to doing anything in docker, make sure it is running on your computer. Find it in your applications folder, or wherever you downloaded it, and start it (often this means just double clicking the icon). Docker desktop for macs should put a docker icon (a fish with boxes on top) near the time-date part of the menu bar to let you know it is running. You can use the docker desktop application to configure CPU and memory resources for both [Macs](https://docs.docker.com/desktop/settings/mac/#:~:text=Resources%F0%9F%94%97,and%20other%20resources.) and [PCs](https://docs.docker.com/desktop/settings/windows/#:~:text=Resources%F0%9F%94%97,or%20Windows%20containers) and [Linux machines](https://docs.docker.com/desktop/settings/linux/#:~:text=Resources%F0%9F%94%97,and%20other%20resources.).
+
+Now navigate to a terminal (I am not sure how this all works in Powershell. I suggest using Ubuntu Terminal for windows).
+
  ```
 ## Option 1 (preferred), local installation:
 docker pull aoliver44/nutrition_tools:base_1.2
