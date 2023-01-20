@@ -34,7 +34,9 @@ Now navigate to a terminal (I am not sure how this all works in Powershell. I su
 docker pull aoliver44/nutrition_tools:base_1.2
 
 ## Option 2: Build it yourself! Still local installation.
-## On my quad-core i7 2020 macbook pro, took 43 minutes. 
+## On my quad-core i7 2020 macbook pro, took 43 minutes.
+## this command will only work if you are in the downloaded
+## git repository nutrition_tools 
 docker build -t nutrition_tools:base_1.2 .
 
 ## to run
