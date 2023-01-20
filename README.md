@@ -47,13 +47,12 @@ cd /home
 
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.2 bash
-cd /home/docker
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.2 bash
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
 
-When you ``cd /home/docker``, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
+When you ```ls``` inside /home/docker, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
 
 You are now operating inside a container, which contains the software necessary to run the following analyses.
 
@@ -216,8 +215,7 @@ Info about the flags:
 
 ```
 ## step 1:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker aoliver44/nutrition_tools:base_1.2 bash
-cd /home/docker
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.2 bash
 
 ## step 2:
 generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /home/docker/simulated_output 
