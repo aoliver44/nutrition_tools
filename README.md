@@ -56,9 +56,9 @@ cd /home
 docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.2 bash
  ```
 
-The above example command (entierly dependent on where you downloaded the repository to your computer...in this case it was downloaded to a folder with the path ~/Downloads) will start the docker container and provide a bash terminal to the user. 
+The above example command (entierly dependent on where you downloaded the repository to your computer -- in this case it was downloaded to a folder with the path ~/Downloads --will start the docker container and provide a bash terminal to the user. 
 
-When you ```ls``` inside /home/docker, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder before the ":" in the above command, in this case the directory "/User/$USER/Downloads/nutrition_tools/")
+When you ```ls``` inside /home/docker, you should see whatever you mounted to this directory inside the docker container (whatever is in the folder to the left of the ":" in the above command (in this case the directory "/User/$USER/Downloads/nutrition_tools/")
 
 You are now operating inside a container, which contains the software necessary to run the following analyses.
 
@@ -116,7 +116,7 @@ This script will read in a directory of files (.csv | .txt | .tsv) and attempt t
 
 Also, if this script identifies problems and creates a summary_problems.csv file, the next script will check and make sure you fixed these problems, otherwise it will drop the dataset from the analysis. 
 
-It is good practice generally, and vital for these scripts to work properly, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/docker/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
+It is good practice generally, and **vital for these scripts to work properly**, for you to supply full paths to directories (inside the docker container). The examples here show this, i.e. ```/home/docker/simulated_data``` and **NOT** just ```simulated_data``` or ```~/simulated_data```
 
 ------------------------------------------
 
@@ -144,16 +144,16 @@ Arguments:
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/docker/simulated_output/ merged_data.csv
  ```
 
-This script will take the output of ```./generic_read_in``` and combine all the files together. It will do 3 major things:
-1. Check and see if problems identified in generic_read_in step were addressed. If they were not addressed, these problematic datasets will be DROPPED. If all datasets get dropped, the program will error out.
+This script will take the output of ```generic_read_in``` and combine all the files together. It will do 3 major things:
+1. Check and see if problems identified in ```generic_read_in``` step were addressed. If they were not addressed, these problematic datasets will be DROPPED. If all datasets get dropped, the program will error out.
 2. Correlate (Spearman) combined featureset at a user-defined threshold [default: 0.99]. This is to identify HIGHLY redundant features. We do not view this as a feature engineering step, because the threshold is so high (it is mainly looking for copied data that has different column names). In the next ML step, a correlation-based feature engineering step can set a much lower threshold more safely (does not contribute to data leakage like this step could).
 3. For the features that are correlated at > 0.99, this program will let the user choose the features that get written to the final dataset. 
 4. One-hot encode factors
-    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because downstream ML (dietML.R) uses the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does). If your label is 0 or 1, and is a factor, please change to A,B or control, treatment, etc.
+    - Note: the method for one-hot encoding here creates new factors with new names. Note, it will **NOT** one-hot encode the label that will be used in ML (the factor you want to predict...***if it is a factor***). This is because downstream ML (```dietML```) uses the R program ranger. Ranger expects the label used in RF classification to **NOT** be a 0,1 (which is exactly what one-hot encoding does). If your label is 0 or 1, and is a factor, please change to A,B or control, treatment, etc.
   
 **OUTPUT:** (1) A .csv file for use in ML in the directory of the input. (2) a feature_summary.csv file which tells you what features you started with
   
-  **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. Initially, features are dropped if they have greater than 50% NAs, and samples are dropped if they have greater than 75% NAs. Next, the details of this flag is that it looks at the distribution of NAs across all features, and if ```--preserve_samples TRUE```, then it will take the min number of NAs as the threshold for dropping features. If ```--preserve_samples FALSE```, the 25% percentile of NAs will be set as threshold for dropping features. Finally, all samples with remaining NAs are dropped, thus making a complete dataset. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
+  **NOTES:** The ```--preserve_samples``` flag attempts to lower the threshold of what is considered a feature with too many NA's (a sample with any amounts of NAs gets dropped...so it is a balancing act of dropping features and samples in order to have the most complete dataset). The final dataset should be complete; this version of this pipeline does not impute missing data. Default behavior is set to false, which for most of our test cases did not lead to many "extra" lost samples. Initially, features are dropped if they have greater than 50% NAs, and samples are dropped if they have greater than 75% NAs. Next, the details of this flag are that it looks at the distribution of NAs across all features, and if ```--preserve_samples TRUE```, then it will take the min number of NAs as the threshold for dropping features. If ```--preserve_samples FALSE```, the 25% percentile of NAs will be set as threshold for dropping features. Finally, all samples with remaining NAs are dropped, thus making a complete dataset. IF you have a dataset with many NA-replete features, consider setting this flag to ```--preserve_samples TRUE```; however, expect a loss of features.
 
 
 ------------------------------------------
