@@ -48,8 +48,8 @@ docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /hom
 ## pull image from internet
 singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.2
 ## run image
-singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home nutrition_tools.sif bash
-cd /home
+singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home/docker nutrition_tools.sif bash
+cd /home/docker
 
 ########### example (local installation): ###########
 
