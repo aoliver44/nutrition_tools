@@ -180,11 +180,6 @@ pdf(file = paste0(opt$outdir, "training_fit.pdf"), width=7, height=5)
 plot(training_fit, plotType = "line")
 dev.off()
 
-cat("\n#########################\n")
-cat("Done! Results written to outdir.", "\n")
-cat("#########################\n\n")
-
-
 ## VIP Plots ===================================================================
 ## For all:
 vip <- caret::varImp(object = training_fit)
@@ -192,21 +187,104 @@ pdf(file = paste0(opt$outdir, "vip_plot.pdf"), width=15, height=5)
 plot(vip, top = pmin(NROW(vip$importance), 20))
 suppressMessages(dev.off())
 
-## shap explaination ===========================================================
+## LIME explaination ===========================================================
 
-# explainer <- shapr::shapr(train_data, training_fit$finalModel, n_combinations = 10000)
-# explanation_largesigma <- shapr::explain(test_data, explainer, approach = "empirical", prediction_zero = p)
-# plot(explanation_largesigma)
-# 
-# #create a list of seed, here change the seed for each resampling
-# set.seed(123)
-# 
-# #length is = (n_repeats*nresampling)+1
-# seeds <- vector(mode = "list", length = 11)
-# 
-# #(3 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-# for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 3)
-# 
-# #for the last model
-# seeds[[11]]<-sample.int(1000, 1)
-# length(seeds[[10]])
+if (opt$type == "regression") {
+  
+  cat("\n#########################\n")
+  cat("Running LIME Analysis on group: ", opt$label, "\n")
+  cat("#########################\n\n")
+  
+  explainer_caret <- lime(train_data, training_fit, n_bins = 5)
+  summary(explainer_caret)
+  
+  testing_data = cbind(test_data, test_label)
+  
+  explanation_caret <- explain(
+    x = test_data, 
+    explainer = explainer_caret, 
+    n_permutations = 5000,
+    dist_fun = "euclidean",
+    n_features = 10, 
+    feature_select = "auto",
+    #n_labels = 2,
+    labels = "feature_of_interest"
+  )
+  
+  most_features <- explanation_caret %>% group_by(feature) %>% tally %>% filter(., n > (NROW(test_data) * .20)) %>% pull(., feature)
+  top_features <- explanation_caret %>% group_by(feature) %>% summarise(., avg = mean(abs(feature_weight))) %>% arrange(desc(avg)) %>% slice(1:15) %>% pull(feature)
+  top_prevelant_features <- intersect(most_features, top_features)
+  explanation_caret_top <- explanation_caret %>% filter(., feature %in% top_prevelant_features)
+  
+  max_feature_weight <- max(explanation_caret_top$feature_weight)
+  min_feature_weight <- min(explanation_caret_top$feature_weight)
+  
+  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=10, height=5)
+  explanation_caret_top %>% 
+    group_split(feature) %>% 
+    map(
+      ~ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
+        geom_point(size = 3, position = position_jitter(height = 0.2), aes(alpha = 0.7)) +
+        viridis::scale_color_viridis(option = "C") + 
+        facet_wrap(~ feature, ncol = 1, labeller = function(x) label_value(x, multi_line = FALSE)) +
+        theme_bw() +
+        theme(strip.background = element_blank(), strip.text.x = element_blank(), legend.position = "none", axis.title.x = element_blank(), panel.border = element_blank(), plot.margin = margin(0.1,0.5,0.1,1, "cm")) +
+        labs(x = "", y = "") +
+        expand_limits(x=c(min_feature_weight, max_feature_weight))
+    ) %>% 
+    plot_grid(plotlist = ., align = 'hv', ncol = 1)
+  suppressMessages(dev.off())
+  
+ }
+
+if (length(levels(as.factor(train_label$label))) == 2) {
+  
+  cat("\n#########################\n")
+  cat("Running LIME Analysis on group: ", levels(as.factor(train_label$label))[1], "\n")
+  cat("#########################\n\n")
+  
+  explainer_caret <- lime(train_data, training_fit, n_bins = 5)
+  summary(explainer_caret)
+  
+  testing_data = cbind(test_data, test_label)
+  
+  explanation_caret <- explain(
+    x = test_data, 
+    explainer = explainer_caret, 
+    n_permutations = 5000,
+    dist_fun = "euclidean",
+    n_features = 10, 
+    feature_select = "auto",
+    #n_labels = 2,
+    labels = levels(as.factor(train_label$label))[1]
+  )
+  
+  most_features <- explanation_caret %>% group_by(feature) %>% tally %>% filter(., n > (NROW(test_data) * .20)) %>% pull(., feature)
+  top_features <- explanation_caret %>% group_by(feature) %>% summarise(., avg = mean(abs(feature_weight))) %>% arrange(desc(avg)) %>% slice(1:15) %>% pull(feature)
+  top_prevelant_features <- intersect(most_features, top_features)
+  explanation_caret_top <- explanation_caret %>% filter(., feature %in% top_prevelant_features)
+  
+  max_feature_weight <- max(explanation_caret_top$feature_weight)
+  min_feature_weight <- min(explanation_caret_top$feature_weight)
+  
+  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=10, height=5)
+  explanation_caret_top %>% 
+    group_split(feature) %>% 
+    map(
+      ~ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
+        geom_point(size = 3, position = position_jitter(height = 0.2), aes(alpha = 0.7)) +
+        viridis::scale_color_viridis(option = "C") + 
+        facet_wrap(~ feature, ncol = 1, labeller = function(x) label_value(x, multi_line = FALSE)) +
+        theme_bw() +
+        theme(strip.background = element_blank(), strip.text.x = element_blank(), legend.position = "none", axis.title.x = element_blank(), panel.border = element_blank(), plot.margin = margin(0.1,0.5,0.1,1, "cm")) +
+        labs(x = "", y = "") +
+        expand_limits(x=c(min_feature_weight, max_feature_weight))
+    ) %>% 
+    plot_grid(plotlist = ., align = 'hv', ncol = 1)
+  suppressMessages(dev.off())
+  
+}
+
+cat("\n#########################\n")
+cat("Done! Results written to outdir.", "\n")
+cat("#########################\n\n")
