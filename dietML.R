@@ -191,15 +191,20 @@ suppressMessages(dev.off())
 
 if (opt$type == "regression") {
   
+  ## print message to user
   cat("\n#########################\n")
   cat("Running LIME Analysis on group: ", opt$label, "\n")
   cat("#########################\n\n")
   
-  explainer_caret <- lime(train_data, training_fit, n_bins = 5)
+  ## set up first part of LIME analysis. A good read on LIME can be
+  ## found here: https://cran.r-project.org/web/packages/lime/vignettes/Understanding_lime.html
+  explainer_caret <- lime(train_data, training_fit, quantile_bins = TRUE)
   summary(explainer_caret)
   
+  ## LIME seems to want both the test_data and label to be together
   testing_data = cbind(test_data, test_label)
   
+  ## Second part of LIME, which is building models for each "case" (see above link)
   explanation_caret <- explain(
     x = test_data, 
     explainer = explainer_caret, 
@@ -211,14 +216,18 @@ if (opt$type == "regression") {
     labels = "feature_of_interest"
   )
   
+  ## for plotting purposes, I attemped to only focus on features that appear in 1) many cases and 
+  ## 2) have a high importance to the model
   most_features <- explanation_caret %>% group_by(feature) %>% tally %>% filter(., n > (NROW(test_data) * .20)) %>% pull(., feature)
   top_features <- explanation_caret %>% group_by(feature) %>% summarise(., avg = mean(abs(feature_weight))) %>% arrange(desc(avg)) %>% slice(1:15) %>% pull(feature)
   top_prevelant_features <- intersect(most_features, top_features)
   explanation_caret_top <- explanation_caret %>% filter(., feature %in% top_prevelant_features)
   
+  ## this is to help with the plot axes
   max_feature_weight <- max(explanation_caret_top$feature_weight)
   min_feature_weight <- min(explanation_caret_top$feature_weight)
   
+  ## plot the model importance (feature weight), and raw feature value as color (feature_value)
   pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=10, height=5)
   explanation_caret_top %>% 
     group_split(feature) %>% 
@@ -237,13 +246,15 @@ if (opt$type == "regression") {
   
  }
 
+## do the same above but only for binary classification, not regression
 if (length(levels(as.factor(train_label$label))) == 2) {
   
   cat("\n#########################\n")
   cat("Running LIME Analysis on group: ", levels(as.factor(train_label$label))[1], "\n")
   cat("#########################\n\n")
   
-  explainer_caret <- lime(train_data, training_fit, n_bins = 5)
+  ## no "bins" needed for binary classification
+  explainer_caret <- lime(train_data, training_fit)
   summary(explainer_caret)
   
   testing_data = cbind(test_data, test_label)
@@ -256,6 +267,7 @@ if (length(levels(as.factor(train_label$label))) == 2) {
     n_features = 10, 
     feature_select = "auto",
     #n_labels = 2,
+    ## this needs a label to focus on, so i just take the one that is alphabetically first
     labels = levels(as.factor(train_label$label))[1]
   )
   
