@@ -203,7 +203,7 @@ if (opt$type == "regression") {
   explanation_caret <- explain(
     x = test_data, 
     explainer = explainer_caret, 
-    n_permutations = 5000,
+    n_permutations = 2500,
     dist_fun = "euclidean",
     n_features = 10, 
     feature_select = "auto",
@@ -251,7 +251,7 @@ if (length(levels(as.factor(train_label$label))) == 2) {
   explanation_caret <- explain(
     x = test_data, 
     explainer = explainer_caret, 
-    n_permutations = 5000,
+    n_permutations = 2500,
     dist_fun = "euclidean",
     n_features = 10, 
     feature_select = "auto",
