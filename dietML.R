@@ -47,6 +47,8 @@ library(ranger, quietly = T, verbose = F, warn.conflicts = F)
 library(doParallel, quietly = T, verbose = F, warn.conflicts = F)
 library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
+library(lime, quietly = T, verbose = F, warn.conflicts = F)
+library(cowplot, quietly = T, verbose = F, warn.conflicts = F)
 
 ## helper functions ============================================================
 ## Negate function ("not in"):
@@ -198,14 +200,14 @@ if (opt$type == "regression") {
   
   ## set up first part of LIME analysis. A good read on LIME can be
   ## found here: https://cran.r-project.org/web/packages/lime/vignettes/Understanding_lime.html
-  explainer_caret <- lime(train_data, training_fit, quantile_bins = TRUE)
+  explainer_caret <- lime::lime(train_data, training_fit, quantile_bins = TRUE)
   summary(explainer_caret)
   
   ## LIME seems to want both the test_data and label to be together
   testing_data = cbind(test_data, test_label)
   
   ## Second part of LIME, which is building models for each "case" (see above link)
-  explanation_caret <- explain(
+  explanation_caret <- lime::explain(
     x = test_data, 
     explainer = explainer_caret, 
     n_permutations = 2500,
@@ -241,7 +243,7 @@ if (opt$type == "regression") {
         labs(x = "", y = "") +
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
-    plot_grid(plotlist = ., align = 'hv', ncol = 1)
+    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
   suppressMessages(dev.off())
   
  }
@@ -254,12 +256,12 @@ if (length(levels(as.factor(train_label$label))) == 2) {
   cat("#########################\n\n")
   
   ## no "bins" needed for binary classification
-  explainer_caret <- lime(train_data, training_fit)
+  explainer_caret <- lime::lime(train_data, training_fit)
   summary(explainer_caret)
   
   testing_data = cbind(test_data, test_label)
   
-  explanation_caret <- explain(
+  explanation_caret <- lime::explain(
     x = test_data, 
     explainer = explainer_caret, 
     n_permutations = 2500,
@@ -292,7 +294,7 @@ if (length(levels(as.factor(train_label$label))) == 2) {
         labs(x = "", y = "") +
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
-    plot_grid(plotlist = ., align = 'hv', ncol = 1)
+    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
   suppressMessages(dev.off())
   
 }
