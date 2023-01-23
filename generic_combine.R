@@ -159,13 +159,6 @@ if (length(fils) > 0) {
 ## merge them all together
 full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all.x = TRUE), myfiles))
 
-## check if label is in dataset ================================================
-
-if (opt$label %!in% colnames(full_merge)) {
-  cat(opt$label, " is specified for --label. Checking to make sure it's there...\n\n")
-  stop("Cannot find --label in datasets")
-}
-
 ## check sample size here ======================================================
 
 if (NROW(full_merge) < 200) {
@@ -204,6 +197,13 @@ full_merge_dedup <- full_merge %>%
   as.data.frame() %>%
   readr::type_convert(.) %>%
   suppressMessages() 
+
+## check if label is in dataset ================================================
+
+if (opt$label %!in% colnames(full_merge_dedup)) {
+  cat(opt$label, " is specified for --label. Checking to make sure it's there...\n\n")
+  stop("Cannot find --label in datasets")
+}
 
 ## keep a dataframe seperately with just the subject id and label
 ## sometimes people have labels with tons of NAs, which will get dropped
