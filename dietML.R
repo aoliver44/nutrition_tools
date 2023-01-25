@@ -236,7 +236,7 @@ if (opt$type == "regression" && opt$model == "rf") {
   min_feature_weight <- min(explanation_caret_top$feature_weight)
   
   ## plot the model importance (feature weight), and raw feature value as color (feature_value)
-  lime_plot <- explanation_caret_top %>% 
+  explanation_caret_top %>% 
     group_split(feature) %>% 
     purrr::map(
       ~ggplot2::ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
@@ -248,11 +248,8 @@ if (opt$type == "regression" && opt$model == "rf") {
         labs(x = "", y = "") +
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
-    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
-  
-  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=15, height=5)
-  lime_plot
-  suppressMessages(dev.off())
+    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1) %>% 
+    ggplot2::ggsave(filename = paste0(opt$outdir, "lime_plot.pdf"), width = 15, height = 5, units = "in")
   
  }
 
@@ -289,7 +286,7 @@ if (length(levels(as.factor(train_label$label))) == 2) {
   max_feature_weight <- max(explanation_caret_top$feature_weight)
   min_feature_weight <- min(explanation_caret_top$feature_weight)
   
-  lime_plot <- explanation_caret_top %>% 
+  explanation_caret_top %>% 
     group_split(feature) %>% 
     purrr::map(
       ~ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
@@ -301,11 +298,8 @@ if (length(levels(as.factor(train_label$label))) == 2) {
         labs(x = "", y = "") +
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
-    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
-  
-  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=15, height=5)
-  lime_plot
-  suppressMessages(dev.off())
+    cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1) %>% 
+    ggplot2::ggsave(filename = paste0(opt$outdir, "lime_plot.pdf"), width = 15, height = 5, units = "in")
   
 }
 
