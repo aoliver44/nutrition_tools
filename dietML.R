@@ -49,6 +49,8 @@ library(parallel, quietly = T, verbose = F, warn.conflicts = F)
 library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
 library(lime, quietly = T, verbose = F, warn.conflicts = F)
 library(cowplot, quietly = T, verbose = F, warn.conflicts = F)
+library(purrr, quietly = T, verbose = F, warn.conflicts = F)
+library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 
 ## helper functions ============================================================
 ## Negate function ("not in"):
@@ -67,7 +69,7 @@ options(warn=-1)
 #                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 200, label = c("feature_of_interest"), type= c("classification"), input = c("/home/output_old/metaphlan_4_abx.txt"), outdir="/home/simulated_output/ml_results/")
+# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", seed= 42, ncores = 4, tune_length = 100, label = c("feature_of_interest"), type= c("classification"), input = c("/home/output_old/abx_cluster_bi_metaphlan4_all.txt"), outdir="/home/simulated_output/ml_results/")
 
 
 ## set seed  ===================================================================
@@ -133,6 +135,10 @@ if (opt$label %in% colnames(input) == TRUE) {
   stop(paste0(opt$label, " not found in input."))
 }
 
+if (opt$type == "classification") {
+  if(length(levels(as.factor(input$label))) > 9)
+  stop("You are trying to predict 10 or more classes. That is a bit much. Did you mean to do regression?")
+}
 ## test train split ============================================================
 
 cat("\n#########################\n")
@@ -191,7 +197,7 @@ suppressMessages(dev.off())
 
 ## LIME explaination ===========================================================
 
-if (opt$type == "regression") {
+if (opt$type == "regression" && opt$model == "rf") {
   
   ## print message to user
   cat("\n#########################\n")
@@ -210,7 +216,7 @@ if (opt$type == "regression") {
   explanation_caret <- lime::explain(
     x = test_data, 
     explainer = explainer_caret, 
-    n_permutations = 2500,
+    n_permutations = 1000,
     dist_fun = "euclidean",
     n_features = 10, 
     feature_select = "auto",
@@ -220,21 +226,20 @@ if (opt$type == "regression") {
   
   ## for plotting purposes, I attemped to only focus on features that appear in 1) many cases and 
   ## 2) have a high importance to the model
-  most_features <- explanation_caret %>% group_by(feature) %>% tally %>% filter(., n > (NROW(test_data) * .20)) %>% pull(., feature)
-  top_features <- explanation_caret %>% group_by(feature) %>% summarise(., avg = mean(abs(feature_weight))) %>% arrange(desc(avg)) %>% slice(1:15) %>% pull(feature)
+  most_features <- explanation_caret %>% dplyr::group_by(feature) %>% dplyr::tally() %>% dplyr::filter(., n > (NROW(test_data) * .20)) %>% dplyr::pull(., feature)
+  top_features <- explanation_caret %>% dplyr::group_by(feature) %>% dplyr::summarise(., avg = mean(abs(feature_weight))) %>% dplyr::arrange(desc(avg)) %>% dplyr::slice(1:15) %>% dplyr::pull(feature)
   top_prevelant_features <- intersect(most_features, top_features)
-  explanation_caret_top <- explanation_caret %>% filter(., feature %in% top_prevelant_features)
+  explanation_caret_top <- explanation_caret %>% dplyr::filter(., feature %in% top_prevelant_features)
   
   ## this is to help with the plot axes
   max_feature_weight <- max(explanation_caret_top$feature_weight)
   min_feature_weight <- min(explanation_caret_top$feature_weight)
   
   ## plot the model importance (feature weight), and raw feature value as color (feature_value)
-  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=10, height=5)
-  explanation_caret_top %>% 
+  lime_plot <- explanation_caret_top %>% 
     group_split(feature) %>% 
-    map(
-      ~ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
+    purrr::map(
+      ~ggplot2::ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
         geom_point(size = 3, position = position_jitter(height = 0.2), aes(alpha = 0.7)) +
         viridis::scale_color_viridis(option = "C") + 
         facet_wrap(~ feature, ncol = 1, labeller = function(x) label_value(x, multi_line = FALSE)) +
@@ -244,6 +249,9 @@ if (opt$type == "regression") {
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
     cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
+  
+  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=15, height=5)
+  lime_plot
   suppressMessages(dev.off())
   
  }
@@ -264,7 +272,7 @@ if (length(levels(as.factor(train_label$label))) == 2) {
   explanation_caret <- lime::explain(
     x = test_data, 
     explainer = explainer_caret, 
-    n_permutations = 2500,
+    n_permutations = 1000,
     dist_fun = "euclidean",
     n_features = 10, 
     feature_select = "auto",
@@ -273,18 +281,17 @@ if (length(levels(as.factor(train_label$label))) == 2) {
     labels = levels(as.factor(train_label$label))[1]
   )
   
-  most_features <- explanation_caret %>% group_by(feature) %>% tally %>% filter(., n > (NROW(test_data) * .20)) %>% pull(., feature)
-  top_features <- explanation_caret %>% group_by(feature) %>% summarise(., avg = mean(abs(feature_weight))) %>% arrange(desc(avg)) %>% slice(1:15) %>% pull(feature)
+  most_features <- explanation_caret %>% dplyr::group_by(feature) %>% dplyr::tally() %>% dplyr::filter(., n > (NROW(test_data) * .20)) %>% dplyr::pull(., feature)
+  top_features <- explanation_caret %>% dplyr::group_by(feature) %>% dplyr::summarise(., avg = mean(abs(feature_weight))) %>% dplyr::arrange(desc(avg)) %>% dplyr::slice(1:15) %>% dplyr::pull(feature)
   top_prevelant_features <- intersect(most_features, top_features)
-  explanation_caret_top <- explanation_caret %>% filter(., feature %in% top_prevelant_features)
+  explanation_caret_top <- explanation_caret %>% dplyr::filter(., feature %in% top_prevelant_features)
   
   max_feature_weight <- max(explanation_caret_top$feature_weight)
   min_feature_weight <- min(explanation_caret_top$feature_weight)
   
-  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=10, height=5)
-  explanation_caret_top %>% 
+  lime_plot <- explanation_caret_top %>% 
     group_split(feature) %>% 
-    map(
+    purrr::map(
       ~ggplot(., aes(y = feature, x = feature_weight, color = log(feature_value + 1))) + 
         geom_point(size = 3, position = position_jitter(height = 0.2), aes(alpha = 0.7)) +
         viridis::scale_color_viridis(option = "C") + 
@@ -295,9 +302,14 @@ if (length(levels(as.factor(train_label$label))) == 2) {
         expand_limits(x=c(min_feature_weight, max_feature_weight))
     ) %>% 
     cowplot::plot_grid(plotlist = ., align = 'hv', ncol = 1)
+  
+  pdf(file = paste0(opt$outdir, "lime_plot.pdf"), width=15, height=5)
+  lime_plot
   suppressMessages(dev.off())
   
 }
+
+save.image(file = paste0(opt$outdir, "ML_r_workspace.rds"))
 
 cat("\n#########################\n")
 cat("Done! Results written to outdir.", "\n")
