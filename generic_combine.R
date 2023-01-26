@@ -198,6 +198,9 @@ full_merge_dedup <- full_merge %>%
   readr::type_convert(.) %>%
   suppressMessages() 
 
+## write full_merge_dedup to file (contains NAs)
+readr::write_delim(full_merge_dedup, file = paste0(full_path, "/", "merged_data_with_NAs.csv"), delim = ",", quote = NULL)
+
 ## check if label is in dataset ================================================
 
 if (opt$label %!in% colnames(full_merge_dedup)) {
