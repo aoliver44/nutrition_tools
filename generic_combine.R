@@ -213,6 +213,9 @@ pre_corr_label_df <- full_merge_dedup %>%
   dplyr::select(., as.character(opt$label), as.character(opt$subject_identifier)) %>%
   tidyr::drop_na()
 
+## drop samples that have NAs in the label...ultimately useless for ML
+full_merge_dedup <- full_merge_dedup %>% dplyr::filter(., as.character(opt$label) != "NA")
+
 ## pre-corr col drop ===========================================================
 
 ## lets initally drop columns that are mostly NA already (50% or greater)
