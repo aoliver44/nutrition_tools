@@ -133,6 +133,16 @@
       "Hash": "e9c08b94391e9f3f97355841229124f2",
       "Requirements": []
     },
+    "RcppArmadillo": {
+      "Package": "RcppArmadillo",
+      "Version": "0.11.4.3.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "836c1aeec6a7a2b28273bd42a0511a9e",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
     "RcppEigen": {
       "Package": "RcppEigen",
       "Version": "0.3.3.9.3",
@@ -161,6 +171,14 @@
       "Requirements": [
         "foreach"
       ]
+    },
+    "abind": {
+      "Package": "abind",
+      "Version": "1.4-5",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "4f57884290cc75ab22f4af9e9d4ca862",
+      "Requirements": []
     },
     "assertthat": {
       "Package": "assertthat",
@@ -502,6 +520,23 @@
       "Repository": "RSPM",
       "Hash": "77bd60a6157420d4ffa93b27cf6a58b8",
       "Requirements": []
+    },
+    "fastshap": {
+      "Package": "fastshap",
+      "Version": "0.0.7",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "8772351ba12c5bd0412f99859553a8e0",
+      "Requirements": [
+        "Rcpp",
+        "RcppArmadillo",
+        "abind",
+        "ggplot2",
+        "gridExtra",
+        "matrixStats",
+        "plyr",
+        "tibble"
+      ]
     },
     "foreach": {
       "Package": "foreach",
@@ -967,6 +1002,14 @@
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "7ce2733a9826b3aeb1775d56fd305472",
+      "Requirements": []
+    },
+    "matrixStats": {
+      "Package": "matrixStats",
+      "Version": "0.63.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "57af0c3da1f1a50680b186591c3359af",
       "Requirements": []
     },
     "mgcv": {
