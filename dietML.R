@@ -60,17 +60,17 @@ models <- c("rf", "lasso", "ridge", "enet")
 ## suppress warnings
 options(warn=-1)
 
-opt <- data.frame(cor_level=numeric(),
-                  label=character(),
-                  train_split=numeric(),
-                  seed=numeric(),
-                  model=character(),
-                  type=character(),
-                  ncores=numeric(),
-                  tune_length=numeric(),
-                  input=character(),
-                  outdir=character())
-opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "rf", seed= 42, ncores = 4, tune_length = 10, label = c("feature_of_interest"), type= c("classification"), input = c("/home/output_old/abx_cluster_bi_metaphlan4_all.txt"), outdir="/home/simulated_output/ml_results/")
+# opt <- data.frame(cor_level=numeric(),
+#                   label=character(),
+#                   train_split=numeric(),
+#                   seed=numeric(),
+#                   model=character(),
+#                   type=character(),
+#                   ncores=numeric(),
+#                   tune_length=numeric(),
+#                   input=character(),
+#                   outdir=character())
+# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "rf", seed= 42, ncores = 4, tune_length = 10, label = c("feature_of_interest"), type= c("classification"), input = c("/home/output_old/abx_cluster_bi_metaphlan4_all.txt"), outdir="/home/simulated_output/ml_results/")
 
 
 ## set seed  ===================================================================
