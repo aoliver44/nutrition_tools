@@ -26,12 +26,15 @@ Options:
     --subject_identifier ame of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
     --cor_level level to group features together [default: 0.80]
-    --train_split what percentage of samples should be used in training [default: 0.70]
+    --train_split what percentage of samples should be used in training 
+            [default: 0.70]
     --model what model would you like run 
             (options: rf,lasso,ridge,enet) [default: rf]
     --metric what metric would you like to optimize in training 
-             (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, f_meas) [default: roc_auc]
-    --type for models that do both regression and classification [default: classification]
+            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
+             f_meas) [default: bal_accuracy]
+    --type for models that do both regression and classification 
+            [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 30]
     --ncores number of processesing cores for parallel computing [default: 2]
