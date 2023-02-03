@@ -72,6 +72,7 @@ models <- c("rf", "lasso", "ridge", "enet")
 options(warn=-1)
 
 # opt <- data.frame(cor_level=numeric(),
+#                   subject_identifier=character(),
 #                   label=character(),
 #                   train_split=numeric(),
 #                   seed=numeric(),
@@ -82,7 +83,7 @@ options(warn=-1)
 #                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(cor_level = 0.80, train_split= 0.7, model = "enet", metric = "roc_auc", seed= 42, ncores = 4, tune_length = 100, label = c("ratio_quartile"), type= c("classification"), input = c("/home/sarah_data/merged_data.csv"), outdir="/home/simulated_output/ml_results/")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, model = "enet", metric = "roc_auc", seed= 42, ncores = 4, tune_length = 100, label = c("ratio_quartile"), type= c("classification"), input = c("/home/sarah_data/merged_data.csv"), outdir="/home/simulated_output/ml_results/")
 
 
 ## set seed  ===================================================================
