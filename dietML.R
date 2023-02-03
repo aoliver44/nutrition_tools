@@ -71,6 +71,8 @@ models <- c("rf", "lasso", "ridge", "enet")
 ## suppress warnings
 options(warn=-1)
 
+## TEST ARGUMENTS ==============================================================
+
 # opt <- data.frame(cor_level=numeric(),
 #                   subject_identifier=character(),
 #                   label=character(),
