@@ -78,7 +78,7 @@ nperm = 10
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "butyrate", feature_type = "numeric", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/synthetic_test_data/fecal_scfa_fl100.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/butyrate_metaphlan4.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "fecal_ph", feature_type = "numeric", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/read_in_tests/CTSC24532USDAWHNRCNu-GIMarkers7Oct2021_DATA_2021-10-07_1627.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/fecal_ph_metaphlan4.txt")
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
@@ -153,7 +153,8 @@ if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","tx
 
 metadata <- metadata %>% dplyr::select(., opt$subject_identifier, opt$label)
 metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier) %>%
-  rename(., "feature_of_interest" = opt$label) 
+  rename(., "feature_of_interest" = opt$label) %>%
+  tidyr::drop_na()
 
 ## Remove very low prevalent features ==========================================
 cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
