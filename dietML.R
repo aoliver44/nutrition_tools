@@ -203,10 +203,10 @@ if (opt$model %in% c("enet", "elasticnet")) {
 
 ## VIP Plots ===================================================================
 ## For all:
-vip <- caret::varImp(object = training_fit)
-pdf(file = paste0(opt$outdir, "vip_plot.pdf"), width=15, height=5)
-plot(vip, top = pmin(NROW(vip$importance), 20))
-suppressMessages(dev.off())
+# vip <- caret::varImp(object = training_fit)
+# pdf(file = paste0(opt$outdir, "vip_plot.pdf"), width=15, height=5)
+# plot(vip, top = pmin(NROW(vip$importance), 20))
+# suppressMessages(dev.off())
 
 ## LIME explanation ===========================================================
 
