@@ -32,7 +32,7 @@ library(ranger, quietly = T, verbose = F, warn.conflicts = F)
 ## resample strategy ===========================================================
 
 ## set initial test-train split
-tr_te_split <- rsample::initial_split(input, prop = opt$train_split, strata = label)
+tr_te_split <- rsample::initial_split(input, prop = as.numeric(opt$train_split), strata = label)
 train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
