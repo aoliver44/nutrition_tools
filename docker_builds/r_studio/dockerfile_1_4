@@ -1,0 +1,30 @@
+## Author: Andrew Oliver
+## Version: aoliver44/nutrition_tools:rstudio_1.3
+## Date: Feb 1, 2023
+
+## base image to start with
+FROM rocker/rstudio:4.2
+
+## RENV version
+ENV RENV_VERSION=0.16.0
+
+RUN apt update
+# install some things that R needs
+RUN apt install -y libz-dev libxml2-dev
+
+## install python
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip python3-venv python3-dev
+
+# install RENV, which will then install all R project packages
+RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
+RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
+
+# should be in the same directory as this file
+COPY renv.lock ./
+RUN R -e 'renv::consent(provided = TRUE)'
+RUN R -e 'renv::restore()'
+
+
+# install python packages
+RUN pip3 install numpy==1.21.2 pandas==1.3.2 numba==0.53.1 shap
