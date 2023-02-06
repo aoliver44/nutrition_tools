@@ -16,6 +16,62 @@ shap.error.occured <- FALSE
 
 tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
+  ## Prediction wrapper
+  pfun <- function(object, newdata) {
+    predict(object, data = newdata)$predictions[, 1L]
+  }
+  
+  ## pull model out of workflow
+  best_workflow <- best_tidy_workflow %>%
+    fit(input)
+  best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
+  
+  ## pull out data
+  shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
+    recipes::juice() %>% 
+    dplyr::select(-label) %>% 
+    as.matrix()
+  
+  ## explain with fastshap
+  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+  
+  ## make shap viz object
+  sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
+  
+  ## make shap plot
+  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
+  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = 9, height = 4.5, units = "in")
+  
+  ####################
+  
+  ## Prediction wrapper
+  pfun <- function(object, newdata) {
+    predict(object, data = newdata)$predictions[, 2L]
+  }
+  
+  ## pull model out of workflow
+  best_workflow <- best_tidy_workflow %>%
+    fit(input)
+  best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
+  
+  ## pull out data
+  shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
+    recipes::juice() %>% 
+    dplyr::select(-label) %>% 
+    as.matrix()
+  
+  ## explain with fastshap
+  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+  
+  ## make shap viz object
+  sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
+  
+  ## make shap plot
+  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
+  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = 9, height = 4.5, units = "in")
+  
   ## Prediction wrapper: first level (ie if levels are high, low, this is high)
   pfun <- function(object, newdata) {
     predict(object, data = newdata)$predictions[, 1L]
@@ -130,6 +186,95 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[2], " (test)"))
   ggplot2::ggsave(plot = importance_plot_test_2, filename = paste0(opt$outdir, "importance_plot_test_2.pdf"), width = 9, height = 4.5, units = "in")
   
+  } 
+  
+  if (opt$type == "regression" && opt$model == "rf") {
+    
+    ## Prediction wrapper
+    pfun <- function(object, newdata) {
+      predict(object, data = newdata)$predictions
+    }
+    
+    ## pull model out of workflow
+    best_workflow <- best_tidy_workflow %>%
+      fit(train)
+    best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
+    
+    ## pull out data
+    shap_data_train <- recipes::prep(dietML_recipe, train) %>% 
+      recipes::juice() %>% 
+      dplyr::select(-label) %>% 
+      as.matrix()
+    
+    ## explain with fastshap
+    shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 10)
+    
+    ## make shap viz object
+    sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
+    
+    ## make shap plot
+    importance_plot_train <- shapviz::sv_importance(sv_train, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+      ggtitle(label = paste0("SHAP: ", opt$label, " (train)"))
+    ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train.pdf"), width = 9, height = 4.5, units = "in")
+    
+    ####################
+    
+    ## Prediction wrapper
+    pfun <- function(object, newdata) {
+      predict(object, data = newdata)$predictions
+    }
+    
+    ## pull model out of workflow
+    best_workflow <- best_tidy_workflow %>%
+      fit(test)
+    best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
+    
+    ## pull out data
+    shap_data_test <- recipes::prep(dietML_recipe, test) %>% 
+      recipes::juice() %>% 
+      dplyr::select(-label) %>% 
+      as.matrix()
+    
+    ## explain with fastshap
+    shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 10)
+    
+    ## make shap viz object
+    sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
+    
+    ## make shap plot
+    importance_plot_test <- shapviz::sv_importance(sv_test, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+      ggtitle(label = paste0("SHAP: ", opt$label, " (train)"))
+    ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = 9, height = 4.5, units = "in")
+    
+    ####################
+    
+    ## Prediction wrapper
+    pfun <- function(object, newdata) {
+      predict(object, data = newdata)$predictions
+    }
+    
+    ## pull model out of workflow
+    best_workflow <- best_tidy_workflow %>%
+      fit(input)
+    best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
+    
+    ## pull out data
+    shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
+      recipes::juice() %>% 
+      dplyr::select(-label) %>% 
+      as.matrix()
+    
+    ## explain with fastshap
+    shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+    
+    ## make shap viz object
+    sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
+    
+    ## make shap plot
+    importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+      ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
+    ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full.pdf"), width = 10, height = 4.5, units = "in")
+    
   }
 
 }, error = function(e) {shap.error.occured <<- TRUE} )
