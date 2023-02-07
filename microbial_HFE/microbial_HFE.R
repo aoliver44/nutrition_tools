@@ -374,9 +374,9 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     dplyr::select(., -kingdom, -phylum, -class, -order, -family, -type) %>%
     dplyr::mutate(species = ifelse(is.na(species), "PARENT", species)) %>%
     dplyr::select(., -genus) %>% 
-    dplyr::group_by(., species) %>%
+    dplyr::group_by(., species) %>% 
     dplyr::summarise(., across(where(is.numeric), ~ sum(.))) %>% 
-    tibble::column_to_rownames(., "species") %>%
+    tibble::column_to_rownames(., "species") %>% 
     t() %>%
     as.data.frame() %>%
     suppressWarnings()
@@ -444,7 +444,7 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       parent_importance <- model_importance$average[model_importance$taxa == "PARENT"]
       
       children_toss <- model_importance %>% dplyr::filter(., average < parent_importance) %>% dplyr::pull(., taxa)
-      children_toss_zero <- model_importance%>% dplyr::filter(., average < 0) %>% dplyr::pull(., taxa) 
+      children_toss_zero <- model_importance %>% dplyr::filter(., average < 0) %>% dplyr::pull(., taxa) 
       children_toss <- unique(c(children_toss, cor_drop, children_toss_zero))
       
       ## drop parent
