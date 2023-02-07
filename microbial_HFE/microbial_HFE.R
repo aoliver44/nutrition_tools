@@ -78,7 +78,7 @@ nperm = 10
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "fecal_ph", feature_type = "numeric", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "TRUE", input_metadata = "/home/data/read_in_tests/CTSC24532USDAWHNRCNu-GIMarkers7Oct2021_DATA_2021-10-07_1627.csv", input= "/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt", output = "/home/output_old/fecal_ph_metaphlan4.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "Sample", label= "Study.Group", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species.tsv", output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt")
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
@@ -179,7 +179,9 @@ metaphlan <- metaphlan %>% dplyr::filter(., clade_name %in% metaphlan_abund_filt
 cat(paste0((prev_filter - NROW(metaphlan)), " features dropped due to abundance filter (rel. abund. >10e-4).\n"))
 Sys.sleep(0.25)
 
-metaphlan_master <- metaphlan
+## clean clade name of symbols and spaces so ranger doesnt freak out.
+metaphlan$clade_name <- gsub(" ", "_", metaphlan$clade_name)
+metaphlan$clade_name <- gsub("\\-", "_", metaphlan$clade_name)
 
 ## make the dataframe of features that will compete in parent-child competitions.
 ## Basically this is just the taxonomic (hierarchical) information of all
