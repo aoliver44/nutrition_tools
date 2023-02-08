@@ -88,7 +88,19 @@ options(warn=-1)
 #                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", cor_level = 0.80, train_split= 0.7, model = "enet", metric = "roc_auc", seed= 42, ncores = 4, tune_length = 100, label = c("ratio_quartile"), type= c("classification"), input = c("/home/sarah_data/merged_data.csv"), outdir="/home/simulated_output/ml_results/")
+# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id",
+#                                cor_level = 0.80,
+#                                train_split= 0.7,
+#                                model = "rf",
+#                                metric = "bal_accuracy",
+#                                seed= 42,
+#                                ncores = 4,
+#                                tune_length = 50,
+#                                label = c("feature_of_interest"),
+#                                type= c("classification"),
+#                                input = c("/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/genus.csv"),
+#                                outdir="/home/simulated_output/ml_results/"
+#                                )
 
 
 ## set seed  ===================================================================
