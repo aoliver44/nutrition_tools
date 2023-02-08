@@ -29,7 +29,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -39,7 +39,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
   ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -58,7 +58,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -68,7 +68,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
   ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -95,7 +95,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
   
   ## make shap plot
-  importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[1], " (train)"))
   ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train_1.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -124,7 +124,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
   
   ## make shap plot
-  importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[2], " (train)"))
   ggplot2::ggsave(plot = importance_plot_train_2, filename = paste0(opt$outdir, "importance_plot_train_2.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -153,7 +153,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
   
   ## make shap plot
-  importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[1], " (test)"))
   ggplot2::ggsave(plot = importance_plot_test_1, filename = paste0(opt$outdir, "importance_plot_test_1.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -182,7 +182,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
   
   ## make shap plot
-  importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[2], " (test)"))
   ggplot2::ggsave(plot = importance_plot_test_2, filename = paste0(opt$outdir, "importance_plot_test_2.pdf"), width = 9, height = 4.5, units = "in")
   
@@ -213,7 +213,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
     
     ## make shap plot
-    importance_plot_train <- shapviz::sv_importance(sv_train, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_train <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (train)"))
     ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train.pdf"), width = 9, height = 4.5, units = "in")
     
@@ -242,7 +242,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
     
     ## make shap plot
-    importance_plot_test <- shapviz::sv_importance(sv_test, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_test <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (train)"))
     ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = 9, height = 4.5, units = "in")
     
@@ -261,7 +261,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## pull out data
     shap_data_full <- recipes::prep(dietML_recipe, input) %>% 
       recipes::juice() %>% 
-      dplyr::select(-label) %>% 
+      dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
       as.matrix()
     
     ## explain with fastshap
@@ -271,7 +271,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
     
     ## make shap plot
-    importance_plot_full <- shapviz::sv_importance(sv_full, kind = "both", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (full data)"))
     ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full.pdf"), width = 10, height = 4.5, units = "in")
     
