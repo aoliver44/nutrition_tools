@@ -18,7 +18,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -37,6 +37,7 @@ Options:
             [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 30]
+    --tune_time length of time tune_bayes runs [default: 10]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
@@ -85,6 +86,7 @@ options(warn=-1)
 #                   metric=character(),
 #                   type=character(),
 #                   ncores=numeric(),
+#                   tune_time=numeric(),
 #                   tune_length=numeric(),
 #                   input=character(),
 #                   outdir=character())
@@ -96,9 +98,10 @@ options(warn=-1)
 #                                seed= 42,
 #                                ncores = 4,
 #                                tune_length = 50,
+#                                tune_time = 10,
 #                                label = c("feature_of_interest"),
 #                                type= c("classification"),
-#                                input = c("/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/genus.csv"),
+#                                input = c("/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt"),
 #                                outdir="/home/simulated_output/ml_results/"
 #                                )
 
