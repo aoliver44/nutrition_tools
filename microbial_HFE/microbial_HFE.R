@@ -24,7 +24,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format>] <input_metadata> <input> <output>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -35,6 +35,7 @@ Options:
     --super_filter to run a final RF and only take positive values [default: TRUE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
     --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into format [default: FALSE]
+    --ncores number of cpu cores to use [default: 2]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
     input path to input file from hierarchical data (i.e. metaphlan data) (txt | tsv | csv)
@@ -78,7 +79,7 @@ nperm = 10
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
-# opt <- opt %>% tibble::add_row(subject_identifier = "Sample", label= "Study.Group", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species.tsv", output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt")
+# opt <- opt %>% tibble::add_row(subject_identifier = "Sample", label= "Study.Group", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species_raw.tsv", output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt")
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
@@ -95,6 +96,7 @@ if (file.exists(opt$input)) {
   cat("\n",paste0("Using ", opt$input, " as input")) 
 } else { stop("Input not found.") }
 
+## read in microbiome ==========================================================
 ## read in data, should be in tab or comma separated format
 if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")) {
   metaphlan <- suppressMessages(readr::read_delim(file = opt$input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
@@ -109,6 +111,21 @@ if ("clade_name" %!in% colnames(metaphlan)) {
 }
 
 original_taxa_count <- NROW(metaphlan)
+
+## read in metadata file =======================================================
+## rename the subject_identifier to subject_id and
+## rename the label to feature_of_interest
+## metadata, should be in tab or comma separated format
+if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","txt")) {
+  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = "\t"))
+} else {
+  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = ","))
+}
+
+metadata <- metadata %>% dplyr::select(., opt$subject_identifier, opt$label)
+metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier) %>%
+  rename(., "feature_of_interest" = opt$label) %>%
+  tidyr::drop_na()
 
 ## if not "metaphlan" format, attempt to convert ===============================
 
@@ -137,24 +154,8 @@ if (opt$format_metaphlan == "FALSE") {
   
   metaphlan <- rbind(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
                      metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
-  ## clean up
-  rm(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
-     metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8)
+  
 }
-
-## read in metadata file and rename the subject_identifier to subject_id and
-## rename the label to feature_of_interest
-## metadata, should be in tab or comma separated format
-if (strsplit(basename(opt$input_metadata), split="\\.")[[1]][2] %in% c("tsv","txt")) {
-  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = "\t"))
-} else {
-  metadata <- suppressMessages(readr::read_delim(file = opt$input_metadata, delim = ","))
-}
-
-metadata <- metadata %>% dplyr::select(., opt$subject_identifier, opt$label)
-metadata <- metadata %>% dplyr::rename(., "subject_id" = opt$subject_identifier) %>%
-  rename(., "feature_of_interest" = opt$label) %>%
-  tidyr::drop_na()
 
 ## Remove very low prevalent features ==========================================
 cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
@@ -197,6 +198,45 @@ taxa_only_split$metaphlan_taxonomy <- metaphlan$clade_name
 taxa_only_split$taxa_abundance <- rowSums(metaphlan[,2:NCOL(metaphlan)])
 taxa_only_split$na_count <- rowSums(is.na(taxa_only_split))
 taxa_only_split_master <- taxa_only_split
+
+## write summarized files and clean up =========================================
+## these are the species only, genus only...etc files
+## to check against.
+write.summary.error.occured <- FALSE
+tryCatch( { if (1 == 1) {
+  
+  metaphlan_summary <- metaphlan %>% 
+    relocate(., clade_name) %>%
+    tidyr::separate(., col = clade_name, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"), sep = "\\|", extra = "merge", remove = F)
+  
+  metaphlan_summary$level <- (stringr::str_count(metaphlan$clade_name, "\\|")) + 1
+  
+  count = 1
+  for (i in seq(1:dplyr::n_distinct(metaphlan_summary$level))) {
+    file_summary <- metaphlan_summary %>% 
+      dplyr::filter(., level == i) %>%
+      dplyr::select(., -level, -dplyr::any_of(c("kingdom", "phylum", "class", "order", "family", "genus", "species", "type"))) %>%
+      tibble::column_to_rownames(., var = "clade_name") %>%
+      t() %>%
+      as.data.frame() %>%
+      tibble::rownames_to_column(., var = "subject_id") %>%
+      janitor::clean_names()
+    colnames(file_summary)[pmin(NCOL(file_summary), 10):NCOL(file_summary)] <- paste0("taxa_",1:NCOL(file_summary))
+    
+    file_merge <- merge(metadata, file_summary, by = "subject_id")
+    
+    filename <- paste0("_level_", count, ".csv")
+    readr::write_csv(x = file_merge, file = paste0(tools::file_path_sans_ext(opt$output), filename))
+    count = count + 1
+  }
+  
+  ## clean up
+  rm(metaphlan_1, metaphlan_2, metaphlan_3, metaphlan_4, 
+     metaphlan_5, metaphlan_6, metaphlan_7, metaphlan_8, file_summary, file_merge,
+     filename, metaphlan_summary)
+}
+}, error = function(e) {write.summary.error.occured <<- TRUE} )
+
 
 cat("\n\n", "##################################\n", "Starting hierarchical competitions\n", "##################################\n")
 
@@ -277,7 +317,7 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       ## create an intial model and keep track of the variable.importance
       ## this will help us decide if the PARENT (species) or the CHILD (sub-speceies)
       ## brings more information to the table with regards to feature_of_interest
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       ## welp, the initial model miiight be correct, but lets permute that process
@@ -286,7 +326,7 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       ## a more sure guess whether a Parent or Child is more important with regards to 
       ## the feature_of_interest
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -297,10 +337,10 @@ for (parent_trial in specieses[specieses$count > 1, ]$species) {
       ## this else statement does the sample as the above few lines, just for a continous
       ## feature_of_interest...with RF Regression.
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -405,10 +445,10 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -418,10 +458,10 @@ for (parent_trial in genera[genera$count > 1, ]$genus) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -525,10 +565,10 @@ for (parent_trial in families[families$count > 1, ]$family) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -538,11 +578,11 @@ for (parent_trial in families[families$count > 1, ]$family) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -645,10 +685,10 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -658,11 +698,11 @@ for (parent_trial in orders[orders$count > 1, ]$order) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -766,10 +806,10 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -779,11 +819,11 @@ for (parent_trial in classes[classes$count > 1, ]$class) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -888,10 +928,10 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -901,11 +941,11 @@ for (parent_trial in phyla[phyla$count > 1, ]$phylum) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -1010,10 +1050,10 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
     ## RF MODEL #####
     
     if (opt$feature_type == "factor") {
-      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -1023,11 +1063,11 @@ for (parent_trial in kingdoms[kingdoms$count > 1, ]$kingdom) {
       
       
     } else {
-      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42)
+      model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       
       for (seed in sample(1:1000, nperm)) {
-        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed)
+        model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = metaphlan_parent_merge_cor_subset, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
         model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
         suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
         
@@ -1091,10 +1131,10 @@ if (opt$super_filter == "TRUE") {
   nperm = nperm + 190
   
   if (opt$feature_type == "factor") {  
-    model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
+    model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
-      model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
+      model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       
@@ -1103,10 +1143,10 @@ if (opt$super_filter == "TRUE") {
     model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
     model_importance <- model_importance %>% dplyr::relocate(., average)
   } else {
-    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42)
+    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
-      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed)
+      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(opt$ncores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       
