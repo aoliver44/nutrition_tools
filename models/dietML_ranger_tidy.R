@@ -70,6 +70,15 @@ dietML_wflow <-
   workflows::add_model(initial_mod) %>% 
   workflows::add_recipe(dietML_recipe)  
 
+## set up parallel jobs ========================================================
+## remove any doParallel job setups that may have
+## unneccessarily hung around
+unregister_dopar()
+
+## register parallel cluster
+cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+doParallel::registerDoParallel(cl)
+
 ## hyperparameters =============================================================
 
 ## define the hyper parameter set
@@ -93,10 +102,6 @@ dietML_param_set <-
 ## set up hyper parameter search
 if (opt$type == "classification") {
   
-  ## remove any doParallel job setups that may have
-  ## unneccessarily hung around
-  unregister_dopar()
-  
   search_res <-
     dietML_wflow %>% 
     tune::tune_bayes(
@@ -110,14 +115,10 @@ if (opt$type == "classification") {
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
       control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
-                                    time_limit = NA)
+                                    time_limit = as.numeric(opt$tune_time))
     )
   
 } else if (opt$type == "regression") {
-  
-  ## remove any doParallel job setups that may have
-  ## unneccessarily hung around
-  unregister_dopar()
   
   search_res <-
     dietML_wflow %>% 
@@ -132,11 +133,17 @@ if (opt$type == "classification") {
       metrics = yardstick::metric_set(mae, rmse, rsq),
       control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
-                                    time_limit = NA)
+                                    time_limit = as.numeric(opt$tune_time))
     )
 }
 
 search_res %>% tune::show_best(opt$metric)
+
+## stop parallel jobs
+parallel::stopCluster(cl)
+## remove any doParallel job setups that may have
+## unneccessarily hung around
+unregister_dopar()
 
 ## fit best model ==============================================================
 
