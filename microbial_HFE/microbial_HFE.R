@@ -58,6 +58,7 @@ library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 library(ggsci, quietly = T, verbose = F, warn.conflicts = F)
 library(vegan, quietly = T, verbose = F, warn.conflicts = F)
 library(progress, quietly = T, verbose = F, warn.conflicts = F)
+library(stringr, quietly = T, verbose = F, warn.conflicts = F)
 
 ## set random seed if needed
 set.seed(42)
