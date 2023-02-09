@@ -71,15 +71,25 @@ nperm = 10
 # opt <- data.frame(subject_identifier=character(),
 #                   label=character(),
 #                   feature_type=character(),
-#                   #var_control=numeric(),
 #                   super_filter=character(),
 #                   feature_limit=character(),
+#                   ncores=numeric(),
 #                   format_metaphlan=character(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = "subject_id", label= "dx", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/data/old_v_new_HFE/new/crc_1_reformated_meta.txt", input= "/home/data/old_v_new_HFE/new/crc1_otu.txt", output = "/home/data/old_v_new_HFE/new/crc1_16S.txt")
-# opt <- opt %>% tibble::add_row(subject_identifier = "Sample", label= "Study.Group", feature_type = "factor", super_filter = "TRUE", feature_limit = "ALL", format_metaphlan = "FALSE", input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species_raw.tsv", output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt")
+# opt <- opt %>% tibble::add_row(
+#   subject_identifier = "Sample", 
+#   label= "Study.Group", 
+#   feature_type = "factor", 
+#   super_filter = "TRUE", 
+#   feature_limit = "ALL", 
+#   format_metaphlan = "FALSE", 
+#   ncores = 4,
+#   input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", 
+#   input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species_raw.tsv", 
+#   output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt"
+#   )
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
