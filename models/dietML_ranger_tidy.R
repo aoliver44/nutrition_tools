@@ -76,8 +76,8 @@ dietML_wflow <-
 unregister_dopar()
 
 ## register parallel cluster
-cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-doParallel::registerDoParallel(cl)
+# cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+# doParallel::registerDoParallel(cl)
 
 ## hyperparameters =============================================================
 
@@ -140,7 +140,7 @@ if (opt$type == "classification") {
 search_res %>% tune::show_best(opt$metric)
 
 ## stop parallel jobs
-parallel::stopCluster(cl)
+# parallel::stopCluster(cl)
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
 unregister_dopar()
