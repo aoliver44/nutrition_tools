@@ -68,6 +68,9 @@ nperm = 10
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
+## suppress warnings
+options(warn=-1)
+
 ## arg tests ===================================================================
 # opt <- data.frame(subject_identifier=character(),
 #                   label=character(),
