@@ -22,7 +22,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_hData=<format> --ncores=<ncores>] <input_metadata> <input> <output>
+    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -32,7 +32,7 @@ Options:
     --feature_type of response i.e. numeric or factor [default: factor]
     --super_filter to run a final RF and only take positive values [default: TRUE]
     --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
-    --format_hData tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
+    --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --ncores number of cpu cores to use [default: 2]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
@@ -78,7 +78,7 @@ source("/home/scripts/microbial_HFE/taxaHFE_functions.R")
 #                   super_filter=character(),
 #                   feature_limit=character(),
 #                   ncores=numeric(),
-#                   format_hData=character(),
+#                   format_metaphlan=character(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
@@ -88,7 +88,7 @@ source("/home/scripts/microbial_HFE/taxaHFE_functions.R")
 #   feature_type = "factor",
 #   super_filter = "TRUE",
 #   feature_limit = "ALL",
-#   format_hData = "TRUE",
+#   format_metaphlan = "TRUE",
 #   ncores = 4,
 #   input_metadata = "/home/curated_data/data/for_HFE_testing/OLIVER_AMR_2022/abx_cluster_andrew_bi.csv",
 #   input= "/home/curated_data/data/for_HFE_testing/OLIVER_AMR_2022/merged_metaphlan4.txt",
@@ -125,7 +125,7 @@ metadata <- read_in_metadata(input = opt$input_metadata, subject_identifier = op
 
 ## if not "metaphlan" format, attempt to convert ===============================
 
-if (opt$format_hData == "FALSE") {
+if (opt$format_metaphlan == "FALSE") {
   
   convert_to_hData(input = hData)
   hData <- do.call(rbind, lapply(ls(pattern = "hData_L"), get))
@@ -136,6 +136,11 @@ if (opt$format_hData == "FALSE") {
 ## Remove very low prevalent features ==========================================
 
 apply_filters(input = hData)
+
+## write files for old HFE program =============================================
+
+write_old_hfe(input = hData, output = opt$output)
+
 
 ## clean clade name of symbols and spaces so ranger doesnt freak out.
 hData$clade_name <- gsub(" ", "_", hData$clade_name)

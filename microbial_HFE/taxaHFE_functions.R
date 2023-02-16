@@ -373,17 +373,18 @@ taxaHFE_competition <- function(input = hData, feature_type = "factor", cores = 
     janitor::clean_names()
   output_nsf <- merge(metadata, hData_output, by.x = "subject_id", by.y = "subject_id")
   assign("output_nsf", output_nsf, envir = .GlobalEnv)
+  assign("output_nsf_count", (NCOL(output_nsf) - 2), envir = .GlobalEnv)
   
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "no_sf.txt"), x = output_nsf, delim = "\t")
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "_taxa_list_no_sf.txt"), x = taxa_only_split, delim = "\t")
-  
-  cat("\n\n Features (no super filter): ", (NCOL(output_nsf) - 2))
   
 }
 
 ## super filter ================================================================
 
 super_filter <- function(input = hData, feature_type = "factor", cores = 4, output) {
+  
+  cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n")
   
   hData_sf <- input %>%
     tibble::column_to_rownames(., var = "clade_name") %>%
@@ -396,14 +397,18 @@ super_filter <- function(input = hData, feature_type = "factor", cores = 4, outp
   output_sf <- hData_sf %>% dplyr::select(., -subject_id) 
   nperm = nperm + 190
   
+  pb <- progress_bar$new( format = " Super-filter [:bar] :percent in :elapsed", total = nperm, clear = FALSE, width= 60)
+  
   if (feature_type == "factor") {  
     model <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(cores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
+      
       model_tmp <- ranger::ranger(as.factor(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(cores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       
+      pb$tick()
     }
     colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
     model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
@@ -414,17 +419,20 @@ super_filter <- function(input = hData, feature_type = "factor", cores = 4, outp
     model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(cores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
+      
       model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "permutation", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(cores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       
+      pb$tick()
     }
     colnames(model_importance)[2:(nperm + 2)] <- paste0("permutation_", seq(1,nperm + 1))
     model_importance$average <- rowMeans(model_importance[, 2:(nperm + 2)])
     model_importance <- model_importance %>% dplyr::relocate(., average)
     assign("model_importance", model_importance, envir = .GlobalEnv)
   }
-    
+  
+  
   model_importance_list <- model_importance %>% dplyr::filter(., average > mean(average)) %>% dplyr::filter(., average > 0) %>% dplyr::pull(., taxa)
   output_sf <- hData_sf %>% dplyr::select(., subject_id, feature_of_interest, all_of(model_importance_list))
   taxa_only_split$clade_name <- janitor::make_clean_names(taxa_only_split$clade_name)
@@ -436,7 +444,8 @@ super_filter <- function(input = hData, feature_type = "factor", cores = 4, outp
   readr::write_delim(file = output, x = output_sf, delim = "\t")
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "_taxa_list.txt"), x = taxa_only_split, delim = "\t")
   
-  cat("\n\n Features (super filter): ", (NCOL(output_sf) - 2))
+  cat("\n\n Features (no super filter): ", output_nsf_count)
+  cat("\n Features (super filter): ", (NCOL(output_sf) - 2), "\n\n")
   
 }
 
@@ -476,4 +485,81 @@ write_figure <- function(input, output) {
   }
   
   
+}
+
+## write files for old_HFE =====================================================
+
+write_old_hfe <- function(input = hData, output) {
+  
+  ## long vector of possible levels in hierarchical data
+  levels <- c("L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15")
+  
+  ## count number of splits (+1) in hierarchical data by "|" symbol
+  num_levels <- max(stringr::str_count(input$clade_name, "\\|"))
+  levels <- levels[1:(num_levels + 1)]
+
+  
+  input <- input %>% 
+    dplyr::relocate(., clade_name) %>%
+    tidyr::separate(., col = clade_name, into = levels, sep = "\\|", extra = "merge")
+  
+  
+
+  ## split raw data by pipe symbol into number of expected parts
+  if ("L7" %in% colnames(input)) {
+    taxonomy <- input %>% dplyr::select(., L1:L7)
+    input <- input %>% 
+      dplyr::select(., L7, where(is.numeric)) %>%
+      dplyr::group_by(., L7) %>%
+      dplyr::summarise_if(is.numeric, sum)
+    taxonomy <- taxonomy[taxonomy$L7 %in% input$L7, ]
+    taxonomy <- taxonomy %>% tidyr::drop_na() %>% dplyr::filter(., !duplicated(L7))
+    input_taxa_merge <- merge(taxonomy, input, by = "L7")
+    
+    input_taxa_merge$index <- (1001:(NROW(input_taxa_merge) + 1000))
+    input_taxa_merge$L1 <- "k__Bacteria"
+    
+    input_taxa_merge <- input_taxa_merge %>%
+      dplyr::relocate(., index, L1,L2,L3,L4,L5,L6,L7)
+    
+    readr::write_delim(x = input_taxa_merge[1:8], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.tab"), col_names = FALSE)
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,9:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.tab"), col_names = FALSE)
+    
+    metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
+    
+    metadata_list <- metadata %>% dplyr::arrange(match(subject_id, metadata_order)) %>%
+      pull(., feature_of_interest)
+    
+    metadata_list <- as.data.frame(c("label", metadata_list))
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.tab"), col_names = FALSE)
+    
+    
+  } else {
+    taxonomy <- input %>% dplyr::select(., L1:L6)
+    input <- input %>% 
+      dplyr::select(., L6, where(is.numeric)) %>%
+      dplyr::group_by(., L6) %>%
+      dplyr::summarise_if(is.numeric, sum)
+    taxonomy <- taxonomy[taxonomy$L6 %in% input$L6, ]
+    taxonomy <- taxonomy %>% tidyr::drop_na() %>% dplyr::filter(., !duplicated(L6))
+    input_taxa_merge <- merge(taxonomy, input, by = "L6")
+    
+    input_taxa_merge$index <- (1001:(NROW(input_taxa_merge) + 1000))
+    input_taxa_merge$L1 <- "k__Bacteria"
+    
+    input_taxa_merge <- input_taxa_merge %>%
+      dplyr::relocate(., index, L1,L2,L3,L4,L5,L6)
+    
+    readr::write_delim(x = input_taxa_merge[1:7], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.tab"), col_names = FALSE)
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,8:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.tab"), col_names = FALSE)
+    
+    metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
+    
+    metadata_list <- metadata %>% dplyr::arrange(match(subject_id, metadata_order)) %>%
+      pull(., feature_of_interest)
+    
+    metadata_list <- as.data.frame(c("label", metadata_list))
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.tab"), col_names = FALSE)
+    
+  }
 }
