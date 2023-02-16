@@ -83,15 +83,15 @@ options(warn=-1)
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
-#   subject_identifier = "Sample", 
-#   label= "Study.Group", 
-#   feature_type = "factor", 
-#   super_filter = "TRUE", 
-#   feature_limit = "ALL", 
-#   format_metaphlan = "FALSE", 
+#   subject_identifier = "Sample",
+#   label= "Study.Group",
+#   feature_type = "factor",
+#   super_filter = "TRUE",
+#   feature_limit = "ALL",
+#   format_metaphlan = "FALSE",
 #   ncores = 4,
-#   input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv", 
-#   input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species_raw.tsv", 
+#   input_metadata = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/metadata_bi.tsv",
+#   input= "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/species_raw.tsv",
 #   output = "/home/curated_data/data/for_HFE_testing/iHMP_IBDMDB_2019/microbial_HFE.txt"
 #   )
 
