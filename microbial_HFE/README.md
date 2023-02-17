@@ -1,14 +1,15 @@
 
- # **microbial_hfe.R**
+ # **taxaHFE**
  
+ (Under active development!)
 
-...under active development...
+We developed software, called taxaHFE (Hierarchical Feature Engineering), which works by first considering the pairwise correlation structure between a taxon and its descendants to prune descendants above a correlation threshold. Next it permutes a random forest on the taxon and remaining descendants to determine how important each is at explaining an intervention or clinical covariate. If, on average, the taxon is the most important feature in the model, the descendants are dropped, otherwise only the descendants more important than the taxon are kept. Last, an optional final filter step considers all features remaining, and again permutes a random forest. Any features which are either below the average importance of all remaining features or have a negative or zero average importance are dropped.  
 
 
 ```
- Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
+Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format>] <input_metadata> <input> <output>
+    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -16,14 +17,12 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --super_filter to run a final RF and only take positive values [default: TRUE]
-    --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
-    --format_metaphlan tells program to expect the desired metaphlan style format, otherwise it attempts to coerce into format [default: FALSE]
-
+    --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
+    --ncores number of cpu cores to use [default: 2]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
-    input path to input file from hierarchical data (i.e. metaphlan data) (txt | tsv | csv)
-    output output file name (txt)
+    input path to input file from hierarchical data (i.e. hData data) (txt | tsv | csv)
+    output output file name (txt) 
 
 ```
 
@@ -34,10 +33,6 @@ Information about the flags:
 --label: the name of the column in your input dataset that you are trying to predict with HFE. Can be a factor or continous.
 
 --feature_type: is the label a factor or a continous variable?
-
---super_filter: run a final, permuted, random forest on the hierarchically feature engineered dataset. Any feature with a variable of importance below zero will get droped. 
-
---feature_limit: optional limit of total number of features to output
 
 --format_metaphlan: is the format of the input file in the "MetaPhlAn" style? What this looks like is (from their tutorial):
 
@@ -53,7 +48,7 @@ k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Ruminococcaceae|g__R
 k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Ruminococcaceae|g__Ruminococcus|s__Ruminococcus_bromii	12.34825	0	5.86474	15.77574	15.23062	4.48636
 ```
 
-Notice that each taxonomic level is summarized on its own line, and the columns are the samples assessed. **Importantly, microbial_HFE needs the column with the taxonomic (hierarchical) information in a column with the header clade_name.** If ```--format_metaphlan FALSE```, the program will try and summarize each level, and coerce the input file into a "MetaPhlAn" style input. Fair warning, if your input taxonomic file has a lot of missing levels (i.e., k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__|g__|s__Clostridiales_sp_OTU12345), they will get summarized to the last known level. Using the previous example, the empty genus and family level will be summarized to f__Clostridiales_unclassified and g__Clostridiales_unclassified. The downside to this method is that, pontentially very different taxa can get grouped together in a _unclassifed level. Taxonomic assignment has come a long way! Try to use a method that results in the most complete information.
+Notice that each taxonomic level is summarized on its own line, and the columns are the samples assessed. **Importantly, taxaHFE needs the column with the taxonomic (hierarchical) information in a column with the header clade_name.** If ```--format_metaphlan FALSE```, the program will try and summarize each level, and coerce the input file into a "MetaPhlAn" style input. Fair warning, if your input taxonomic file has a lot of missing levels (i.e., k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__|g__|s__Clostridiales_sp_OTU12345), they will get summarized to the last known level. Using the previous example, the empty genus and family level will be summarized to f__Clostridiales_unclassified and g__Clostridiales_unclassified. The downside to this method is that, pontentially very different taxa can get grouped together in a _unclassifed level. Taxonomic assignment has come a long way! Try to use a method that results in the most complete information.
 
 input_meta: the file that contains the metadata column you wish to predict with your hierarchical data. This file should contain BOTH your subject_identifier and your metadata label
 
