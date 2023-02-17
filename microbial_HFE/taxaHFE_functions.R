@@ -72,6 +72,24 @@ convert_to_hData <- function(input) {
 
 apply_filters <- function(input) {
   
+  ## this CV check checks to make sure everything is going to get roughly
+  ## divided by the same number for the abundance filter
+  ## if not, then it will break.
+  CV <- function(x){
+    (sd(x)/mean(x))*100
+  }
+  
+  cv_check <- input %>% 
+    dplyr::filter(., !grepl("\\|", clade_name)) %>% 
+    tibble::column_to_rownames(., var = "clade_name") %>% 
+    dplyr::summarise_all(sum) %>% t() %>% as.data.frame() %>% dplyr::pull()
+  
+  if ((CV(cv_check) >= 0.1) == TRUE) {
+    cat("\n\n\n", "###########################\n", "ERROR: CV too large \n", "###########################")
+    cat("\n", "Program is stopping because your data is not normalized. It should be rarefied or in relative abundance.")
+    stop()
+  }
+  
   cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
   ## remove taxa/rows that are 95% zeros (5% prevalence filter)
   input <- input[rowSums(input[,2:NCOL(input)] == 0) <= (NCOL(input[,2:NCOL(input)])*0.95), ]
@@ -88,23 +106,6 @@ apply_filters <- function(input) {
     tibble::column_to_rownames(., var = "clade_name") %>% 
     summarise_all(sum) %>% rowMeans()
   
-  ## this CV check checks to make sure everything is going to get roughly
-  ## divided by the same number for the abundance filter
-  ## if not, then it will break.
-  CV <- function(x){
-    (sd(x)/mean(x))*100
-  }
-  
-  cv_check <- input %>% 
-    dplyr::filter(., !grepl("\\|", clade_name)) %>% 
-    tibble::column_to_rownames(., var = "clade_name") %>% 
-    dplyr::summarise_all(sum) %>% t() %>% as.data.frame() %>% dplyr::pull()
-  
-  if (CV(cv_check) >= 0.1) {
-    cat("\n\n\n", "###########################\n", "ERROR: CV too large \n", "###########################")
-    cat("\n", "Program is stopping because your data is not normalized. It should be rarefied or in relative abundance.")
-    stop()
-  }
   
   ## abundance filter
   hData_abund_filter <- input %>% tibble::remove_rownames() %>% tibble::column_to_rownames(., var = "clade_name")
@@ -522,8 +523,8 @@ write_old_hfe <- function(input = hData, output) {
     input_taxa_merge <- input_taxa_merge %>%
       dplyr::relocate(., index, L1,L2,L3,L4,L5,L6,L7)
     
-    readr::write_delim(x = input_taxa_merge[1:8], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.tab"), col_names = FALSE)
-    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,9:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.tab"), col_names = FALSE)
+    readr::write_delim(x = input_taxa_merge[1:8], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,9:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
     
     metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
     
@@ -531,7 +532,7 @@ write_old_hfe <- function(input = hData, output) {
       pull(., feature_of_interest)
     
     metadata_list <- as.data.frame(c("label", metadata_list))
-    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.tab"), col_names = FALSE)
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.txt"), col_names = FALSE, delim = "\t")
     
     
   } else {
@@ -550,8 +551,8 @@ write_old_hfe <- function(input = hData, output) {
     input_taxa_merge <- input_taxa_merge %>%
       dplyr::relocate(., index, L1,L2,L3,L4,L5,L6)
     
-    readr::write_delim(x = input_taxa_merge[1:7], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.tab"), col_names = FALSE)
-    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,8:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.tab"), col_names = FALSE)
+    readr::write_delim(x = input_taxa_merge[1:7], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,8:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
     
     metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
     
@@ -559,7 +560,7 @@ write_old_hfe <- function(input = hData, output) {
       pull(., feature_of_interest)
     
     metadata_list <- as.data.frame(c("label", metadata_list))
-    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.tab"), col_names = FALSE)
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.txt"), col_names = FALSE, delim = "\t")
     
   }
 }
