@@ -22,7 +22,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    microbial_HFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --super_filter=<TRUE/FALSE> --feature_limit=<number_of_features> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
+    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -30,8 +30,6 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --super_filter to run a final RF and only take positive values [default: TRUE]
-    --feature_limit limits output to best N number of features (NOTE: if changed, must set superfilter to TRUE) [default: ALL]
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --ncores number of cpu cores to use [default: 2]
 Arguments:
