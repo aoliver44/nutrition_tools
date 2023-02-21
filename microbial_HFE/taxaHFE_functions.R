@@ -4,9 +4,9 @@
 read_in_microbiome <- function(input) {
   ## read in txt, tsv, or csv microbiome data
   if (strsplit(basename(input), split="\\.")[[1]][2] %in% c("tsv","txt")) {
-    suppressMessages(readr::read_delim(file = input, delim = "\t", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
+    suppressMessages(readr::read_delim(file = input, delim = "\t", skip = 0, name_repair = "minimal") %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
   } else {
-    suppressMessages(readr::read_delim(file = input, delim = ",", skip = 0) %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
+    suppressMessages(readr::read_delim(file = input, delim = ",", skip = 0, name_repair = "minimal") %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
   }
   
 }
@@ -246,7 +246,7 @@ taxaHFE_competition <- function(input = hData, feature_type = "factor", cores = 
       ## correlated with child, drop the highly correlated child...they dont bring
       ## more information to the table that is otherwise carried in the parent (species in this case)
       cor_drop <- suppressMessages(corrr::correlate(hData_parent)) %>% 
-        corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > 0.85) %>% 
+        corrr::focus(., PARENT) %>% dplyr::filter(., PARENT > as.numeric(opt$cor_level)) %>% 
         dplyr::pull(., term)
       
       hData_parent_merge_cor_subset <- hData_parent_merge %>% 
