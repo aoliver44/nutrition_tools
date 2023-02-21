@@ -25,7 +25,7 @@ options(warn=-1)
 library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
 library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
-library(tidymodels, quietly = T, verbose = F, warn.conflicts = F)
+suppressPackageStartupMessages(library(tidymodels, quietly = T, verbose = F, warn.conflicts = F))
 library(ranger, quietly = T, verbose = F, warn.conflicts = F)
 
 
