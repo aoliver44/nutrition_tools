@@ -49,7 +49,6 @@ Arguments:
 opt <- docopt::docopt(doc, version = 'dietML.R v1.0\n\n')
 
 ## load libraries ==============================================================
-
 library(readr, quietly = T, verbose = F, warn.conflicts = F)
 library(dplyr, quietly = T, verbose = F, warn.conflicts = F)
 library(ranger, quietly = T, verbose = F, warn.conflicts = F)
