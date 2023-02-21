@@ -11,9 +11,6 @@
 ## docker command:
 #docker run --rm -it -p 8787:8787 -e PASSWORD=yourpasswordhere -v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home amr_r_env:3.1.0
 
-## general command:
-## taxa_HFE --subject_identifier subject_id --feature_type factor --var_control 5 --label cluster --super_filter TRUE --feature_limit 15 /home/data/synthetic_test_data/abx_cluster_andrew_bi.csv /home/data/synthetic_test_data/merged_hData4.txt /home/output_old/abx_cluster_bi_hData4.txt
-
 ## set working dir to /home for the docker container
 setwd("/home")
 
@@ -22,7 +19,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --format_metaphlan=<format> --ncores=<ncores>] <input_metadata> <input> <output>
+    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --format_metaphlan=<format> --cor_level=<correlation_level> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -31,6 +28,7 @@ Options:
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
+    --cor_level level of initial correlation filter [default: 0.95]
     --ncores number of cpu cores to use [default: 2]
 Arguments:
     input_meta path to metadata input (txt | tsv | csv)
@@ -73,24 +71,22 @@ source("/home/scripts/microbial_HFE/taxaHFE_functions.R")
 # opt <- data.frame(subject_identifier=character(),
 #                   label=character(),
 #                   feature_type=character(),
-#                   super_filter=character(),
-#                   feature_limit=character(),
 #                   ncores=numeric(),
 #                   format_metaphlan=character(),
+#                   cor_level=numeric(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
-#   subject_identifier = "subject_id",
-#   label= "cluster",
+#   subject_identifier = "Sample",
+#   label= "Study.Group",
 #   feature_type = "factor",
-#   super_filter = "TRUE",
-#   feature_limit = "ALL",
-#   format_metaphlan = "TRUE",
+#   format_metaphlan = "FALSE",
+#   cor_level = 0.70,
 #   ncores = 4,
-#   input_metadata = "/home/curated_data/data/for_HFE_testing/OLIVER_AMR_2022/abx_cluster_andrew_bi.csv",
-#   input= "/home/curated_data/data/for_HFE_testing/OLIVER_AMR_2022/merged_metaphlan4.txt",
-#   output = "/home/curated_data/data/for_HFE_testing/OLIVER_AMR_2022/abx_bi_HFE.txt"
+#   input_metadata = "/home/curated_data/data/clean_data/WANG_metadata.tsv",
+#   input= "/home/curated_data/data/clean_data/WANG_species.tsv",
+#   output = "/home/curated_data/data/clean_data/WANG_correlation_tests/WANG_cor_70.txt"
 #   )
 
 ## check for inputs ============================================================
