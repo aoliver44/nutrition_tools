@@ -147,11 +147,11 @@ best_tidy_workflow <-
 final_res <- tune::last_fit(best_tidy_workflow, tr_te_split)
 
 ## show the final results
-cat("Performance of test set:")
-cat("File: ", opt$input)
-cat("Label: ", opt$label)
-cat("Model: ", opt$model)
-print(workflowsets::collect_metrics(final_res))
+cat("\n", "Performance of test set:", "\n")
+cat("File: ", opt$input, "\n")
+cat("Label: ", opt$label, "\n")
+cat("Model: ", opt$model, "\n")
+print(workflowsets::collect_metrics(final_res), "\n")
 
 ## graphs ======================================================================
 
