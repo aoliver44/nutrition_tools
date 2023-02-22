@@ -151,7 +151,7 @@ cat("\n", "Performance of test set:", "\n")
 cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 cat("Model: ", opt$model, "\n")
-print(workflowsets::collect_metrics(final_res), "\n")
+print(workflowsets::collect_metrics(final_res))
 
 ## graphs ======================================================================
 
