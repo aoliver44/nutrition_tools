@@ -157,7 +157,7 @@ if (length(fils) > 0) {
 }
 
 ## merge them all together
-full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all.x = TRUE), myfiles))
+full_merge <- suppressWarnings(Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = opt$subject_identifier, all = TRUE), myfiles))
 
 ## check sample size here ======================================================
 
@@ -189,13 +189,14 @@ full_merge_dedup <- full_merge %>%
   t() %>%
   as.data.frame() %>%
   tibble::rownames_to_column(., var = "feature") %>%
-  dplyr::mutate(., feature = gsub("\\.x", "", gsub("\\.y", "", gsub("\\.1", "", feature)))) %>% 
+  dplyr::mutate(., feature = gsub("\\.x", "", gsub("\\.y", "", gsub("\\.[1-9]", "", feature)))) %>% 
   dplyr::arrange(rowSums(is.na(.))) %>%
   dplyr::distinct(feature, .keep_all = TRUE) %>% 
   tibble::column_to_rownames(., var = "feature") %>%
   t() %>%
   as.data.frame() %>%
   readr::type_convert(.) %>%
+  tibble::rownames_to_column(., var = opt$subject_identifier) %>%
   suppressMessages() 
 
 ## write full_merge_dedup to file (contains NAs)
@@ -212,12 +213,11 @@ if (opt$label %!in% colnames(full_merge_dedup)) {
 ## sometimes people have labels with tons of NAs, which will get dropped
 
 pre_corr_label_df <- full_merge_dedup %>% 
-  tibble::rownames_to_column(., var = opt$subject_identifier) %>% 
   dplyr::select(., as.character(opt$label), as.character(opt$subject_identifier)) %>%
   tidyr::drop_na()
 
 ## drop samples that have NAs in the label...ultimately useless for ML
-full_merge_dedup <- full_merge_dedup %>% dplyr::filter(., as.character(opt$label) != "NA")
+full_merge_dedup <- full_merge_dedup %>% tibble::column_to_rownames(., var = opt$subject_identifier) %>% dplyr::filter(., as.character(opt$label) != "NA")
 
 ## pre-corr col drop ===========================================================
 
