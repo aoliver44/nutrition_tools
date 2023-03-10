@@ -19,7 +19,7 @@ setwd("/home")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --format_metaphlan=<format> --cor_level=<correlation_level> --write_old_files=<TRUE/FALSE> --ncores=<ncores>] <input_metadata> <input> <output>
+    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --input_covariates=<path> --format_metaphlan=<format> --cor_level=<correlation_level> --write_old_files=<TRUE/FALSE> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -27,6 +27,7 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
+    --input_covariates path to input covariates
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --cor_level level of initial correlation filter [default: 0.95]
     --write_old_files write individual level files and old HFE files [default: TRUE]
@@ -51,7 +52,7 @@ library(readr, quietly = T, verbose = F, warn.conflicts = F)
 library(reshape2, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 library(ggsci, quietly = T, verbose = F, warn.conflicts = F)
-library(vegan, quietly = T, verbose = F, warn.conflicts = F)
+suppressPackageStartupMessages(library(vegan, quietly = T, verbose = F, warn.conflicts = F))
 library(progress, quietly = T, verbose = F, warn.conflicts = F)
 library(stringr, quietly = T, verbose = F, warn.conflicts = F)
 
@@ -75,19 +76,23 @@ source("/home/scripts/microbial_HFE/taxaHFE_functions.R")
 #                   ncores=numeric(),
 #                   format_metaphlan=character(),
 #                   cor_level=numeric(),
+#                   write_old_files=character(),
+#                   input_covariates=character(),
 #                   input_metadata=character(),
 #                   input=character(),
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
-#   subject_identifier = "Sample",
-#   label= "Study.Group",
-#   feature_type = "factor",
-#   format_metaphlan = "FALSE",
-#   cor_level = 0.70,
+#   subject_identifier = "subject_id",
+#   label= "rel_abund_diff_new_butyrate",
+#   feature_type = "numeric",
+#   format_metaphlan = "TRUE",
+#   write_old_files = "FALSE",
+#   cor_level = 0.95,
 #   ncores = 4,
-#   input_metadata = "/home/curated_data/data/clean_data/WANG_metadata.tsv",
-#   input= "/home/curated_data/data/clean_data/WANG_species.tsv",
-#   output = "/home/curated_data/data/clean_data/WANG_correlation_tests/WANG_cor_70.txt"
+#   input_metadata = "/home/data/SCFAs_for_yirui.csv",
+#   #input_covariates = "/home/data/covariates8_for_butyrate.csv",
+#   input= "/home/data/synthetic_test_data/merged_metaphlan4.txt",
+#   output = "/home/output_old/new_butyrate_diff_subset.txt"
 #   )
 
 ## check for inputs ============================================================
@@ -117,6 +122,13 @@ original_taxa_count <- NROW(hData)
 ## metadata, should be in tab or comma separated format
 
 metadata <- read_in_metadata(input = opt$input_metadata, subject_identifier = opt$subject_identifier, label = opt$label)
+
+
+## read in covariates file =====================================================
+
+if (!is.na(opt$input_covariates)) {
+ covariates = read_in_covariates(input = opt$input_covariates, subject_identifier = opt$subject_identifier)
+}
 
 ## if not "metaphlan" format, attempt to convert ===============================
 
@@ -160,12 +172,18 @@ cat("\n\n", "##################################\n", "Starting hierarchical compe
 
 ## compete! ====================================================================
 
+if (is.na(opt$input_covariates)) {
 taxaHFE_competition(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
-
+} else {
+  taxaHFE_competition_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+}
 ## super filter ================================================================
 
+if (is.na(opt$input_covariates)) {
 super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
-
+} else {
+  super_filter_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+}
 
 ## Write Figure ================================================================
 
