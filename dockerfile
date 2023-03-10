@@ -1,5 +1,5 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:base_1.2
+## Version: aoliver44/nutrition_tools:base_1.5
 ## Date: Jan 19, 2023
 
 ## base image to start with
@@ -25,8 +25,14 @@ RUN R -e 'renv::restore()'
 COPY ./generic_read_in.R ./scripts/generic_read_in
 COPY ./generic_combine.R ./scripts/generic_combine
 COPY ./dietML.R ./scripts/dietML
-COPY models/dietML_ranger.R ./scripts/models/dietML_ranger.R
 COPY models/dietML_glmnet.R ./scripts/models/dietML_glmnet.R
+COPY models/dietML_glmnet_tidy_enet.R ./scripts/models/dietML_glmnet_tidy_enet.R
+COPY models/dietML_glmnet_tidy_ridge_lasso.R ./scripts/models/dietML_glmnet_tidy_ridge_lasso.R
+COPY models/dietML_ranger.R ./scripts/models/dietML_ranger.R
+COPY models/dietML_ranger_tidy.R ./scripts/models/dietML_ranger_tidy.R
+COPY models/ml_blast_test.R ./scripts/models/ml_blast_test.R
+COPY utilities/lime_figures.R ./scripts/utilities/lime_figures.R
+COPY utilities/shap_figures.R ./scripts/utilities/shap_figures.R
 
 ENV PATH="${PATH}:/scripts/"
 
