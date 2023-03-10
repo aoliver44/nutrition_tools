@@ -230,6 +230,6 @@ generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /ho
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/docker/simulated_output/ merged_data.csv
 
 ## step 4:
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 30 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
+dietML --subject_identifier subject_id --label label --cor_level 0.80  --model lasso --metric bal_accuracy --type classification --tune_length 30 --tune_time 2 --shap TRUE --ncores 2 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 
 ```
