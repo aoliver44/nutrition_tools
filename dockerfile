@@ -30,9 +30,10 @@ COPY models/dietML_glmnet_tidy_enet.R ./scripts/models/dietML_glmnet_tidy_enet.R
 COPY models/dietML_glmnet_tidy_ridge_lasso.R ./scripts/models/dietML_glmnet_tidy_ridge_lasso.R
 COPY models/dietML_ranger.R ./scripts/models/dietML_ranger.R
 COPY models/dietML_ranger_tidy.R ./scripts/models/dietML_ranger_tidy.R
-COPY models/ml_blast_test.R ./scripts/models/ml_blast_test.R
 COPY utilities/lime_figures.R ./scripts/utilities/lime_figures.R
 COPY utilities/shap_figures.R ./scripts/utilities/shap_figures.R
+COPY microbial_HFE/taxaHFE.R ./scripts/taxaHFE
+COPY microbial_HFE/taxaHFE_functions.R ./scripts/utilities/taxaHFE_functions.R
 
 ENV PATH="${PATH}:/scripts/"
 
