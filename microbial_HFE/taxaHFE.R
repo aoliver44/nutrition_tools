@@ -67,7 +67,7 @@ nperm = 10
 ## suppress warnings
 options(warn=-1)
 
-source("/home/scripts/microbial_HFE/taxaHFE_functions.R")
+source("/scripts/microbial_HFE/taxaHFE_functions.R")
 
 ## arg tests ===================================================================
 # opt <- data.frame(subject_identifier=character(),
