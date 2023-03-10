@@ -31,22 +31,22 @@ Now navigate to a terminal (I am not sure how this all works in Powershell. I su
 
  ```
 ## Option 1 (preferred), local installation:
-docker pull aoliver44/nutrition_tools:base_1.3
+docker pull aoliver44/nutrition_tools:base_1.6
 
 ## Option 2: Build it yourself! Still local installation.
 ## On my quad-core i7 2020 macbook pro, took 43 minutes.
 ## this command will only work if you are in the downloaded
 ## git repository nutrition_tools 
-docker build -t nutrition_tools:base_1.3 .
+docker build -t nutrition_tools:base_1.6 .
 
 ## to run
-docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.3 bash
+docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
 
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 ## pull image from internet
-singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.3
+singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.6
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home/docker nutrition_tools.sif bash
 cd /home/docker
@@ -221,7 +221,7 @@ Info about the flags:
 
 ```
 ## step 1:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.3 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
 
 ## step 2:
 generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /home/docker/simulated_output 
@@ -230,6 +230,6 @@ generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /ho
 generic_combine --subject_identifier subject_id --label label --cor_level 0.99 --cor_choose TRUE --preserve_samples FALSE /home/docker/simulated_output/ merged_data.csv
 
 ## step 4:
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 30 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
+dietML --subject_identifier subject_id --label label --cor_level 0.80  --model lasso --metric bal_accuracy --type classification --tune_length 30 --tune_time 2 --shap TRUE --ncores 2 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 
 ```
