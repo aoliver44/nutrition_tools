@@ -7,6 +7,7 @@
 ## PURPOSE: fastshap and viz for tidymodels
 
 ## load libraries
+
 library(fastshap, quietly = T, verbose = F, warn.conflicts = F)
 library(shapviz, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
@@ -23,7 +24,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(input)
+    parsnip::fit(input)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -52,7 +53,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(input)
+    parsnip::fit(input)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -79,7 +80,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(train)
+    parsnip::fit(train)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -108,7 +109,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(train)
+    parsnip::fit(train)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -137,7 +138,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(test)
+    parsnip::fit(test)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -166,7 +167,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## pull model out of workflow
   best_workflow <- best_tidy_workflow %>%
-    fit(test)
+    parsnip::fit(test)
   best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
   
   ## pull out data
@@ -188,7 +189,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   } 
   
-  if (opt$type == "regression" && opt$model == "rf") {
+  if (opt$type == "regression") {
     
     ## Prediction wrapper
     pfun <- function(object, newdata) {
@@ -197,7 +198,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     
     ## pull model out of workflow
     best_workflow <- best_tidy_workflow %>%
-      fit(train)
+      parsnip::fit(train)
     best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
     
     ## pull out data
@@ -226,7 +227,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     
     ## pull model out of workflow
     best_workflow <- best_tidy_workflow %>%
-      fit(test)
+      parsnip::fit(test)
     best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
     
     ## pull out data
@@ -255,7 +256,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     
     ## pull model out of workflow
     best_workflow <- best_tidy_workflow %>%
-      fit(input)
+      parsnip::fit(input)
     best_workflow_mod <- workflows::extract_fit_parsnip(best_workflow)
     
     ## pull out data
