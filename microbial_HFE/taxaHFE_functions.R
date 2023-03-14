@@ -538,8 +538,8 @@ write_old_hfe <- function(input = hData, output) {
     input_taxa_merge <- input_taxa_merge %>%
       dplyr::relocate(., index, L1,L2,L3,L4,L5,L6,L7)
     
-    readr::write_delim(x = input_taxa_merge[1:8], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
-    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,9:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge[1:8], file = paste0(tools::file_path_sans_ext(output), "_old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,9:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "_old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
     
     metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
     
@@ -547,7 +547,7 @@ write_old_hfe <- function(input = hData, output) {
       pull(., feature_of_interest)
     
     metadata_list <- as.data.frame(c("label", metadata_list))
-    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "_old_hfe_label.txt"), col_names = FALSE, delim = "\t")
     
     
   } else {
@@ -566,8 +566,8 @@ write_old_hfe <- function(input = hData, output) {
     input_taxa_merge <- input_taxa_merge %>%
       dplyr::relocate(., index, L1,L2,L3,L4,L5,L6)
     
-    readr::write_delim(x = input_taxa_merge[1:7], file = paste0(tools::file_path_sans_ext(output), "old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
-    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,8:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge[1:7], file = paste0(tools::file_path_sans_ext(output), "_old_hfe_taxa.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = input_taxa_merge %>% dplyr::select(., 1,8:dplyr::last_col()), file = paste0(tools::file_path_sans_ext(output), "_old_hfe_otu.txt"), col_names = FALSE, delim = "\t")
     
     metadata_order <- colnames(input_taxa_merge[,9:NCOL(input_taxa_merge)])
     
@@ -575,7 +575,7 @@ write_old_hfe <- function(input = hData, output) {
       pull(., feature_of_interest)
     
     metadata_list <- as.data.frame(c("label", metadata_list))
-    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "old_hfe_label.txt"), col_names = FALSE, delim = "\t")
+    readr::write_delim(x = as.data.frame(t(metadata_list)), file = paste0(tools::file_path_sans_ext(output), "_old_hfe_label.txt"), col_names = FALSE, delim = "\t")
     
   }
 }
