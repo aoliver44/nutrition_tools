@@ -198,25 +198,14 @@ if (opt$model %in% c("ranger", "rf", "randomforest")) {
 
 ## lasso/ridge models
 if (opt$model %in% c("lasso", "ridge")) {
-  if (opt$type == "classification") {
     source("/scripts/models/dietML_glmnet_tidy_ridge_lasso.R")
-  } else {
-    cat("\n#########################\n")
-    cat("ERROR: lasso/ridge/enet can only be used for classification", "\n")
-    cat("#########################\n\n")
-  }
-}
+} 
+
 
 ## elastic net models
 if (opt$model %in% c("enet", "elasticnet")) {
-  if (opt$type == "classification") {
     source("/scripts/models/dietML_glmnet_tidy_enet.R")
-  } else {
-    cat("\n#########################\n")
-    cat("ERROR: lasso/ridge/enet can only be used for classification", "\n")
-    cat("#########################\n\n")
-  }
-}
+} 
 
 ## VIP Plots ===================================================================
 ## For all:
