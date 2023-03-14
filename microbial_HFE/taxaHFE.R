@@ -27,7 +27,7 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --input_covariates path to input covariates
+    --input_covariates path to input covariates [default: NA]
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --cor_level level of initial correlation filter [default: 0.95]
     --write_old_files write individual level files and old HFE files [default: TRUE]
@@ -83,16 +83,16 @@ source("/scripts/microbial_HFE/taxaHFE_functions.R")
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
 #   subject_identifier = "subject_id",
-#   label= "rel_abund_diff_new_butyrate",
-#   feature_type = "numeric",
+#   label= "discrete",
+#   feature_type = "factor",
 #   format_metaphlan = "TRUE",
-#   write_old_files = "FALSE",
+#   write_old_files = "TRUE",
 #   cor_level = 0.95,
 #   ncores = 4,
-#   input_metadata = "/home/data/SCFAs_for_yirui.csv",
+#   input_metadata = "/home/output_old/fecal_ph/fecal_ph_kmeans3.csv",
 #   #input_covariates = "/home/data/covariates8_for_butyrate.csv",
 #   input= "/home/data/synthetic_test_data/merged_metaphlan4.txt",
-#   output = "/home/output_old/new_butyrate_diff_subset.txt"
+#   output = "/home/output_old/fecal_ph/fecal_ph_discrete.txt"
 #   )
 
 ## check for inputs ============================================================
