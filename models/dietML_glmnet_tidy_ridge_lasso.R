@@ -102,7 +102,7 @@ if (opt$type == "classification") {
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
-      control = tune::control_bayes(no_improve = 10, 
+      control = tune::control_bayes(no_improve = 20, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
     )
@@ -119,7 +119,7 @@ if (opt$type == "classification") {
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq),
-      control = tune::control_bayes(no_improve = 10, 
+      control = tune::control_bayes(no_improve = 20, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
     )
