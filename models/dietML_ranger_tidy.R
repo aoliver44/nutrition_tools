@@ -109,7 +109,7 @@ if (opt$type == "classification") {
       # To use non-default parameter ranges
       param_info = dietML_param_set,
       # Generate five at semi-random to start
-      initial = 5,
+      initial = 20,
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
@@ -127,7 +127,7 @@ if (opt$type == "classification") {
       # To use non-default parameter ranges
       param_info = dietML_param_set,
       # Generate five at semi-random to start
-      initial = 5,
+      initial = 20,
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq),
