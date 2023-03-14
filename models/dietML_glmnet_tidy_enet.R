@@ -52,10 +52,17 @@ dietML_recipe <-
 ## ML engine ===================================================================
 
 ## specify ML model and engine 
-initial_mod <- parsnip::logistic_reg(mode = "classification", 
-                                penalty = tune(),
-                                mixture = tune()) %>%
-  parsnip::set_engine("glmnet")
+if (opt$type == "classification") {
+  initial_mod <- parsnip::logistic_reg(mode = "classification", 
+                                       penalty = tune(),
+                                       mixture = tune()) %>%
+    parsnip::set_engine("glmnet")
+} else {
+  initial_mod <- parsnip::linear_reg(mode = "regression", 
+                                       penalty = tune(),
+                                       mixture = tune()) %>%
+    parsnip::set_engine("glmnet")
+}
 
 initial_mod %>% parsnip::translate()
 
@@ -133,10 +140,17 @@ best_mod <-
   tune::select_best(metric = opt$metric)
 
 ## create the last model based on best parameters
-last_best_mod <- 
-  parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
-  parsnip::set_engine("glmnet") %>% 
-  parsnip::set_mode(opt$type)
+if (opt$type == "classification") {
+  last_best_mod <- 
+    parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
+    parsnip::set_engine("glmnet") %>% 
+    parsnip::set_mode(opt$type)
+} else {
+  last_best_mod <- 
+    parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
+    parsnip::set_engine("glmnet") %>% 
+    parsnip::set_mode(opt$type)
+}
 
 ## update workflow with best model
 best_tidy_workflow <- 
