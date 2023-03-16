@@ -109,11 +109,11 @@ if (opt$type == "classification") {
       # To use non-default parameter ranges
       param_info = dietML_param_set,
       # Generate five at semi-random to start
-      initial = 20,
+      initial = 5,
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
-      control = tune::control_bayes(no_improve = 20, 
+      control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
     )
@@ -127,11 +127,11 @@ if (opt$type == "classification") {
       # To use non-default parameter ranges
       param_info = dietML_param_set,
       # Generate five at semi-random to start
-      initial = 20,
+      initial = 5,
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq),
-      control = tune::control_bayes(no_improve = 20, 
+      control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
     )
