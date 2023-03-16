@@ -54,11 +54,11 @@ dietML_recipe <-
 ## specify ML model and engine 
 initial_mod <- parsnip::rand_forest(mode = opt$type, 
                                mtry = tune(),
-                               trees = tune(),
+                               #trees = tune(),
                                min_n = tune()) %>%
   parsnip::set_engine("ranger", 
                       num.threads = as.numeric(opt$ncores), 
-                      importance = "permutation")
+                      importance = "none")
 
 initial_mod %>% parsnip::translate()
 
@@ -155,7 +155,7 @@ best_mod <-
 ## create the last model based on best parameters
 last_best_mod <- 
   parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n, trees = best_mod$trees) %>% 
-  parsnip::set_engine("ranger", num.threads = as.numeric(opt$ncores), importance = "permutation") %>% 
+  parsnip::set_engine("ranger", num.threads = as.numeric(opt$ncores), importance = "none") %>% 
   parsnip::set_mode(opt$type)
 
 ## update workflow with best model
