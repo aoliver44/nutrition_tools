@@ -154,7 +154,7 @@ best_mod <-
 
 ## create the last model based on best parameters
 last_best_mod <- 
-  parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n, trees = best_mod$trees) %>% 
+  parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n) %>% 
   parsnip::set_engine("ranger", num.threads = as.numeric(opt$ncores), importance = "none") %>% 
   parsnip::set_mode(opt$type)
 
