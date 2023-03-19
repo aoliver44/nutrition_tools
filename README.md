@@ -32,7 +32,9 @@ Now navigate to a terminal (I am not sure how this all works in Powershell. I su
  ```
 ## Option 1 (preferred), local installation:
 docker pull aoliver44/nutrition_tools:base_1.6
+```
 
+```
 ## Option 2: Build it yourself! Still local installation.
 ## On my quad-core i7 2020 macbook pro, took 43 minutes.
 ## this command will only work if you are in the downloaded
@@ -41,7 +43,9 @@ docker build -t nutrition_tools:base_1.6 .
 
 ## to run
 docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
+```
 
+```
 ## Option 3: You are using singularity (assuming its in your path.
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
@@ -50,10 +54,12 @@ singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.6
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home/docker nutrition_tools.sif bash
 cd /home/docker
+```
 
+```
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.3 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer -- in this case it was downloaded to a folder with the path ~/Downloads --will start the docker container and provide a bash terminal to the user. 
@@ -163,26 +169,35 @@ This script will take the output of ```generic_read_in``` and combine all the fi
 ```
 Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --type=<type> --seed=<seed> --tune_length=<tune_length> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --label=<label> name of column that you are prediction [default: label]
-    --cor_level level to group features together [default: 0.80]
-    --train_split what percentage of samples should be used in training [default: 0.70]
-    --model what model would you like run (options: rf,lasso,ridge,enet) [defualt: rf]
-    --type for models that do both regression and classification [default: classification]
+    --subject_identifier name of columns with subject IDs [default: subject_id]
+    --label name of column that you are prediction [default: label]
+    --cor_level level to group features together [default: 0.95]
+    --train_split what percentage of samples should be used in training 
+            [default: 0.70]
+    --model what model would you like run 
+            (options: rf,lasso,ridge,enet) [default: rf]
+    --metric what metric would you like to optimize in training 
+            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
+             f_meas) [default: bal_accuracy]
+    --type for models that do both regression and classification 
+            [default: classification]
     --seed set random seed [default: 42]
-    --tune_length number of hyperparameter combinations to sample [default: 30]
+    --tune_length number of hyperparameter combinations to sample [default: 80]
+    --tune_time length of time tune_bayes runs [default: 10]
+    --shap attempt to calcualte shap values? [default: FALSE]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
     input  FULL path to input file for ML (output from generic_combine.R)
-    outdir FULL path where results should be written 
+    outdir FULL path where results should be written
 
 ########### example: ###########
-dietML --label label --cor_level 0.80 --train_split 0.7 --model lasso --type classification --ncores 2 --tune_length 10 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
+dietML --label label --cor_level 0.95 --train_split 0.7 --model lasso --type classification --metric bal_accuracy --ncores 2 --tune_length 10 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
@@ -206,10 +221,11 @@ Info about the flags:
 - Random forest: a ensemble model which uses a "forest" of decision trees to classify samples.
   - Hyperparameter search space: a (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry to 27 (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesn't error out. This search space is the grid for training the caret model.
 
+--metric: metric that should be optimized during hyperparameter tuning. Currently, dietML supports balanced accuracy (bal_accuracy), kappa (kap), ROC AUC, F-measure, and accuracy for classification. Most of these metrics will auto-detect if the classification is a multi-class problem and weight accordingly (e.g. macro-averaged for balanced accuracy). For regression, metrics include mean absolute error (mae), R-squared (rsq), root mean squared error (rsme). You can read more about these metrics in the Yardstick R package [documentation] (https://yardstick.tidymodels.org/articles/metric-types.html#metrics). 
 
 --type: whether the user is trying to accomplish classification (your label has discrete levels) or regression (your label is continous).
 
---seed: there is a fair amount of stochasticity inside these models already (for instance, glmnet::cv.glmnet() "hot-starts" at a different place each time, resulting in slightly different lambdas assessed). The --seed flag lets you adjust the overall seed of the program. If the models are re-run many times, this is a good flag to interate over.
+--seed: there is a fair amount of stochasticity inside these models already (for instance, glmnet::cv.glmnet() "hot-starts" at a different place each time, resulting in slightly different lambdas assessed). The --seed flag lets you adjust the overall seed of the program. If the models are re-run many times, this is a good flag to interate over. In my own testing, for smaller datasets its a good idea to iterate over 5-10 seeds to understand variability in results. This variability is likely due to different test-train splits.
 
 --tune_length: The hyperparameter grid this program auto-generates can be VERY large. This would mean the program runs for a very long time. Often times it doesnt make a large difference in the model performance by testing ALL the hyperparameter combinations. By setting this to a resonable number of combinations, the model will train faster! What is reasonable? That is hard to answer. In LASSO, the models train pretty fast...so testing 500 hyperparameter combinations does not take terribly long to do on a local machine. Alternatively, a random forest takes longer to train, so 500 hyperparameter combinations would take a very long time. If the user specifies a value larger than the size of the auto-generated grid, the search will default to the entire grid (an exhuastive grid search). 
 
