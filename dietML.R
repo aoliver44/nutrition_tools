@@ -23,7 +23,7 @@ Usage:
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
-    --subject_identifier ame of columns with subject IDs [default: subject_id]
+    --subject_identifier name of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
     --cor_level level to group features together [default: 0.95]
     --train_split what percentage of samples should be used in training 
@@ -36,7 +36,7 @@ Options:
     --type for models that do both regression and classification 
             [default: classification]
     --seed set random seed [default: 42]
-    --tune_length number of hyperparameter combinations to sample [default: 30]
+    --tune_length number of hyperparameter combinations to sample [default: 80]
     --tune_time length of time tune_bayes runs [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
     --ncores number of processesing cores for parallel computing [default: 2]
