@@ -12,6 +12,10 @@
 
 --------------------------------------------------
 
+![general_overview](general_outline.png)
+
+--------------------------------------------------
+
 ### **1. Clone the environment from Github**
 
 ```
