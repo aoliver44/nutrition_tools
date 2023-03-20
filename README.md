@@ -168,7 +168,7 @@ This script will take the output of ```generic_read_in``` and combine all the fi
 
 ------------------------------------------
 
-### **5. Run diet_ML**
+### **5. Run dietML**
 
 ```
 Run regression or classification ML models on a dataframe
@@ -225,7 +225,7 @@ Info about the flags:
 - Random forest: a ensemble model which uses a "forest" of decision trees to classify samples.
   - Hyperparameter search space: a (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry to 27 (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesn't error out. This search space is the grid for training the caret model.
 
---metric: metric that should be optimized during hyperparameter tuning. Currently, dietML supports balanced accuracy (bal_accuracy), kappa (kap), ROC AUC, F-measure, and accuracy for classification. Most of these metrics will auto-detect if the classification is a multi-class problem and weight accordingly (e.g. macro-averaged for balanced accuracy). For regression, metrics include mean absolute error (mae), R-squared (rsq), root mean squared error (rsme). You can read more about these metrics in the Yardstick R package [documentation] (https://yardstick.tidymodels.org/articles/metric-types.html#metrics). 
+--metric: metric that should be optimized during hyperparameter tuning. Currently, dietML supports balanced accuracy (bal_accuracy), kappa (kap), ROC AUC, F-measure, and accuracy for classification. Most of these metrics will auto-detect if the classification is a multi-class problem and weight accordingly (e.g. macro-averaged for balanced accuracy). For regression, metrics include mean absolute error (mae), R-squared (rsq), root mean squared error (rsme). You can read more about these metrics in the Yardstick R package [documentation](https://yardstick.tidymodels.org/articles/metric-types.html#metrics). 
 
 --type: whether the user is trying to accomplish classification (your label has discrete levels) or regression (your label is continous).
 
