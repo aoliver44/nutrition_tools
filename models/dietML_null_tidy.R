@@ -20,6 +20,9 @@ options(warn=-1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
+## set seed
+set.seed(as.numeric(opt$seed))
+
 ## load libraries ==============================================================
 
 library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
@@ -29,13 +32,13 @@ suppressPackageStartupMessages(library(tidymodels, quietly = T, verbose = F, war
 ## create results df ===========================================================
 
 if (opt$type == "classification") {
-  results_df <- data.frame(seed = as.numeric(), bal_accuracy = as.numeric(), stringsAsFactors = F)
+  results_df <- data.frame(seed = as.numeric(), bal_accuracy = as.numeric(), f_meas = as.numeric(), stringsAsFactors = F)
 } else if (opt$type == "regression") {
-  results_df <- data.frame(seed = as.numeric(), mae = as.numeric(), stringsAsFactors = F)
+  results_df <- data.frame(seed = as.numeric(), mae = as.numeric(), rmse = as.numeric(), ccc = as.numeric(), stringsAsFactors = F)
 }
 
 ## interate over null model ====================================================
-seeds <- sample(x = 1:999, size = 10, replace = F)
+seeds <- sample(x = 1:999, size = 20, replace = F)
 
 for (seed in seeds) {
   
@@ -86,18 +89,30 @@ for (seed in seeds) {
   df_loop_results$estimate <- final_res$fit$fit$fit$value
   
   if (opt$type == "classification") {
+    df_loop_results$estimate <- factor(x = df_loop_results$estimate, levels = levels(as.factor(df_loop_results$truth)))
+    results_df <- results_df %>% 
+      tibble::add_row(., bal_accuracy = 
+                        yardstick::bal_accuracy(truth = as.factor(df_loop_results$truth), 
+                                       estimate = as.factor(df_loop_results$estimate), 
+                                       data = df_loop_results)$.estimate, 
+                      roc_auc = 
+                        yardstick::f_meas(truth = as.factor(df_loop_results$truth), 
+                                                estimate = as.factor(df_loop_results$estimate), 
+                                                data = df_loop_results)$.estimate,
+                      seed = seed)
+  } else if (opt$type == "regression") {
     results_df <- results_df %>% 
       tibble::add_row(., mae = 
                         yardstick::mae(truth = df_loop_results$truth, 
                                        estimate = df_loop_results$estimate, 
                                        data = df_loop_results)$.estimate, 
-                      seed = seed)
-  } else if (opt$type == "regression") {
-    results_df <- results_df %>% 
-      tibble::add_row(., bal_accuracy = 
-                        yardstick::bal_accuracy(truth = df_loop_results$truth, 
+                      rmse = 
+                        yardstick::rmse(truth = df_loop_results$truth, 
                                        estimate = df_loop_results$estimate, 
-                                       data = df_loop_results)$.estimate, 
+                                       data = df_loop_results)$.estimate,
+                      ccc = yardstick::ccc(truth = df_loop_results$truth, 
+                                            estimate = df_loop_results$estimate, 
+                                            data = df_loop_results)$.estimate,
                       seed = seed)
     
   }
@@ -105,13 +120,19 @@ for (seed in seeds) {
   
 }
 
+## write df ====================================================================
 
-## graphs ======================================================================
+## write table of results to file
+
+write.csv(x = results_df, file = "dummy_model_results.csv", row.names = F)
+
+## show the final results
+cat("\n", "Performance of NULL model:", "\n")
+cat("File: ", opt$input, "\n")
+cat("Label: ", opt$label, "\n")
+print(results_df %>% dplyr::select(-seed) %>% dplyr::summarise_all(., ~mean(.x)))
 
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
 unregister_dopar()
 
-## write table of results to file
-
-write.csv(x = results_df, file = "dummy_model_results.csv", row.names = F)
