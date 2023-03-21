@@ -37,7 +37,7 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-set.seed(1697)
+set.seed(as.numeric(opt$seed))
 folds <- rsample::vfold_cv(train, v = 10)
 
 ## recipe ======================================================================
@@ -76,8 +76,8 @@ dietML_wflow <-
 unregister_dopar()
 
 ## register parallel cluster
-# cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-# doParallel::registerDoParallel(cl)
+cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+doParallel::registerDoParallel(cl)
 
 ## hyperparameters =============================================================
 
@@ -111,6 +111,7 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
+      parallel_over = "resamples",
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
       control = tune::control_bayes(no_improve = 10, 
@@ -129,8 +130,9 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
+      parallel_over = "resamples",
       # How to measure performance?
-      metrics = yardstick::metric_set(mae, rmse, rsq),
+      metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
       control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
@@ -140,7 +142,7 @@ if (opt$type == "classification") {
 search_res %>% tune::show_best(opt$metric)
 
 ## stop parallel jobs
-# parallel::stopCluster(cl)
+parallel::stopCluster(cl)
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
 unregister_dopar()

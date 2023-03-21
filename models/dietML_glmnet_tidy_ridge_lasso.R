@@ -44,7 +44,7 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-set.seed(1697)
+set.seed(as.numeric(opt$seed))
 folds <- rsample::vfold_cv(train, v = 10)
 
 ## recipe ======================================================================
@@ -107,6 +107,7 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
+      parallel_over = "resamples",
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
       control = tune::control_bayes(no_improve = 10, 
@@ -124,8 +125,9 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
+      parallel_over = "resamples",
       # How to measure performance?
-      metrics = yardstick::metric_set(mae, rmse, rsq),
+      metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
       control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
