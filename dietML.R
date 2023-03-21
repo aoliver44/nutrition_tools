@@ -129,16 +129,15 @@ if (dir.exists(opt$outdir) == TRUE) {
   setwd(opt$outdir)
 }
 
-cat("Checking for input file...", "\n\n")
+cat("\n#########################\n")
+cat("Checking for input file...", "\n")
+cat("###########################\n\n")
 
 ## check for input and break if not found
 if (file.exists(opt$input) == TRUE) { 
-  cat("\n#########################\n")
   cat(paste0(opt$input), " is being used as input.", "\n")
-  cat("#########################\n\n")
-  
 } else {
-  stop("Input file not found.")
+  stop("Input file not found.\n")
 }
 
 ## read in input ===============================================================
@@ -162,11 +161,13 @@ if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
 ## make colnames appropriate for ML (ranger is picky)
 colnames(input) <- make.names(colnames(input))
 
+cat("\n#########################\n")
+cat("Checking for label...", "\n")
+cat("#########################\n\n")
+
 ## check for label
 if (opt$label %in% colnames(input) == TRUE) {
-  cat("\n#########################\n")
   cat(paste0(opt$label), " label is being used for ", paste0(opt$type), ".\n")
-  cat("#########################\n\n")
   
   ## rename specified label to "label"
   input <- input %>% dplyr::rename(., "label" = opt$label)
@@ -182,6 +183,10 @@ if (opt$type == "classification") {
 
 ## run null (dummy) model ======================================================
 
+cat("\n#########################\n")
+cat("Running null model...", "\n")
+cat("#########################\n\n")
+
 source("/scripts/models/dietML_null_tidy.R")
 
 ## run chosen model ============================================================
@@ -194,6 +199,11 @@ if (opt$model %!in% models) {
   print(as.data.frame(models))
   cat("#########################\n\n")
 }
+
+cat("\n#########################\n")
+cat("Running model...", "\n")
+cat("#########################\n\n")
+cat(paste0(opt$model), " is being used for ", paste0(opt$type), ".\n")
 
 ## random forest
 if (opt$model %in% c("ranger", "rf", "randomforest")) {
@@ -225,6 +235,11 @@ if (opt$model %in% c("enet", "elasticnet")) {
 ## SHAP explanation ============================================================
 
 if (opt$shap == TRUE) {
+  
+  cat("\n#######################################\n")
+  cat("Attempting to calculate SHAP values...", "\n")
+  cat("#########################################\n\n")
+  
   source("/scripts/utilities/shap_figures.R")
 }
 
