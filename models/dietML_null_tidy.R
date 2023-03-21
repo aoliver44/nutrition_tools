@@ -89,7 +89,7 @@ for (seed in seeds) {
                         yardstick::bal_accuracy(truth = as.factor(df_loop_results$truth), 
                                        estimate = as.factor(df_loop_results$estimate), 
                                        data = df_loop_results)$.estimate, 
-                      roc_auc = 
+                      f_meas = 
                         yardstick::f_meas(truth = as.factor(df_loop_results$truth), 
                                                 estimate = as.factor(df_loop_results$estimate), 
                                                 data = df_loop_results)$.estimate,
