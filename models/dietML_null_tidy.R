@@ -8,12 +8,6 @@
 
 ## helper functions and vars ===================================================
 
-## unregister hung-up parallel jobs
-unregister_dopar <- function() {
-  env <- foreach:::.foreachGlobals
-  rm(list=ls(name=env), pos=env)
-}
-
 ## suppress warnings
 options(warn=-1)
 
@@ -131,8 +125,4 @@ cat("\n", "Performance of NULL model:", "\n")
 cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 print(results_df %>% dplyr::select(-seed) %>% dplyr::summarise_all(., ~mean(.x)))
-
-## remove any doParallel job setups that may have
-## unneccessarily hung around
-unregister_dopar()
 
