@@ -32,7 +32,7 @@ Options:
             (options: rf,lasso,ridge,enet) [default: rf]
     --metric what metric would you like to optimize in training 
             (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
-             f_meas) [default: bal_accuracy]
+             f_meas, ccc) [default: bal_accuracy]
     --type for models that do both regression and classification 
             [default: classification]
     --seed set random seed [default: 42]
@@ -110,7 +110,7 @@ options(warn=-1)
 
 ## set seed  ===================================================================
 
-set.seed(opt$seed)
+set.seed(as.numeric(opt$seed))
 
 ## check for inputs ============================================================
 
@@ -179,6 +179,10 @@ if (opt$type == "classification") {
   if(length(levels(as.factor(input$label))) > 9)
   stop("You are trying to predict 10 or more classes. That is a bit much. Did you mean to do regression?")
 }
+
+## run null (dummy) model ======================================================
+
+source("/scripts/models/dietML_null_tidy.R")
 
 ## run chosen model ============================================================
 
