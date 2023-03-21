@@ -59,7 +59,7 @@ initial_mod <- parsnip::rand_forest(mode = opt$type,
                                #trees = tune(),
                                min_n = tune()) %>%
   parsnip::set_engine("ranger", 
-                      num.threads = opt$ncores,
+                      num.threads = as.numeric(opt$ncores),
                       importance = "none")
 
 initial_mod %>% parsnip::translate()
@@ -116,7 +116,7 @@ if (opt$type == "classification") {
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap, f_meas),
       control = tune::control_bayes(no_improve = 10, 
-                                    verbose = TRUE,
+                                    verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
     )
   
@@ -177,8 +177,12 @@ if (opt$type == "classification") {
                                                               ccc))
 }
 
+cat("\n################\n")
+cat("RESULTS:", "\n")
+cat("##################\n\n")
+
 ## show the final results
-cat("\n", "Performance of test set:", "\n")
+cat("Performance of test set:", "\n")
 cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 cat("Model: ", opt$model, "\n")
