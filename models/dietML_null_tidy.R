@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
-## SCRIPT: dietML_ranger_tidy.R ===================================================
+## SCRIPT: dietML_null_tidy.R ===================================================
 ## AUTHOR: Andrew Oliver
-## DATE:   Jan, 30 2023
+## DATE:   Mar, 20 2023
 ##
 ## PURPOSE: NULL model for tidymodels
 
