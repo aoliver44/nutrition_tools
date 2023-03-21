@@ -92,7 +92,7 @@ options(warn=-1)
 #                   input=character(),
 #                   outdir=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = "subject_id",
-#                                cor_level = 0.80,
+#                                cor_level = 0.90,
 #                                train_split= 0.7,
 #                                model = "rf",
 #                                metric = "bal_accuracy",
@@ -100,11 +100,11 @@ options(warn=-1)
 #                                ncores = 4,
 #                                tune_length = 50,
 #                                tune_time = 10,
-#                                shap = FALSE
+#                                shap = "FALSE",
 #                                label = c("feature_of_interest"),
 #                                type= c("classification"),
-#                                input = c("/home/data/pipeline_tests/microbiome_data/merged_metaphlan4.txt"),
-#                                outdir="/home/simulated_output/ml_results/"
+#                                input = c("/home/curated_data/data/clean_data/OLIVER_conambo/OLIVER_conambo_level_5.csv"),
+#                                outdir= c("/home/output_old//")
 #                                )
 
 

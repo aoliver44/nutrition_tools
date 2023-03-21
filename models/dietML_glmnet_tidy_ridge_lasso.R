@@ -22,10 +22,13 @@ options(warn=-1)
 `%!in%` <- Negate(`%in%`)
 
 ## unregister hung-up parallel jobs
-unregister_dopar <- function() {
-  env <- foreach:::.foreachGlobals
-  rm(list=ls(name=env), pos=env)
-}
+# unregister_dopar <- function() {
+#   env <- foreach:::.foreachGlobals
+#   rm(list=ls(name=env), pos=env)
+# }
+
+## set seed
+set.seed(as.numeric(opt$seed))
 
 ## load libraries ==============================================================
 
@@ -44,7 +47,6 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-set.seed(as.numeric(opt$seed))
 folds <- rsample::vfold_cv(train, v = 10)
 
 ## recipe ======================================================================
@@ -84,11 +86,11 @@ dietML_wflow <-
 ## set up parallel jobs ========================================================
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
-unregister_dopar()
+# unregister_dopar()
 
 ## register parallel cluster
-cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-doParallel::registerDoParallel(cl)
+# cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+# doParallel::registerDoParallel(cl)
 
 ## hyperparameters =============================================================
 
@@ -107,9 +109,8 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
-      parallel_over = "resamples",
       # How to measure performance?
-      metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
+      metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap, f_meas),
       control = tune::control_bayes(no_improve = 10, 
                                     verbose = FALSE,
                                     time_limit = as.numeric(opt$tune_time))
@@ -125,7 +126,6 @@ if (opt$type == "classification") {
       # Generate five at semi-random to start
       initial = 5,
       iter = opt$tune_length,
-      parallel_over = "resamples",
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
       control = tune::control_bayes(no_improve = 10, 
@@ -137,10 +137,10 @@ if (opt$type == "classification") {
 search_res %>% tune::show_best(opt$metric)
 
 ## stop parallel jobs
-parallel::stopCluster(cl)
+# parallel::stopCluster(cl)
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
-unregister_dopar()
+# unregister_dopar()
 
 
 ## fit best model ==============================================================
@@ -169,7 +169,16 @@ best_tidy_workflow <-
   workflows::update_model(last_best_mod)
 
 ## fit to test data
-final_res <- tune::last_fit(best_tidy_workflow, tr_te_split)
+if (opt$type == "classification") {
+  final_res <- tune::last_fit(best_tidy_workflow, tr_te_split, 
+                              metrics = yardstick::metric_set(bal_accuracy, 
+                                                              roc_auc, accuracy, 
+                                                              kap, f_meas))
+} else if (opt$type == "regression") {
+  final_res <- tune::last_fit(best_tidy_workflow, tr_te_split, 
+                              metrics = yardstick::metric_set(mae, rmse, rsq, 
+                                                              ccc))
+}
 
 ## show the final results
 cat("\n", "Performance of test set:", "\n")
