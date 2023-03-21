@@ -39,7 +39,11 @@ seeds <- sample(x = 1:999, size = 10, replace = F)
 
 for (seed in seeds) {
   
-  df_loop_results <- data.frame()
+  if (opt$type == "classification") {
+    df_loop_results <- data.frame(truth = as.character(), estimate = as.character(), stringsAsFactors = F)
+  } else if (opt$type == "regression") {
+    df_loop_results <- data.frame(truth = as.numeric(), estimate = as.numeric(), stringsAsFactors = F)
+  }
   
   ## set initial test-train split
   tr_te_split <- rsample::initial_split(input, prop = as.numeric(opt$train_split), strata = label)
