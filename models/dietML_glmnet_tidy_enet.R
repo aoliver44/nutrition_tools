@@ -171,8 +171,12 @@ if (opt$type == "classification") {
                                                               ccc))
 }
 
+cat("\n################\n")
+cat("RESULTS:", "\n")
+cat("##################\n\n")
+
 ## show the final results
-cat("\n", "Performance of test set:", "\n")
+cat("Performance of test set:", "\n")
 cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 cat("Model: ", opt$model, "\n")

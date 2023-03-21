@@ -121,7 +121,7 @@ for (seed in seeds) {
 write.csv(x = results_df, file = "dummy_model_results.csv", row.names = F)
 
 ## show the final results
-cat("\n", "Performance of NULL model:", "\n")
+cat("Performance of NULL model:", "\n")
 cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 print(results_df %>% dplyr::select(-seed) %>% dplyr::summarise_all(., ~mean(.x)))
