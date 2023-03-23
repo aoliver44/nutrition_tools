@@ -426,6 +426,46 @@ for (file in fils) {
   
 }
 
+## check if duplicated columns across datasets =================================
+
+cat("\n\nChanging names of duplicated columns across different datasets...", "\n\n")
+
+na_count_features <- na_count_features %>% 
+  dplyr::mutate(across(where(is.character), stringr::str_trim))
+
+na_count_features$duplicated_feature <- duplicated(na_count_features$feature) | duplicated(na_count_features$feature, fromLast=TRUE)
+
+duplicated_features <- na_count_features %>%
+  dplyr::filter(., duplicated_feature == "TRUE") %>% 
+  dplyr::filter(., duplicated_feature == "TRUE") %>%
+  dplyr::arrange(dplyr::desc(have_data)) %>%
+  dplyr::distinct(data_feature_hash, .keep_all = TRUE)
+
+if (NROW(duplicated_features) > 0) {
+  duplicated_features$new_feature_name <- janitor::make_clean_names(duplicated_features$feature)
+  
+  clean_fils <- list.files(paste0(outdir_name, "clean_files/"), full.names = TRUE, recursive = TRUE)
+  
+  for (fil in unique(duplicated_features$dataset)) {
+    name_changing <- readr::read_csv(file = paste0(outdir_name, "/clean_files/", fil, ".csv")) %>% suppressMessages() 
+    
+    tmp_name_subset <- duplicated_features %>%
+      dplyr::filter(., dataset == fil)
+    
+    for (index in c(1:length(tmp_name_subset$feature))) {
+      
+      ## change the names!
+      names(name_changing)[names(name_changing) == tmp_name_subset$feature[index]] <- tmp_name_subset$new_feature_name[index]
+      
+    }
+    
+    ## write the file back
+    readr::write_delim(name_changing, file = paste0(outdir_name, "/clean_files/", fil,".csv"), delim = ",") %>%
+      suppressMessages() 
+    
+  }
+}
+
 ## write figures and files  ====================================================
 
 ## print na figure and data to file

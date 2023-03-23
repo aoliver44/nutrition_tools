@@ -60,14 +60,14 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-# opt <- data.frame(subject_identifier=character(),
-#                                 label=character(),
-#                                 cor_level=numeric(),
-#                                 cor_choose=logical(),
-#                                 preserve_samples=logical(),
-#                                 input=character(),
-#                                 output_file=character())
-# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("ratio_quartile"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/simulated_output/"), output_file="merged_data.csv")
+opt <- data.frame(subject_identifier=character(),
+                                label=character(),
+                                cor_level=numeric(),
+                                cor_choose=logical(),
+                                preserve_samples=logical(),
+                                input=character(),
+                                output_file=character())
+opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("age"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/nutrition_tools/ultra_merge/output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -115,7 +115,7 @@ if (file.exists("summary_dataset_problems.csv")) {
   }
   
   ## run generic_read_in.R on this problem subset and see if any problems occur
-  system(paste0("generic_read_in --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
+  system(paste0("/scripts/generic_read_in --subject_identifier ",opt$subject_identifier," ",opt$input, "problem_check ", opt$input, "problem_check/output/"))
   
   ## check and see if summary_dataset_problems got written  
     if (file.exists("problem_check/output/summary_dataset_problems.csv")) {
@@ -183,21 +183,110 @@ if (NROW(full_merge) < 200) {
   
 }
 
-## de-duplicate based on NA count ==============================================
-full_merge_dedup <- full_merge %>% 
-  tibble::column_to_rownames(., var = opt$subject_identifier) %>%
-  t() %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column(., var = "feature") %>%
-  dplyr::mutate(., feature = gsub("\\.x", "", gsub("\\.y", "", gsub("\\.[1-9]", "", feature)))) %>% 
-  dplyr::arrange(rowSums(is.na(.))) %>%
-  dplyr::distinct(feature, .keep_all = TRUE) %>% 
-  tibble::column_to_rownames(., var = "feature") %>%
-  t() %>%
-  as.data.frame() %>%
-  readr::type_convert(.) %>%
-  tibble::rownames_to_column(., var = opt$subject_identifier) %>%
-  suppressMessages() 
+## remove duplicated columns across datasets BY CORRELATION ====================
+
+## NUMERIC
+
+## only select the numeric columns
+full_merge_numeric <- full_merge %>% dplyr::select((where(is.numeric)), -dplyr::any_of(c(opt$subject_identifier, opt$label)))
+
+## run pairwise correlations and keep anything with abs(cor) > 0.999
+tmp_cor <- cor(full_merge_numeric, use = "pairwise.complete.obs")
+tmp_cor <- reshape2::melt(as.matrix(tmp_cor))
+tmp_cor <- tmp_cor %>% filter(., abs(value) > 0.999)
+
+if (NROW(tmp_cor) > 0) {
+  potential_duplicated <- unique(tmp_cor$Var1)
+  
+  ## merge with NA data
+  na_count <- full_merge %>% 
+    dplyr::summarise_all(~ sum(is.na(.))) %>% t() %>% 
+    as.data.frame() %>% tibble::rownames_to_column(., var = "feature") %>% 
+    dplyr::rename(., "na_count" = "V1")
+  
+  cor_na <- merge(tmp_cor, na_count, by.x = "Var1", by.y = "feature") %>% 
+    dplyr::rename(., "na_count_Var_1" = "na_count")
+  
+  cor_na <- merge(cor_na, na_count, by.x = "Var2", by.y = "feature") %>% 
+    dplyr::rename(., "na_count_Var_2" = "na_count")
+  
+  ## remove rows which compare self against self
+  cor_na <- subset(cor_na, Var1 != Var2)
+  
+  ## select only distinct pairwise comparisons
+  cor_na <- cor_na[!duplicated(data.frame(t(apply(cor_na[1:2], 1, sort)), cor_na$value, cor_na$na_count_Var_1, cor_na$na_count_Var_2)),]
+  
+  ## select best variable based on na_count
+  cor_na <- cor_na %>% 
+    dplyr::mutate(., keep = ifelse(na_count_Var_1 >= na_count_Var_2, "keep", "toss")) %>%
+    dplyr::filter(., keep == "keep") %>%
+    dplyr::filter(., Var2 %!in% Var1)
+  
+  best_vars_across_datasets <- unique(cor_na$Var2) 
+  
+  drop_duplicated <- potential_duplicated[potential_duplicated %!in% best_vars_across_datasets]
+  
+  full_merge_dedup <- full_merge %>% dplyr::select(., -dplyr::any_of(drop_duplicated))
+  full_merge_dedup <- full_merge_dedup[, unlist(lapply(full_merge_dedup, function(x) !all(is.na(x))))]
+} else {
+  full_merge_dedup <- full_merge
+  full_merge_dedup <- full_merge_dedup[, unlist(lapply(full_merge_dedup, function(x) !all(is.na(x))))]
+}
+
+## CHARACTERS
+
+full_merge_dedup_characters <- full_merge_dedup %>% dplyr::select(where(is.character), dplyr::any_of(opt$subject_identifier), -dplyr::any_of(c(opt$label)))
+
+if (length(grep("_2$", colnames(full_merge_dedup_characters))) > 0) {
+  ## warn users about this:
+  cat("\n","################################################", "\n")
+  cat("NOTE:", "\n")
+  cat("We will drop character columns with the same name 
+    (keeping the column with fewest NAs). NOTE: If you have
+    character columns with the same name but different data,
+    firstly, shame. Secondly, we're about to delete one...", "\n")
+  cat("################################################", "\n\n")
+  
+  
+  full_merge_char_dedup <- full_merge_dedup_characters %>% 
+    tibble::column_to_rownames(., opt$subject_identifier) %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(., var = "feature") %>% 
+    dplyr::mutate(., feature = gsub("\\.x$", "", gsub("\\.y$", "", gsub("_[1-9]$", "", feature)))) %>% 
+    dplyr::arrange(rowSums(is.na(.))) %>% 
+    dplyr::distinct(feature, .keep_all = TRUE) %>% 
+    tibble::column_to_rownames(., var = "feature") %>%
+    t() %>%
+    as.data.frame() %>%
+    readr::type_convert(.) %>%
+    tibble::rownames_to_column(., var = opt$subject_identifier) %>%
+    suppressMessages() 
+  
+  drop_char_columns <- colnames(full_merge_dedup_characters)[colnames(full_merge_dedup_characters) %!in% colnames(full_merge_char_dedup)]
+  
+  full_merge_dedup <- full_merge_dedup %>% dplyr::select(., -dplyr::any_of(drop_char_columns))
+}
+
+## drop duplicated label column 
+
+full_merge_label_dedup <- full_merge_dedup %>% 
+  tibble::column_to_rownames(., opt$subject_identifier) %>%
+  dplyr::select(., tidyr::matches(c(paste0("^", opt$label, "$"), paste0("^", opt$label, "_[1-9]$")), perl = T)) 
+
+if (NCOL(full_merge_label_dedup) > 1) {
+  na_labels <- colSums(is.na(full_merge_label_dedup))
+  if (max(na_labels) == min(na_labels)) {
+    drop_label_impersonator <- setdiff(colnames(full_merge_label_dedup), opt$label)
+    full_merge_dedup <- full_merge_dedup %>% dplyr::select(-dplyr::any_of(drop_label_impersonator))
+  } else {
+    drop_label_impersonator <- rownames((as.data.frame(sort(na_labels, decreasing = F))))[2:length(na_labels)]
+    full_merge_dedup <- full_merge_dedup %>% dplyr::select(-dplyr::any_of(drop_label_impersonator))
+    opt$label <- rownames((as.data.frame(sort(na_labels, decreasing = F))))[1]
+  }
+}
+
+## write full_merge_dedup to file ==============================================
 
 ## write full_merge_dedup to file (contains NAs)
 readr::write_delim(full_merge_dedup, file = paste0(full_path, "/", "merged_data_with_NAs.csv"), delim = ",", quote = NULL)
