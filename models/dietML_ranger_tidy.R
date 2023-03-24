@@ -40,7 +40,7 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-folds <- rsample::vfold_cv(train, v = 10)
+folds <- rsample::vfold_cv(train, v = 10, strata = label)
 
 ## recipe ======================================================================
 
@@ -48,7 +48,7 @@ folds <- rsample::vfold_cv(train, v = 10)
 dietML_recipe <- 
   recipes::recipe(label ~ ., data = train) %>% 
   recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
-  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level)) %>%
+  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>%
   recipes::step_zv(all_predictors())
 
 ## ML engine ===================================================================
@@ -56,7 +56,7 @@ dietML_recipe <-
 ## specify ML model and engine 
 initial_mod <- parsnip::rand_forest(mode = opt$type, 
                                mtry = tune(),
-                               #trees = tune(),
+                               trees = 1000,
                                min_n = tune()) %>%
   parsnip::set_engine("ranger", 
                       num.threads = as.numeric(opt$ncores),
