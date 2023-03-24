@@ -204,7 +204,7 @@ Arguments:
 dietML --label label --cor_level 0.95 --train_split 0.7 --model lasso --type classification --metric bal_accuracy --ncores 2 --tune_length 10 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 ```
 
-The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. 
+The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. The underlying ML framework is from the developers of [TidyModels](https://www.tidymodels.org/), a big thank you to them. The engines themselves are largely from [ranger()](https://github.com/imbs-hl/ranger) and [glmnet()](https://glmnet.stanford.edu/) packages (and others as this project grows). Again, I have to recognize the epic contributions of these developers. 
 
 Info about the flags:
 
