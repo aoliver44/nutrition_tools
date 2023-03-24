@@ -60,14 +60,14 @@ set.seed(1)
 ## Negate function ("not in"):
 `%!in%` <- Negate(`%in%`)
 
-opt <- data.frame(subject_identifier=character(),
-                                label=character(),
-                                cor_level=numeric(),
-                                cor_choose=logical(),
-                                preserve_samples=logical(),
-                                input=character(),
-                                output_file=character())
-opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("age"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/nutrition_tools/ultra_merge/output/"), output_file="merged_data.csv")
+# opt <- data.frame(subject_identifier=character(),
+#                                 label=character(),
+#                                 cor_level=numeric(),
+#                                 cor_choose=logical(),
+#                                 preserve_samples=logical(),
+#                                 input=character(),
+#                                 output_file=character())
+# opt <- opt %>% tibble::add_row(subject_identifier = c("subject_id"), label = c("age"), cor_level = 0.99, cor_choose = TRUE, preserve_samples = FALSE, input = c("/home/nutrition_tools/ultra_merge/output/"), output_file="merged_data.csv")
 
 ## suppress warnings
 options(warn=-1)
@@ -189,12 +189,17 @@ if (NROW(full_merge) < 200) {
 
 ## only select the numeric columns
 full_merge_numeric <- full_merge %>% dplyr::select((where(is.numeric)), -dplyr::any_of(c(opt$subject_identifier, opt$label)))
+## get a list of high NA features to throw out, they dont correlate well
+potential_duplicated_high_na <- colnames(full_merge_numeric[, colSums(!is.na(full_merge_numeric)) <= (0.45 * NROW(full_merge_numeric))])
+## remove those features from being correlated
+full_merge_numeric <- full_merge_numeric[, colSums(!is.na(full_merge_numeric)) >= (0.5 * NROW(full_merge_numeric))]
 
-## run pairwise correlations and keep anything with abs(cor) > 0.999
-tmp_cor <- cor(full_merge_numeric, use = "pairwise.complete.obs")
+## run correlations and keep anything with abs(cor) > 0.999
+tmp_cor <- cor(full_merge_numeric, use = "complete.obs")
 tmp_cor <- reshape2::melt(as.matrix(tmp_cor))
-tmp_cor <- tmp_cor %>% filter(., abs(value) > 0.999)
+tmp_cor <- tmp_cor %>% filter(., abs(value) > 0.99)
 
+## if things were correlated:
 if (NROW(tmp_cor) > 0) {
   potential_duplicated <- unique(tmp_cor$Var1)
   
@@ -210,10 +215,16 @@ if (NROW(tmp_cor) > 0) {
   cor_na <- merge(cor_na, na_count, by.x = "Var2", by.y = "feature") %>% 
     dplyr::rename(., "na_count_Var_2" = "na_count")
   
-  ## remove rows which compare self against self
+  ## create list of things correlated with themselves and ONLY themselves
+  singletons <- cor_na %>% 
+    dplyr::count(Var1, name= "Count_Var1") %>% 
+    dplyr::filter(., Count_Var1 == 1) %>%
+    dplyr::pull(., Var1)
+  
+  ## remove rows which only compare self against self
   cor_na <- subset(cor_na, Var1 != Var2)
   
-  ## select only distinct pairwise comparisons
+  ## select only distinct pairwise comparisons (remove reverse comparison)
   cor_na <- cor_na[!duplicated(data.frame(t(apply(cor_na[1:2], 1, sort)), cor_na$value, cor_na$na_count_Var_1, cor_na$na_count_Var_2)),]
   
   ## select best variable based on na_count
@@ -222,21 +233,30 @@ if (NROW(tmp_cor) > 0) {
     dplyr::filter(., keep == "keep") %>%
     dplyr::filter(., Var2 %!in% Var1)
   
+  ## get the vars that are likely duplicated but have most data
   best_vars_across_datasets <- unique(cor_na$Var2) 
+  best_vars_across_datasets <- c(best_vars_across_datasets, singletons)
   
+  ## get the difference between the previous list and what we started with
   drop_duplicated <- potential_duplicated[potential_duplicated %!in% best_vars_across_datasets]
   
-  full_merge_dedup <- full_merge %>% dplyr::select(., -dplyr::any_of(drop_duplicated))
+  ## remove these from the main dataframe + high NA features
+  full_merge_dedup <- full_merge %>% dplyr::select(., -dplyr::any_of(drop_duplicated), -dplyr::any_of(potential_duplicated_high_na))
+  
+  ## remove features that are all NA...for some crazy reason these sometimes exist
+  ## because people are imperfect and gather imperfect data. We still gotta love though
   full_merge_dedup <- full_merge_dedup[, unlist(lapply(full_merge_dedup, function(x) !all(is.na(x))))]
+  
 } else {
   full_merge_dedup <- full_merge
   full_merge_dedup <- full_merge_dedup[, unlist(lapply(full_merge_dedup, function(x) !all(is.na(x))))]
 }
 
 ## CHARACTERS
-
+## get the vars that are characters (not numeric like above)
 full_merge_dedup_characters <- full_merge_dedup %>% dplyr::select(where(is.character), dplyr::any_of(opt$subject_identifier), -dplyr::any_of(c(opt$label)))
 
+## if there appears to be duplicated features (_2 at end of var)
 if (length(grep("_2$", colnames(full_merge_dedup_characters))) > 0) {
   ## warn users about this:
   cat("\n","################################################", "\n")
@@ -248,14 +268,15 @@ if (length(grep("_2$", colnames(full_merge_dedup_characters))) > 0) {
   cat("################################################", "\n\n")
   
   
+  ## gather the data, remove the _[1-9] and keep the one with least NA
   full_merge_char_dedup <- full_merge_dedup_characters %>% 
     tibble::column_to_rownames(., opt$subject_identifier) %>%
     t() %>%
     as.data.frame() %>%
     tibble::rownames_to_column(., var = "feature") %>% 
-    dplyr::mutate(., feature = gsub("\\.x$", "", gsub("\\.y$", "", gsub("_[1-9]$", "", feature)))) %>% 
+    dplyr::mutate(., feature_new = gsub("\\.x$", "", gsub("\\.y$", "", gsub("_[1-9]$", "", feature)))) %>% 
     dplyr::arrange(rowSums(is.na(.))) %>% 
-    dplyr::distinct(feature, .keep_all = TRUE) %>% 
+    dplyr::distinct(feature_new, .keep_all = TRUE) %>% 
     tibble::column_to_rownames(., var = "feature") %>%
     t() %>%
     as.data.frame() %>%
@@ -263,6 +284,7 @@ if (length(grep("_2$", colnames(full_merge_dedup_characters))) > 0) {
     tibble::rownames_to_column(., var = opt$subject_identifier) %>%
     suppressMessages() 
   
+  ## figure out the ones that get dropped
   drop_char_columns <- colnames(full_merge_dedup_characters)[colnames(full_merge_dedup_characters) %!in% colnames(full_merge_char_dedup)]
   
   full_merge_dedup <- full_merge_dedup %>% dplyr::select(., -dplyr::any_of(drop_char_columns))
@@ -552,6 +574,6 @@ readr::write_delim(x = kept_features_summary, file = paste0(full_path, "/feature
 ## write final file for ML =====================================================
 
 for_ml <- post_mikrop_data %>% 
-  dplyr::select(., any_of(full_decision_list))
+  dplyr::select(., any_of(full_decision_list), opt$subject_identifier)
 
 readr::write_delim(for_ml, file = paste0(full_path, "/", opt$output_file), delim = ",", quote = NULL)
