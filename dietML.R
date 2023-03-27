@@ -18,7 +18,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -30,6 +30,7 @@ Options:
             [default: 0.70]
     --model what model would you like run 
             (options: rf,lasso,ridge,enet) [default: rf]
+    --folds number of CV folds to tune with [default: 10]
     --metric what metric would you like to optimize in training 
             (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
              f_meas, ccc) [default: bal_accuracy]
@@ -83,6 +84,7 @@ options(warn=-1)
 #                   train_split=numeric(),
 #                   seed=numeric(),
 #                   model=character(),
+#                   folds=numeric(),
 #                   metric=character(),
 #                   type=character(),
 #                   ncores=numeric(),
@@ -92,19 +94,20 @@ options(warn=-1)
 #                   input=character(),
 #                   outdir=character())
 # opt <- opt %>% tibble::add_row(subject_identifier = "subject_id",
-#                                cor_level = 0.90,
+#                                cor_level = 0.95,
 #                                train_split= 0.7,
 #                                model = "rf",
 #                                metric = "bal_accuracy",
 #                                seed= 42,
 #                                ncores = 4,
+#                                folds = 10,
 #                                tune_length = 50,
 #                                tune_time = 10,
 #                                shap = "FALSE",
-#                                label = c("feature_of_interest"),
+#                                label = c("cluster"),
 #                                type= c("classification"),
-#                                input = c("/home/curated_data/data/clean_data/OLIVER_conambo/OLIVER_conambo_level_5.csv"),
-#                                outdir= c("/home/output_old//")
+#                                input = c("/home/nutrition_tools/ultra_merge/output/diet-life_input_bi.csv"),
+#                                outdir= c("/home/output_old/")
 #                                )
 
 
