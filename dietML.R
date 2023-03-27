@@ -21,7 +21,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
