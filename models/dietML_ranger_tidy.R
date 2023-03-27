@@ -9,10 +9,10 @@
 ## helper functions and vars ===================================================
 
 ## unregister hung-up parallel jobs
-# unregister_dopar <- function() {
-#   env <- foreach:::.foreachGlobals
-#   rm(list=ls(name=env), pos=env)
-# }
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
 
 ## suppress warnings
 options(warn=-1)
@@ -40,7 +40,8 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-folds <- rsample::vfold_cv(train, v = 10, strata = label)
+folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = 3)
+#folds <- rsample::bootstraps(train, times = as.numeric(opt$folds), strata = label, apparent = F)
 
 ## recipe ======================================================================
 
@@ -56,10 +57,10 @@ dietML_recipe <-
 ## specify ML model and engine 
 initial_mod <- parsnip::rand_forest(mode = opt$type, 
                                mtry = tune(),
-                               trees = 1000,
+                               trees = 1500,
                                min_n = tune()) %>%
   parsnip::set_engine("ranger", 
-                      num.threads = as.numeric(opt$ncores),
+                      num.threads = 1,
                       importance = "none")
 
 initial_mod %>% parsnip::translate()
@@ -75,11 +76,11 @@ dietML_wflow <-
 ## set up parallel jobs ========================================================
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
-# unregister_dopar()
+unregister_dopar()
 
 ## register parallel cluster
-# cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-# doParallel::registerDoParallel(cl)
+cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
+doParallel::registerDoParallel(cl)
 
 ## hyperparameters =============================================================
 
@@ -115,8 +116,10 @@ if (opt$type == "classification") {
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap, f_meas),
-      control = tune::control_bayes(no_improve = 10, 
+      control = tune::control_bayes(no_improve = 10,
+                                    uncertain = 5,
                                     verbose = FALSE,
+                                    parallel_over = "resamples",
                                     time_limit = as.numeric(opt$tune_time))
     )
   
@@ -134,7 +137,9 @@ if (opt$type == "classification") {
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
       control = tune::control_bayes(no_improve = 10, 
+                                    uncertain = 5,
                                     verbose = FALSE,
+                                    parallel_over = "resamples",
                                     time_limit = as.numeric(opt$tune_time))
     )
 }
@@ -142,10 +147,10 @@ if (opt$type == "classification") {
 search_res %>% tune::show_best(opt$metric)
 
 ## stop parallel jobs
-# parallel::stopCluster(cl)
+parallel::stopCluster(cl)
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
-# unregister_dopar()
+unregister_dopar()
 
 ## fit best model ==============================================================
 
@@ -199,4 +204,4 @@ ggplot2::ggsave(plot = hyperpar_tested_plot, filename = paste0(opt$outdir, "hype
 
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
-# unregister_dopar()
+unregister_dopar()
