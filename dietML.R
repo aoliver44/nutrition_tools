@@ -42,6 +42,8 @@ Options:
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 80]
     --tune_time length of time tune_bayes runs [default: 10]
+    --tune_stop number of HP interations to let pass without a metric 
+            improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
     --ncores number of processesing cores for parallel computing [default: 2]
     
@@ -90,6 +92,7 @@ models <- c("rf", "lasso", "ridge", "enet")
 #                   ncores=numeric(),
 #                   tune_time=numeric(),
 #                   tune_length=numeric(),
+#                   tune_stop=numeric(),
 #                   shap=character(),
 #                   input=character(),
 #                   outdir=character())
@@ -103,6 +106,7 @@ models <- c("rf", "lasso", "ridge", "enet")
 #                                folds = 10,
 #                                tune_length = 50,
 #                                tune_time = 10,
+#                                tune_stop = 10,
 #                                shap = "FALSE",
 #                                label = c("cluster"),
 #                                type= c("classification"),
@@ -202,7 +206,7 @@ cat(paste0("Tune time limit: ", opt$tune_time, "\n"))
 cat(paste0("Attempt to calculate SHAP: ", opt$shap, "\n"))
 cat(paste0("Number of cores: ", opt$ncores, "\n"))
 cat(paste0("Random seed: ", opt$seed, "\n"))
-cat(paste0("*will prematurely end if metric is not optimized in 10 iterations\n"))
+cat(paste0("*will prematurely end if metric is not optimized in ", opt$tune_stop," iterations\n"))
 
 ## run null (dummy) model ======================================================
 
