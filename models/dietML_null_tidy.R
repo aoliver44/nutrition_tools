@@ -26,7 +26,7 @@ suppressPackageStartupMessages(library(tidymodels, quietly = T, verbose = F, war
 ## create results df ===========================================================
 
 if (opt$type == "classification") {
-  results_df <- data.frame(seed = as.numeric(), bal_accuracy = as.numeric(), f_meas = as.numeric(), stringsAsFactors = F)
+  results_df <- data.frame(seed = as.numeric(), bal_accuracy = as.numeric(), f_meas = as.numeric(), accuracy = as.numeric(), stringsAsFactors = F)
 } else if (opt$type == "regression") {
   results_df <- data.frame(seed = as.numeric(), mae = as.numeric(), rmse = as.numeric(), ccc = as.numeric(), stringsAsFactors = F)
 }
@@ -89,6 +89,10 @@ for (seed in seeds) {
                         yardstick::bal_accuracy(truth = as.factor(df_loop_results$truth), 
                                        estimate = as.factor(df_loop_results$estimate), 
                                        data = df_loop_results)$.estimate, 
+                      accuracy = 
+                        yardstick::accuracy(truth = as.factor(df_loop_results$truth), 
+                                                estimate = as.factor(df_loop_results$estimate), 
+                                                data = df_loop_results)$.estimate, 
                       f_meas = 
                         yardstick::f_meas(truth = as.factor(df_loop_results$truth), 
                                                 estimate = as.factor(df_loop_results$estimate), 
