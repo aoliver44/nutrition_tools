@@ -10,6 +10,9 @@
 ## docker info =================================================================
 #docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home aoliver44/nutrition_tools:1.1 bash
 
+## suppress warnings
+options(warn=-1)
+
 ## set working dir to /home for the docker container
 setwd("/home")
 
@@ -72,9 +75,6 @@ unregister_dopar <- function() {
 
 ## list of supported models
 models <- c("rf", "lasso", "ridge", "enet")
-
-## suppress warnings
-options(warn=-1)
 
 ## TEST ARGUMENTS ==============================================================
 
@@ -158,6 +158,12 @@ if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
 
 ## make colnames appropriate for ML (ranger is picky)
 colnames(input) <- make.names(colnames(input))
+
+## shuffle data row-wise
+input <- input[sample(nrow(input)),]
+
+## shuffle data col-wise
+input <- input[,sample(ncol(input))]
 
 ## check for label
 if (opt$label %in% colnames(input) == TRUE) {
