@@ -132,14 +132,9 @@ if (dir.exists(opt$outdir) == TRUE) {
   setwd(opt$outdir)
 }
 
-cat("\n#########################\n")
-cat("Checking for input file...", "\n")
-cat("###########################\n\n")
 
 ## check for input and break if not found
-if (file.exists(opt$input) == TRUE) { 
-  cat(paste0(opt$input), " is being used as input.", "\n")
-} else {
+if (file.exists(opt$input) == FALSE) { 
   stop("Input file not found.\n")
 }
 
@@ -164,14 +159,8 @@ if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
 ## make colnames appropriate for ML (ranger is picky)
 colnames(input) <- make.names(colnames(input))
 
-cat("\n#########################\n")
-cat("Checking for label...", "\n")
-cat("#########################\n\n")
-
 ## check for label
 if (opt$label %in% colnames(input) == TRUE) {
-  cat(paste0(opt$label), " label is being used for ", paste0(opt$type), ".\n")
-  
   ## rename specified label to "label"
   input <- input %>% dplyr::rename(., "label" = opt$label)
 } else {
@@ -183,6 +172,31 @@ if (opt$type == "classification") {
   if(length(levels(as.factor(input$label))) > 9)
   stop("You are trying to predict 10 or more classes. That is a bit much. Did you mean to do regression?")
 }
+
+## output all the parameters used ==============================================
+
+cat("\n#########################\n")
+cat("         DietML", "\n")
+cat("#########################\n\n")
+
+cat("Parameters specified: ", "\n\n")
+
+cat(paste0("Input: ", opt$input, "\n"))
+cat(paste0("Outdir: ", opt$outdir, "\n\n"))
+cat(paste0("subject_identifier: ", opt$subject_identifier, "\n"))
+cat(paste0("Label: ", opt$label, "\n"))
+cat(paste0("Preprocessing correlation threshold: ", opt$cor_level, "\n"))
+cat(paste0("Train-Test Split: ", opt$cor_level, "\n"))
+cat(paste0("Model: ", opt$model, "\n"))
+cat(paste0("Type: ", opt$type, "\n"))
+cat(paste0("Number of folds: ", opt$folds, "\n"))
+cat(paste0("Metric optimized: ", opt$metric, "\n"))
+cat(paste0("Number* of HP combinations to test: ", opt$tune_length, "\n"))
+cat(paste0("Tune time limit: ", opt$tune_time, "\n"))
+cat(paste0("Attempt to calculate SHAP: ", opt$shap, "\n"))
+cat(paste0("Number of cores: ", opt$ncores, "\n"))
+cat(paste0("Random seed: ", opt$seed, "\n"))
+cat(paste0("*will prematurely end if metric is not optimized in 10 iterations\n"))
 
 ## run null (dummy) model ======================================================
 
@@ -206,7 +220,6 @@ if (opt$model %!in% models) {
 cat("\n#########################\n")
 cat("Running model...", "\n")
 cat("#########################\n\n")
-cat(paste0(opt$model), " is being used for ", paste0(opt$type), ".\n")
 
 ## random forest
 if (opt$model %in% c("ranger", "rf", "randomforest")) {
@@ -239,9 +252,9 @@ if (opt$model %in% c("enet", "elasticnet")) {
 
 if (opt$shap == TRUE) {
   
-  cat("\n#######################################\n")
-  cat("Attempting to calculate SHAP values...", "\n")
-  cat("#########################################\n\n")
+  cat("\n#########################\n")
+  cat("Calculating SHAP...", "\n")
+  cat("#########################\n\n")
   
   source("/scripts/utilities/shap_figures.R")
 }
