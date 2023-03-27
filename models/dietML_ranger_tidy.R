@@ -120,7 +120,8 @@ if (opt$type == "classification") {
                                     uncertain = 5,
                                     verbose = FALSE,
                                     parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time))
+                                    time_limit = as.numeric(opt$tune_time),
+                                    seed = as.numeric(opt$seed))
     )
   
 } else if (opt$type == "regression") {
@@ -136,11 +137,12 @@ if (opt$type == "classification") {
       iter = opt$tune_length,
       # How to measure performance?
       metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
-      control = tune::control_bayes(no_improve = 10, 
+      control = tune::control_bayes(no_improve = 10,
                                     uncertain = 5,
                                     verbose = FALSE,
                                     parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time))
+                                    time_limit = as.numeric(opt$tune_time),
+                                    seed = as.numeric(opt$seed))
     )
 }
 

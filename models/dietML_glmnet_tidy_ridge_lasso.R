@@ -115,7 +115,8 @@ if (opt$type == "classification") {
                                     uncertain = 5,
                                     verbose = FALSE,
                                     parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time))
+                                    time_limit = as.numeric(opt$tune_time),
+                                    seed = as.numeric(opt$seed))
     )
   
 } else if (opt$type == "regression") {
@@ -134,7 +135,8 @@ if (opt$type == "classification") {
                                     uncertain = 5,
                                     verbose = FALSE,
                                     parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time))
+                                    time_limit = as.numeric(opt$tune_time),
+                                    seed = as.numeric(opt$seed))
     )
 }
 
