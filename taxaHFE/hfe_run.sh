@@ -1,5 +1,5 @@
 #!/bin/bash
-
+## Probs needs updating for dietML parameters (AO 3.29.23)
 base_dir=/home/docker/data/
 
 while read input meta label sample levels metaphlan factor; do

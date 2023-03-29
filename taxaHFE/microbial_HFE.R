@@ -7,6 +7,7 @@
 ## PURPOSE: To do some gentle feature engineering. This concept
 ## is too complicated to do much more without knowing more about the
 ## dataset.
+## DEPRECIATED *************************
 
 ## docker info =================================================================
 
