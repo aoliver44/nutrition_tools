@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript 
 
-## SCRIPT: taxa_HFE.R ===============================================
+## SCRIPT: taxaHFE.R ===============================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Feb 16, 2022
 ##
@@ -39,7 +39,7 @@ Arguments:
 
 ' -> doc
 
-opt <- docopt::docopt(doc, version = 'microbial_HFE.R v1.2\n\n')
+opt <- docopt::docopt(doc, version = 'taxaHFE.R v1.2\n\n')
 #print(opt)
 ## load libraries ==============================================================
 
@@ -67,7 +67,7 @@ nperm = 10
 ## suppress warnings
 options(warn=-1)
 
-source("/scripts/microbial_HFE/taxaHFE_functions.R")
+source("/scripts/taxaHFE/taxaHFE_functions.R")
 
 ## arg tests ===================================================================
 # opt <- data.frame(subject_identifier=character(),
