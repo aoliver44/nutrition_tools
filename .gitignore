@@ -23,7 +23,7 @@ after_github_push_easy.sh
 models/ml_blast_test.R
 models/dietML_glmnet.R
 models/dietML_ranger.R
-microbial_HFE/microbial_HFE.R
+taxaHFE/microbial_HFE.R
 general_outline.afdesign
 playground.R
-microbial_HFE/hfe_run.sh
+taxaHFE/hfe_run.sh
