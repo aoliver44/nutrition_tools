@@ -83,16 +83,16 @@ source("/scripts/taxaHFE/taxaHFE_functions.R")
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
 #   subject_identifier = "subject_id",
-#   label= "discrete",
+#   label= "cluster",
 #   feature_type = "factor",
 #   format_metaphlan = "TRUE",
-#   write_old_files = "TRUE",
+#   write_old_files = "FALSE",
 #   cor_level = 0.95,
 #   ncores = 4,
-#   input_metadata = "/home/output_old/fecal_ph/fecal_ph_kmeans3.csv",
+#   input_metadata = "/home/nutrition_tools/ultra_merge/output/merged_data_with_NAs.csv",
 #   #input_covariates = "/home/data/covariates8_for_butyrate.csv",
-#   input= "/home/data/synthetic_test_data/merged_metaphlan4.txt",
-#   output = "/home/output_old/fecal_ph/fecal_ph_discrete.txt"
+#   input= "/home/nutrition_tools/data/synthetic_test_data/merged_metaphlan4.txt",
+#   output = "/home/nutrition_tools/output_old/unbalanced_test.txt"
 #   )
 
 ## check for inputs ============================================================
@@ -123,6 +123,9 @@ original_taxa_count <- NROW(hData)
 
 metadata <- read_in_metadata(input = opt$input_metadata, subject_identifier = opt$subject_identifier, label = opt$label)
 
+## calculate vector of class frequencies, take 70% of them to leave
+## some data out
+calc_class_frequencies()
 
 ## read in covariates file =====================================================
 
@@ -167,8 +170,6 @@ make_taxa_split_df(input = hData)
 if (opt$write_old_files == "TRUE") {
   write_summary_files(input = hData, output = opt$output)
 }
-
-cat("\n\n", "##################################\n", "Starting hierarchical competitions\n", "##################################\n")
 
 ## compete! ====================================================================
 
