@@ -213,7 +213,10 @@ calc_class_frequencies <- function(input = metadata, feature_type = opt$feature_
       dplyr::mutate(prop = prop.table(n)) %>% dplyr::pull(prop)
     ## make the class frequencies a fraction of the entire data to help
     ## prevent overfitting. Janky, but i think this is better than nothing
-    ## edit...im gonna leave this in here, but since ranger 
+    ## edit...im gonna leave this in here, but since ranger uses OOB to calc
+    ## scores maybe its best to use all the data. Not ideal, but because
+    ## sample sizes are usually a little small i think its better to use all
+    ## data??
     #class_frequencies <- class_frequencies * 0.8
     
     assign("class_frequencies", class_frequencies, envir = .GlobalEnv)
