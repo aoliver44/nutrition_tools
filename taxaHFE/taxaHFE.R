@@ -121,7 +121,15 @@ original_taxa_count <- NROW(hData)
 ## rename the label to feature_of_interest
 ## metadata, should be in tab or comma separated format
 
-metadata <- read_in_metadata(input = opt$input_metadata, subject_identifier = opt$subject_identifier, label = opt$label)
+metadata <- read_in_metadata(input = opt$input_metadata, 
+                             subject_identifier = opt$subject_identifier, 
+                             label = opt$label)
+
+## check if type was mis-specified
+if (opt$feature_type == "factor") {
+  if(length(levels(as.factor(metadata$label))) > 9)
+    stop("You are trying to predict 10 or more classes. That is a bit much. Did you mean to do regression?")
+}
 
 ## calculate vector of class frequencies, take 70% of them to leave
 ## some data out
