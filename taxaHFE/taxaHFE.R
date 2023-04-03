@@ -83,7 +83,7 @@ source("/scripts/taxaHFE/taxaHFE_functions.R")
 #                   output=character())
 # opt <- opt %>% tibble::add_row(
 #   subject_identifier = "subject_id",
-#   label= "cluster",
+#   label= "fiber_groups",
 #   feature_type = "factor",
 #   format_metaphlan = "TRUE",
 #   write_old_files = "FALSE",
@@ -92,8 +92,8 @@ source("/scripts/taxaHFE/taxaHFE_functions.R")
 #   input_metadata = "/home/nutrition_tools/ultra_merge/output/merged_data_with_NAs.csv",
 #   #input_covariates = "/home/data/covariates8_for_butyrate.csv",
 #   input= "/home/nutrition_tools/data/synthetic_test_data/merged_metaphlan4.txt",
-#   output = "/home/nutrition_tools/output_old/unbalanced_test.txt"
-#   )
+#   output = "/home/nutrition_tools/output_old/fiber_groups.txt"
+# )
 
 ## check for inputs ============================================================
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
@@ -130,7 +130,7 @@ calc_class_frequencies()
 ## read in covariates file =====================================================
 
 if (!is.na(opt$input_covariates)) {
- covariates = read_in_covariates(input = opt$input_covariates, subject_identifier = opt$subject_identifier)
+  covariates = read_in_covariates(input = opt$input_covariates, subject_identifier = opt$subject_identifier)
 }
 
 ## if not "metaphlan" format, attempt to convert ===============================
@@ -174,14 +174,14 @@ if (opt$write_old_files == "TRUE") {
 ## compete! ====================================================================
 
 if (is.na(opt$input_covariates)) {
-taxaHFE_competition(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+  taxaHFE_competition(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 } else {
   taxaHFE_competition_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 }
 ## super filter ================================================================
 
 if (is.na(opt$input_covariates)) {
-super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+  super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 } else {
   super_filter_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 }
