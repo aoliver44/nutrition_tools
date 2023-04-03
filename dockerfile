@@ -33,7 +33,7 @@ COPY models/dietML_ranger_tidy.R ./scripts/models/dietML_ranger_tidy.R
 COPY utilities/lime_figures.R ./scripts/utilities/lime_figures.R
 COPY utilities/shap_figures.R ./scripts/utilities/shap_figures.R
 COPY taxaHFE/taxaHFE.R ./scripts/taxaHFE
-COPY taxaHFE/taxaHFE_functions.R ./scripts/taxaHFE/taxaHFE_functions.R
+COPY taxaHFE/taxaHFE_functions.R ./scripts/utilities/taxaHFE_functions.R
 COPY models/dietML_null_tidy.R ./scripts/models/dietML_null_tidy.R
 
 ENV PATH="${PATH}:/scripts/"
