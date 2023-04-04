@@ -12,7 +12,7 @@
 #docker run --rm -it -p 8787:8787 -e PASSWORD=yourpasswordhere -v /Users/andrew.oliver/Documents/active_projects_github-USDA/nutrition_tools/:/home amr_r_env:3.1.0
 
 ## set working dir to /home for the docker container
-setwd("/home")
+setwd("/home/docker")
 
 ## add commandline options =====================================================
 
@@ -27,7 +27,7 @@ Options:
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
-    --input_covariates path to input covariates [default: NA]
+    --input_covariates path to input covariates [default: FALSE]
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --cor_level level of initial correlation filter [default: 0.95]
     --write_old_files write individual level files and old HFE files [default: TRUE]
@@ -137,7 +137,7 @@ calc_class_frequencies()
 
 ## read in covariates file =====================================================
 
-if (!is.na(opt$input_covariates)) {
+if (opt$input_covariates != "FALSE") {
   covariates = read_in_covariates(input = opt$input_covariates, subject_identifier = opt$subject_identifier)
 }
 
@@ -181,14 +181,14 @@ if (opt$write_old_files == "TRUE") {
 
 ## compete! ====================================================================
 
-if (is.na(opt$input_covariates)) {
+if (opt$input_covariates == "FALSE") {
   taxaHFE_competition(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 } else {
   taxaHFE_competition_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 }
 ## super filter ================================================================
 
-if (is.na(opt$input_covariates)) {
+if (opt$input_covariates == "FALSE") {
   super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
 } else {
   super_filter_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
