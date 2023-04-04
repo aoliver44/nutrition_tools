@@ -42,7 +42,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = (9.66 * max(nchar(colnames(sv_full$X)))), height = 375, units = "px")
   
   ####################
   
@@ -71,7 +71,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = (9.66 * max(nchar(colnames(sv_full$X)))), height = 375, units = "px")
   
   ## Prediction wrapper: first level (ie if levels are high, low, this is high)
   pfun <- function(object, newdata) {
@@ -98,7 +98,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[1], " (train)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train_1.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train_1.pdf"), width = (9.66 * max(nchar(colnames(sv_train$X)))), height = 375, units = "px")
   
                               ################
   
@@ -127,7 +127,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[2], " (train)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_train_2, filename = paste0(opt$outdir, "importance_plot_train_2.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_train_2, filename = paste0(opt$outdir, "importance_plot_train_2.pdf"), width = (9.66 * max(nchar(colnames(sv_train$X)))), height = 375, units = "px")
   
                              ################
   
@@ -156,7 +156,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[1], " (test)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_test_1, filename = paste0(opt$outdir, "importance_plot_test_1.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_test_1, filename = paste0(opt$outdir, "importance_plot_test_1.pdf"), width = (9.66 * max(nchar(colnames(sv_test$X)))), height = 375, units = "px")
   
   ################
   
@@ -185,7 +185,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## make shap plot
   importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[2], " (test)")) + theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_test_2, filename = paste0(opt$outdir, "importance_plot_test_2.pdf"), width = 9, height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_test_2, filename = paste0(opt$outdir, "importance_plot_test_2.pdf"), width = (9.66 * max(nchar(colnames(sv_test$X)))), height = 375, units = "px")
   
   } 
   
@@ -216,7 +216,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## make shap plot
     importance_plot_train <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (train)")) + theme_bw(base_size = 14)
-    ggplot2::ggsave(plot = importance_plot_train, filename = paste0(opt$outdir, "importance_plot_train.pdf"), width = 9, height = 4.5, units = "in")
+    ggplot2::ggsave(plot = importance_plot_train, filename = paste0(opt$outdir, "importance_plot_train.pdf"), width = (9.66 * max(nchar(colnames(sv_train$X)))), height = 375, units = "px")
     
     ####################
     
@@ -245,7 +245,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## make shap plot
     importance_plot_test <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (train)")) + theme_bw(base_size = 14)
-    ggplot2::ggsave(plot = importance_plot_test, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = 9, height = 4.5, units = "in")
+    ggplot2::ggsave(plot = importance_plot_test, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = (9.66 * max(nchar(colnames(sv_test$X)))), height = 375, units = "px")
     
     ####################
     
@@ -274,7 +274,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## make shap plot
     importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
-    ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full.pdf"), width = 10, height = 4.5, units = "in")
+    ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full.pdf"), width = (9.66 * max(nchar(colnames(sv_full$X)))), height = 375, units = "px")
     
   }
 
