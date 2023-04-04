@@ -108,7 +108,7 @@ if (file.exists(opt$input_metadata)) {
 } else { stop("Metadata input not found.") }
 
 ## check for input file (hierarchical data)
-cat("\n","Checking for for input")
+cat("\n","Checking for for input...")
 if (file.exists(opt$input)) {
   cat("\n",paste0("Using ", opt$input, " as input")) 
 } else { stop("Input not found.") }
@@ -204,6 +204,6 @@ write_figure(input = hData, output = opt$output)
 
 ## Write outputs ===============================================================
 
-cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split_sf)), " (", NROW(taxa_only_split), " if no super filter)"))
+cat("\n",paste0("Reduced/compressed taxa set from ", original_taxa_count, " taxa to ", (NROW(taxa_only_split_sf)), " (", NROW(taxa_only_split), " if no super filter)\n"))
 
-cat("\n","Output written.  ")
+cat("\n","Output written.  \n\n")

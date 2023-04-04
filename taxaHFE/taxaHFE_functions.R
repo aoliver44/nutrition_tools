@@ -131,7 +131,7 @@ apply_filters <- function(input) {
   
   hData <- input %>% dplyr::filter(., clade_name %in% hData_abund_filter)
   assign(x = "hData", value = hData, envir = .GlobalEnv)
-  cat(paste0((prev_filter - NROW(hData)), " features dropped due to abundance filter (rel. abund. >10e-4).\n"))
+  cat(paste0((prev_filter - NROW(hData)), " features dropped due to abundance filter (rel. abund. >10e-4)"))
 
 }
 
@@ -228,7 +228,7 @@ calc_class_frequencies <- function(input = metadata, feature_type = opt$feature_
 
 taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, cores = 4, output) {
   
-  cat("\n\n", "##################################\n", "Starting hierarchical competitions\n", "##################################\n")
+  cat("\n\n", "##################################\n", "Starting hierarchical competitions\n", "##################################\n\n")
   
   ## helper function
   `%!in%` <- Negate(`%in%`)
@@ -441,7 +441,7 @@ taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, 
 
 super_filter <- function(input = hData, feature_type = "factor", cores = 4, output) {
   
-  cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n")
+  cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n\n")
   
   hData_sf <- input %>%
     tibble::column_to_rownames(., var = "clade_name") %>%
@@ -627,7 +627,7 @@ write_old_hfe <- function(input = hData, output) {
 
 taxaHFE_competition_covariates <- function(input = hData, covariates, feature_type = opt$feature_type, cores = 4, output) {
   
-  cat("\n\n", "####################################\n", "Starting competition with covariates\n", "####################################\n")
+  cat("\n\n", "####################################\n", "Starting competition with covariates\n", "####################################\n\n")
   
   ## helper function
   `%!in%` <- Negate(`%in%`)
@@ -847,7 +847,7 @@ taxaHFE_competition_covariates <- function(input = hData, covariates, feature_ty
 
 super_filter_covariates <- function(input = hData, covariates, feature_type = "factor", cores = 4, output) {
   
-  cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n")
+  cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n\n")
   
   ## helper function
   `%!in%` <- Negate(`%in%`)
