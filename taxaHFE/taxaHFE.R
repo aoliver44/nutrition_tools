@@ -93,7 +93,7 @@ source("/scripts/utilities/taxaHFE_functions.R")
 #   cor_level = 0.95,
 #   ncores = 4,
 #   input_metadata = "/home/nutrition_tools/ultra_merge/output/merged_data_with_NAs.csv",
-#   #input_covariates = "/home/data/covariates8_for_butyrate.csv",
+#   input_covariates = "FALSE",
 #   input= "/home/nutrition_tools/data/synthetic_test_data/merged_metaphlan4.txt",
 #   output = "/home/nutrition_tools/output_old/fiber_groups.txt"
 # )
