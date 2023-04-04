@@ -238,6 +238,9 @@ taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, 
   children <- rev(levels)
   count = 1
   
+  ## correlation vs RF list
+  cor_vs_rf <- c()
+  
   for (parent in parents) {
     
     ## make a dataframe of all the species and how many sub-species each species has
@@ -310,9 +313,16 @@ taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, 
         ## So some subspecies (CHILDREN) were not correlated with the species (PARENT)...
         ## Do these species bring more information to the table with regards to the
         ## feature_of_interest?
+        
+        ## keep tally of how many features were collapsed due to correlation vs RF
+        cor_vs_rf <- append(cor_vs_rf, 1, after = length(cor_vs_rf))
+        
       } else {
         
         ## RF MODEL #####
+        
+        ## keep tally of how many features were collapsed due to correlation vs RF
+        cor_vs_rf <- append(cor_vs_rf, 0, after = length(cor_vs_rf))
         
         ## if the feature of interest is a factor, do a RF Classification
         if (feature_type == "factor") {
@@ -416,10 +426,15 @@ taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, 
   output_nsf <- merge(metadata, hData_output, by.x = "subject_id", by.y = "subject_id")
   assign("output_nsf", output_nsf, envir = .GlobalEnv)
   assign("output_nsf_count", (NCOL(output_nsf) - 2), envir = .GlobalEnv)
-  
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "no_sf.txt"), x = output_nsf, delim = "\t")
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "_taxa_list_no_sf.txt"), x = taxa_only_split, delim = "\t")
   
+  ## assign cor vs rf battle tally to global env
+  assign("cor_vs_rf", cor_vs_rf, envir = .GlobalEnv)
+  
+  ## print results of cor vs rf battle tally
+  cat(paste0("\nPercent of parent-child competitions decided through correlation: ", round((sum(cor_vs_rf)/ length(cor_vs_rf) * 100), digits = 2), "\n"))
+  cat(paste0("Percent of parent-child competitions decided through RF models: ", round(((length(cor_vs_rf) - sum(cor_vs_rf))/ length(cor_vs_rf) * 100), digits = 2), "\n"))
 }
 
 ## super filter ================================================================
@@ -622,6 +637,9 @@ taxaHFE_competition_covariates <- function(input = hData, covariates, feature_ty
   children <- rev(levels)
   count = 1
   
+  ## correlation vs RF list
+  cor_vs_rf <- c()
+  
   for (parent in parents) {
     
     ## make a dataframe of all the species and how many sub-species each species has
@@ -693,9 +711,16 @@ taxaHFE_competition_covariates <- function(input = hData, covariates, feature_ty
         ## So some subspecies (CHILDREN) were not correlated with the species (PARENT)...
         ## Do these species bring more information to the table with regards to the
         ## feature_of_interest?
+        
+        ## keep tally of how many features were collapsed due to correlation vs RF
+        cor_vs_rf <- append(cor_vs_rf, 1, after = length(cor_vs_rf))
+        
       } else {
         
         ## RF MODEL #####
+        
+        ## keep tally of how many features were collapsed due to correlation vs RF
+        cor_vs_rf <- append(cor_vs_rf, 0, after = length(cor_vs_rf))
         
         ## merge with covariates
         hData_parent_merge_cor_subset <- merge(covariates, hData_parent_merge_cor_subset, by = "subject_id")
@@ -808,6 +833,12 @@ taxaHFE_competition_covariates <- function(input = hData, covariates, feature_ty
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "no_sf.txt"), x = output_nsf, delim = "\t")
   readr::write_delim(file = paste0(tools::file_path_sans_ext(output), "_taxa_list_no_sf.txt"), x = taxa_only_split, delim = "\t")
   
+  ## assign cor vs rf battle tally to global env
+  assign("cor_vs_rf", cor_vs_rf, envir = .GlobalEnv)
+ 
+   ## print results of cor vs rf battle tally
+  cat(paste0("\nPercent of parent-child competitions decided through correlation: ", (sum(cor_vs_rf)/ length(cor_vs_rf) * 100), "\n"))
+  cat(paste0("Percent of parent-child competitions decided through RF models: ", ((length(cor_vs_rf) - sum(cor_vs_rf))/ length(cor_vs_rf) * 100), "\n"))
 }
 
 ## super filter covariates =====================================================
