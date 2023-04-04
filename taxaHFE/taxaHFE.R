@@ -19,7 +19,7 @@ setwd("/home/docker")
 library(docopt)
 'Hierarchical feature engineering (HFE) for the reduction of features with respects to a factor or regressor
 Usage:
-    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --input_covariates=<path> --format_metaphlan=<format> --cor_level=<correlation_level> --write_old_files=<TRUE/FALSE> --ncores=<ncores>] <input_metadata> <input> <output>
+    taxaHFE.R [--subject_identifier=<subject_colname> --label=<label> --feature_type=<feature_type> --input_covariates=<path> --subsample=<decimal> --format_metaphlan=<format> --cor_level=<correlation_level> --write_old_files=<TRUE/FALSE> --ncores=<ncores>] <input_metadata> <input> <output>
     
 Options:
     -h --help  Show this screen.
@@ -28,6 +28,7 @@ Options:
     --label response feature of interest for classification [default: cluster]
     --feature_type of response i.e. numeric or factor [default: factor]
     --input_covariates path to input covariates [default: FALSE]
+    --subsample decimal, only let random forests see a fraction of total data [default: 1]
     --format_metaphlan tells program to expect the desired hData style format, otherwise it attempts to coerce into format [default: FALSE]
     --cor_level level of initial correlation filter [default: 0.95]
     --write_old_files write individual level files and old HFE files [default: TRUE]
@@ -76,6 +77,7 @@ source("/scripts/utilities/taxaHFE_functions.R")
 #                   ncores=numeric(),
 #                   format_metaphlan=character(),
 #                   cor_level=numeric(),
+#                   subsample=numeric(),
 #                   write_old_files=character(),
 #                   input_covariates=character(),
 #                   input_metadata=character(),
@@ -87,6 +89,7 @@ source("/scripts/utilities/taxaHFE_functions.R")
 #   feature_type = "factor",
 #   format_metaphlan = "TRUE",
 #   write_old_files = "FALSE",
+#   subsample = 1,
 #   cor_level = 0.95,
 #   ncores = 4,
 #   input_metadata = "/home/nutrition_tools/ultra_merge/output/merged_data_with_NAs.csv",

@@ -217,7 +217,7 @@ calc_class_frequencies <- function(input = metadata, feature_type = opt$feature_
     ## scores maybe its best to use all the data. Not ideal, but because
     ## sample sizes are usually a little small i think its better to use all
     ## data??
-    #class_frequencies <- class_frequencies * 0.8
+    class_frequencies <- class_frequencies * as.numeric(opt$subsample)
     
     assign("class_frequencies", class_frequencies, envir = .GlobalEnv)
   }
