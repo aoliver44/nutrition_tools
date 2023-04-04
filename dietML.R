@@ -52,7 +52,7 @@ Arguments:
     outdir FULL path where results should be written
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'dietML.R v1.0\n\n')
+opt <- docopt::docopt(doc, version = 'dietML.R v0.3.0-alpha\n\n')
 
 ## load libraries ==============================================================
 library(readr, quietly = T, verbose = F, warn.conflicts = F)
