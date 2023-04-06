@@ -28,6 +28,18 @@ read_in_metadata <- function(input, subject_identifier, label) {
   }
 }
 
+
+## run safety checks!  =========================================================
+
+safety_checks <- function(input = opt$input, meta = opt$input_metadata, type = opt$feature_type, label = opt$label) {
+
+  ## check if type was mis-specified
+  if (type == "factor") {
+    if(length(levels(as.factor(metadata$feature_of_interest))) > 9)
+      stop("You are trying to predict 10 or more classes.\nThat is a bit much. Did you mean to do regression? (i.e., --feature_type numeric)")
+  }
+
+}
 ## read in covariates  =========================================================
 
 read_in_covariates <- function(input, subject_identifier) {
