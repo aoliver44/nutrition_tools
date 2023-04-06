@@ -1,3 +1,32 @@
+# Table of Contents
+
+- dietML pipeline for machine learning
+- taxaHFE for taxonomic feature engineering
+- Download these programs
+- Quick Start
+- Contributing
+  
+----------------------------------
+
+# dietML pipeline for machine learning
+
+dietML is a one-line wrapper for machine learning. It takes a "best practices" approach to ML while also lowering the technical knowledge needed to implement. It will: 
+1) read in a flat file 
+2) perform a test-train split
+3) cacluate the performance of a dummy classifier/regressor
+4) preprocess data inside cross-validation loops to minimize data leakage
+5) optimize hyperparameters using 10-fold cross validation
+6) build and fit a final model to test data
+7) Calculate feature importance using Shapley values
+
+--------------------------------------------------
+
+# taxaHFE for taxonomic feature engineering
+
+
+
+--------------------------------------------
+
 # Nutrition Tools
  This repository contains useful scripts for taking data to ML analysis, especially with nutritionists in mind.
 
