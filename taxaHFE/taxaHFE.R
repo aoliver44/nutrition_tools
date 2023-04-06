@@ -130,7 +130,7 @@ metadata <- read_in_metadata(input = opt$input_metadata,
 
 ## check if type was mis-specified
 if (opt$feature_type == "factor") {
-  if(length(levels(as.factor(metadata$label))) > 9)
+  if(length(levels(as.factor(metadata$feature_of_interest))) > 9)
     stop("You are trying to predict 10 or more classes. That is a bit much. Did you mean to do regression?")
 }
 
