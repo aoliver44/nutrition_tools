@@ -523,11 +523,13 @@ write_figure <- function(input, output) {
                        aes(x = as.factor(feature_of_interest), y = log(value)) +
                        geom_boxplot(aes(fill = as.factor(feature_of_interest)), outlier.alpha = 0) +
                        geom_point(position = position_jitter(width = 0.2), alpha = 0.4) +
-                       facet_wrap( ~ variable, scales = "free_y") +
-                       theme_bw() + theme(strip.text.x = element_text(size = 5), legend.position = "none") + 
-                       ggsci::scale_fill_jama())
+                       facet_wrap( ~ variable, scales = "free_y", ncol = 1, labeller = labeller(groupwrap = label_wrap_gen(10))) +
+                       theme_bw() +
+                       theme(strip.text.x = element_text(size = 7), legend.position = "none", text = element_text(color = "black")) + 
+                       labs(y = "ln(Relative abundance)", x = "Feature of Interest") +
+                       ggsci::scale_fill_jama() + coord_flip())
     
-    ggsave(filename = paste0(tools::file_path_sans_ext(output), "_plot.pdf"), device = "pdf", dpi = "retina", width = 12, height = 8, units = "in")
+    ggsave(filename = paste0(tools::file_path_sans_ext(output), "_plot.pdf"), device = "pdf", dpi = "retina", width = pmax((max(nchar(as.character(figure_data$variable))) * 0.0552), 3), height = 10, units = "in")
     
   } else {
     suppressWarnings(ggplot(data = figure_data) +
