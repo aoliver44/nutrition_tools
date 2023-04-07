@@ -451,7 +451,7 @@ taxaHFE_competition <- function(input = hData, feature_type = opt$feature_type, 
 
 ## super filter ================================================================
 
-super_filter <- function(input = hData, feature_type = "factor", cores = 4, output) {
+super_filter <- function(input = hData, feature_type = "factor", cores = 4, subsample = opt$subsample, output) {
   
   cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n\n")
   
@@ -485,11 +485,11 @@ super_filter <- function(input = hData, feature_type = "factor", cores = 4, outp
     assign("model_importance", model_importance, envir = .GlobalEnv)
     
   } else {
-    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = 42, sample.fraction = class_frequencies, num.threads = as.numeric(cores))
+    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = 42, sample.fraction = as.numeric(subsample), num.threads = as.numeric(cores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
       
-      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = seed, sample.fraction = class_frequencies, num.threads = as.numeric(cores))
+      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = seed, sample.fraction = as.numeric(subsample), num.threads = as.numeric(cores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       
@@ -859,7 +859,7 @@ taxaHFE_competition_covariates <- function(input = hData, covariates, feature_ty
 ## essentially a copy of main super filter function just with added
 ## merge and consideration of additional features
 
-super_filter_covariates <- function(input = hData, covariates, feature_type = "factor", cores = 4, output) {
+super_filter_covariates <- function(input = hData, covariates, feature_type = "factor", cores = 4, subsample = opt$subsample, output) {
   
   cat("\n\n", "##################################\n", "Starting Super-filter\n", "##################################\n\n")
   
@@ -898,11 +898,11 @@ super_filter_covariates <- function(input = hData, covariates, feature_type = "f
     assign("model_importance", model_importance, envir = .GlobalEnv)
     
   } else {
-    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = 42, sample.fraction = 0.7, num.threads = as.numeric(cores))
+    model <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = 42, sample.fraction = as.numeric(subsample), num.threads = as.numeric(cores))
     model_importance <- as.data.frame(model$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
     for (seed in sample(1:1000, nperm)) {
       
-      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = seed, sample.fraction = 0.7, num.threads = as.numeric(cores))
+      model_tmp <- ranger::ranger(as.numeric(feature_of_interest) ~ . , data = output_sf, importance = "impurity_corrected", seed = seed, sample.fraction = as.numeric(subsample), num.threads = as.numeric(cores))
       model_importance_tmp <- as.data.frame(model_tmp$variable.importance) %>% tibble::rownames_to_column(., var = "taxa")
       suppressWarnings(model_importance <- merge(model_importance, model_importance_tmp, by = "taxa"))
       

@@ -190,9 +190,9 @@ if (opt$input_covariates == "FALSE") {
 ## super filter ================================================================
 
 if (opt$input_covariates == "FALSE") {
-  super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+  super_filter(input = hData, feature_type = opt$feature_type, cores = opt$ncores, subsample = opt$subsample, output = opt$output)
 } else {
-  super_filter_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, output = opt$output)
+  super_filter_covariates(input = hData, covariates = covariates, feature_type = opt$feature_type, cores = opt$ncores, subsample = opt$subsample, output = opt$output)
 }
 
 ## Write Figure ================================================================
