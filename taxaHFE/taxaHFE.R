@@ -130,7 +130,7 @@ metadata <- read_in_metadata(input = opt$input_metadata,
 
 ## run safety checks ===========================================================
 
-safety_checks()
+mid_safety_checks()
 
 ## calculate vector of class frequencies, take 70% of them to leave
 ## some data out

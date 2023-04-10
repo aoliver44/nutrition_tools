@@ -31,12 +31,17 @@ read_in_metadata <- function(input, subject_identifier, label) {
 
 ## run safety checks!  =========================================================
 
-safety_checks <- function(input = opt$input, meta = opt$input_metadata, type = opt$feature_type, label = opt$label) {
+mid_safety_checks <- function(input = opt$input, meta = opt$input_metadata, type = opt$feature_type, label = opt$label, out = opt$output) {
 
   ## check if type was mis-specified
   if (type == "factor") {
     if(length(levels(as.factor(metadata$feature_of_interest))) > 9)
       stop("You are trying to predict 10 or more classes.\nThat is a bit much. Did you mean to do regression? (i.e., --feature_type numeric)")
+  }
+  
+  ## check and see if output directory exists
+  if (!dir.exists(dirname(out))) {
+    stop("No output path found. Did you create the output directory?")
   }
 
 }
@@ -541,7 +546,7 @@ write_figure <- function(input, output) {
                        labs(y = "ln(Relative abundance)", x = "Feature of Interest") +
                        ggsci::scale_fill_jama() + coord_flip())
     
-    ggsave(filename = paste0(tools::file_path_sans_ext(output), "_plot.pdf"), device = "pdf", dpi = "retina", width = pmax((max(nchar(as.character(figure_data$variable))) * 0.0552), 3), height = 10, units = "in")
+    ggsave(filename = paste0(tools::file_path_sans_ext(output), "_plot.pdf"), device = "pdf", dpi = "retina", width = pmax((max(nchar(as.character(figure_data$variable))) * 0.0555), 3), height = 10, units = "in")
     
   } else {
     suppressWarnings(ggplot(data = figure_data) +
