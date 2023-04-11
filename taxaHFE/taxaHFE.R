@@ -102,7 +102,7 @@ source("/scripts/utilities/taxaHFE_functions.R")
 cat("\n\n", "###########################\n", "Reading in data...\n", "###########################")
 
 ## check and see if clean_files directory exists
-cat("\n","Checking for for input_metadata...")
+cat("\n\n","Checking for for input_metadata...")
 if (file.exists(opt$input_metadata)) {
   cat("\n",paste0("Using ", opt$input_metadata, " as input")) 
 } else { stop("Metadata input not found.") }
