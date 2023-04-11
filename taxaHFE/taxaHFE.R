@@ -118,7 +118,6 @@ if (file.exists(opt$input)) {
 
 hData <- read_in_microbiome(input = opt$input)
 original_taxa_count <- NROW(hData)
-assign(x = "original_taxa_count", value = original_taxa_count, envir = .GlobalEnv)
 
 ## read in metadata file =======================================================
 ## rename the subject_identifier to subject_id and

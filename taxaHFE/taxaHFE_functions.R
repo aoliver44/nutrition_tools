@@ -130,12 +130,13 @@ apply_filters <- function(input) {
   }
   
   cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
+  post_metaphlan_transformation_feature_count <- NROW(input)
   ## remove taxa/rows that are 99% zeros (1% prevalence filter)
   input <- input[rowSums(input[,2:NCOL(input)] == 0) <= (NCOL(input[,2:NCOL(input)])*0.99), ]
   cat("\n\n Prevelance filter: ")
   prev_filter <- NROW(input)
   assign(x = "prev_filter", value = prev_filter, envir = .GlobalEnv)
-  cat(paste0((original_taxa_count - prev_filter), " features dropped due to 1% prevelance filter.\n"))
+  cat(paste0(round((((post_metaphlan_transformation_feature_count - prev_filter)/ post_metaphlan_transformation_feature_count ) * 100)), "% of features dropped due to 1% prevelance filter.\n"))
   
   ## Remove very low abundant features ===========================================
   ## remove taxa/rows that are below 0.0001 relative abundance
@@ -156,8 +157,8 @@ apply_filters <- function(input) {
   
   hData <- input %>% dplyr::filter(., clade_name %in% hData_abund_filter)
   assign(x = "hData", value = hData, envir = .GlobalEnv)
-  cat(paste0((prev_filter - NROW(hData)), " features dropped due to abundance filter (rel. abund. >10e-4)"))
-
+  cat(paste0(round((((prev_filter - NROW(hData)) / prev_filter) * 100)), "% of post-prevalence filtered features dropped due to abundance filter (rel. abund. >10e-4)\n"))
+  cat(NROW(hData), "taxa retained for downstream analysis...\n")
 }
 
 ## make make_taxa_split dataframe ============================================== 
