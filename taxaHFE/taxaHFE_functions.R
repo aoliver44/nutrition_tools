@@ -31,7 +31,7 @@ read_in_metadata <- function(input, subject_identifier, label) {
 
 ## run safety checks!  =========================================================
 
-mid_safety_checks <- function(input = opt$input, meta = opt$input_metadata, type = opt$feature_type, label = opt$label, out = opt$output) {
+mid_safety_checks <- function(type = opt$feature_type, label = opt$label, out = opt$output, input = hData, meta = metadata) {
 
   ## check if type was mis-specified
   if (type == "factor") {
@@ -42,6 +42,14 @@ mid_safety_checks <- function(input = opt$input, meta = opt$input_metadata, type
   ## check and see if output directory exists
   if (!dir.exists(dirname(out))) {
     stop("No output path found. Did you create the output directory?")
+  }
+  
+  ## check and make sure colnames and metadata match
+  input <- input %>% tibble::column_to_rownames(., var = "clade_name") %>% t() %>% as.data.frame()
+  tmp_merge <- merge(meta, input, by.x = "subject_id", by.y = "row.names")
+  
+  if (NROW(tmp_merge) < 2) {
+    stop("Your subject identifer doesnt match between input data and metadata.\n Or it's in the incorrect format.")
   }
 
 }
@@ -122,8 +130,8 @@ apply_filters <- function(input) {
   }
   
   cat("\n\n", "###########################\n", "Applying filtering steps...\n", "###########################")
-  ## remove taxa/rows that are 95% zeros (5% prevalence filter)
-  input <- input[rowSums(input[,2:NCOL(input)] == 0) <= (NCOL(input[,2:NCOL(input)])*0.95), ]
+  ## remove taxa/rows that are 99% zeros (1% prevalence filter)
+  input <- input[rowSums(input[,2:NCOL(input)] == 0) <= (NCOL(input[,2:NCOL(input)])*0.99), ]
   cat("\n\n Prevelance filter: ")
   prev_filter <- NROW(input)
   assign(x = "prev_filter", value = prev_filter, envir = .GlobalEnv)

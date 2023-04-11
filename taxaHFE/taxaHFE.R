@@ -149,7 +149,6 @@ if (opt$format_metaphlan == "FALSE") {
   convert_to_hData(input = hData)
   hData <- do.call(rbind, lapply(ls(pattern = "hData_L"), get))
   
-  
 }
 
 ## Remove very low prevalent features ==========================================
