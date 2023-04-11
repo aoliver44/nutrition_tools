@@ -8,7 +8,7 @@ read_in_microbiome <- function(input) {
   } else {
     suppressMessages(readr::read_delim(file = input, delim = ",", skip = 0, name_repair = "minimal") %>% dplyr::select(., -any_of(c("NCBI_tax_id", "clade_taxid"))))
   }
-  
+
 }
 
 ## read in metadata  ===========================================================
@@ -135,7 +135,7 @@ apply_filters <- function(input) {
   cat("\n\n Prevelance filter: ")
   prev_filter <- NROW(input)
   assign(x = "prev_filter", value = prev_filter, envir = .GlobalEnv)
-  cat(paste0((original_taxa_count - prev_filter), " features dropped due to 5% prevelance filter.\n"))
+  cat(paste0((original_taxa_count - prev_filter), " features dropped due to 1% prevelance filter.\n"))
   
   ## Remove very low abundant features ===========================================
   ## remove taxa/rows that are below 0.0001 relative abundance
