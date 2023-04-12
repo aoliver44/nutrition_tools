@@ -157,7 +157,7 @@ apply_filters <- function(input) {
   
   hData <- input %>% dplyr::filter(., clade_name %in% hData_abund_filter)
   assign(x = "hData", value = hData, envir = .GlobalEnv)
-  cat(paste0(round((((prev_filter - NROW(hData)) / prev_filter) * 100)), "% of post-prevalence filtered features dropped due \nto abundance filter (rel. abund. >10e-4) \n\n"))
+  cat(paste0(round((((prev_filter - NROW(hData)) / prev_filter) * 100)), "% of post-prevalence filtered features dropped due \n to abundance filter (rel. abund. >10e-4) \n\n"))
   cat(NROW(hData), "taxa retained for downstream analysis...\n")
 }
 
