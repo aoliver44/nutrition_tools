@@ -142,10 +142,6 @@ if (opt$input_covariates != "FALSE") {
   covariates = read_in_covariates(input = opt$input_covariates, subject_identifier = opt$subject_identifier)
 }
 
-## Remove very low prevalent features ==========================================
-
-apply_filters(input = hData)
-
 ## if not "metaphlan" format, attempt to convert ===============================
 
 if (opt$format_metaphlan == "FALSE") {
@@ -154,6 +150,10 @@ if (opt$format_metaphlan == "FALSE") {
   hData <- do.call(rbind, lapply(ls(pattern = "hData_L"), get))
   
 }
+
+## Remove very low prevalent features ==========================================
+
+apply_filters(input = hData)
 
 ## write files for old HFE program =============================================
 
