@@ -1,4 +1,5 @@
 ## HFE FUNCTIONS
+## v0.3.0a.2
 
 ## read in microbiome data =====================================================
 read_in_microbiome <- function(input) {
