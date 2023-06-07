@@ -264,6 +264,8 @@ Info about the flags:
 
 --ncores: number of parallel processes to use in model training. This can greatly speed up the time it takes to train. **NOTE:** use this at your own risk on an HPC system. In my brief testing, setting this to reasonable number, 16 cores, seemed to light up 64 cores. Im still not sure how the doParallel package in R translates to an HPC system. 
 
+--shap: A good overview of shap values can be found [here](https://www.aidancooper.co.uk/a-non-technical-guide-to-interpreting-shap-analyses/)
+
 ------------------------------------------
 
 ### **EXAMPLE RUN THROUGH**
