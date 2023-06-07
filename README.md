@@ -64,7 +64,7 @@ Now navigate to a terminal (I am not sure how this all works in Powershell. I su
 
  ```
 ## Option 1 (preferred), local installation:
-docker pull aoliver44/nutrition_tools:base_1.6
+docker pull aoliver44/nutrition_tools:latest
 ```
 
 ```
@@ -72,10 +72,10 @@ docker pull aoliver44/nutrition_tools:base_1.6
 ## On my quad-core i7 2020 macbook pro, took 43 minutes.
 ## this command will only work if you are in the downloaded
 ## git repository nutrition_tools 
-docker build -t nutrition_tools:base_1.6 .
+docker build -t nutrition_tools:latest .
 
 ## to run
-docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
+docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /home/docker aoliver44/nutrition_tools:latest bash
 ```
 
 ```
@@ -83,7 +83,7 @@ docker run --rm -it -v /path/to/github_repo/nutrition_tools:/home/docker -w /hom
 ## you might need to load a module or something). Usually remote installation.
 ## **NOTE:** I do not know much about singularity
 ## pull image from internet
-singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:base_1.6
+singularity pull nutrition_tools.sif docker://aoliver44/nutrition_tools:latest
 ## run image
 singularity run -w -W /path/to/working/directory --bind /path/to/cloned/github/repo:/home/docker nutrition_tools.sif bash
 cd /home/docker
@@ -92,7 +92,7 @@ cd /home/docker
 ```
 ########### example (local installation): ###########
 
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:latest bash
  ```
 
 The above example command (entierly dependent on where you downloaded the repository to your computer -- in this case it was downloaded to a folder with the path ~/Downloads --will start the docker container and provide a bash terminal to the user. 
@@ -272,7 +272,7 @@ Info about the flags:
 
 ```
 ## step 1:
-docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:base_1.6 bash
+docker run --rm -it -v /Users/$USER/Downloads/nutrition_tools/:/home/docker -w /home/docker aoliver44/nutrition_tools:latest bash
 
 ## step 2:
 generic_read_in --subject_identifier subject_id /home/docker/simulated_data/ /home/docker/simulated_output 
