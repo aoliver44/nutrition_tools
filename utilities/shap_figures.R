@@ -245,7 +245,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     
     ## make shap plot
     importance_plot_test <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-      ggtitle(label = paste0("SHAP: ", opt$label, " (train)")) + theme_bw(base_size = 14)
+      ggtitle(label = paste0("SHAP: ", opt$label, " (test)")) + theme_bw(base_size = 14)
     ggplot2::ggsave(plot = importance_plot_test, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_test$X)))), 6), height = 4.5, units = "in")
     
     ####################
