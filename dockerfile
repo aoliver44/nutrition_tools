@@ -1,5 +1,5 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:base_1.6
+## Version: aoliver44/nutrition_tools:base_0.3.0a.3
 ## Date: Jan 19, 2023
 
 ## base image to start with

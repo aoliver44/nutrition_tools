@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.2
+## v0.3.0a.3
 
 ## SCRIPT: shap_figures.R ======================================================
 ## AUTHOR: Andrew Oliver
