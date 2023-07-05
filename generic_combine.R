@@ -39,7 +39,7 @@ Arguments:
 
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'generic_combine.R v0.3.0a.3\n\n')
+opt <- docopt::docopt(doc, version = 'generic_combine.R v0.3.0a.4\n\n')
 
 ## load libraries ==============================================================
 
@@ -198,6 +198,9 @@ full_merge_numeric <- full_merge_numeric[, colSums(!is.na(full_merge_numeric)) >
 tmp_cor <- cor(full_merge_numeric, use = "complete.obs")
 tmp_cor <- reshape2::melt(as.matrix(tmp_cor))
 tmp_cor <- tmp_cor %>% filter(., abs(value) > 0.99)
+
+## remove rows which only compare self against self
+tmp_cor <- subset(tmp_cor, Var1 != Var2)
 
 ## if things were correlated:
 if (NROW(tmp_cor) > 0) {
