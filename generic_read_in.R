@@ -38,7 +38,7 @@ Arguments:
 
 " -> doc
 
-opt <- docopt(doc, version = 'generic_read_in.R v0.3.0a.4\n\n')
+opt <- docopt(doc, version = 'generic_read_in.R v0.3.0a.5\n\n')
 
 ## load libraries ==============================================================
 
@@ -469,26 +469,38 @@ if (NROW(duplicated_features) > 0) {
 ## write figures and files  ====================================================
 
 ## print na figure and data to file
-if (length(fils) == 1) {
-  na_figure <- na_count_features %>%
-    dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
-    dplyr::filter(., na_count > 0) %>%
-    ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
-    geom_bar() +
-    labs(y = "NA Count", x = "Features with NAs") +
-    theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
-} else { # facet by dataset
-  na_figure <- na_count_features %>%
-    dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
-    dplyr::filter(., na_count > 0) %>%
-    ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
-    geom_bar() +
-    labs(y = "NA Count", x = "Features with NAs") +
-    facet_grid(~ dataset, scales = "free") +
-    theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+if (sum(na_count_features$na_count) > 0) {
+  if (length(fils) == 1) {
+    na_figure <- na_count_features %>%
+      dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
+      dplyr::filter(., na_count > 0) %>%
+      ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
+      geom_bar() +
+      labs(y = "NA Count", x = "Features with NAs") +
+      theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+    
+    cat("\n\n", "Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
+    suppressWarnings(ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL))
+    
+    
+  } else { # facet by dataset
+    na_figure <- na_count_features %>%
+      dplyr::mutate(., dataset = gsub(pattern = "_", replacement = "\n", x = dataset, perl = T)) %>%
+      dplyr::filter(., na_count > 0) %>%
+      ggplot2::ggplot(aes(x = reorder(feature, na_count), weight = as.numeric(na_count))) +
+      geom_bar() +
+      labs(y = "NA Count", x = "Features with NAs") +
+      facet_grid(~ dataset, scales = "free") +
+      theme(axis.text.x=element_text(angle = 45, size = 2), axis.ticks.x=element_blank())
+    
+    cat("\n\n", "Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
+    suppressWarnings(ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL))
+    
+  }
+} else {
+  cat("\n No NAs found. No na_counts.pdf figure generated.")
 }
 
-cat("\n\n", "Saving NA counts figure to file, see /outputs/na_counts.pdf", "\n\n")
 cat("Saving NA counts table to file, see /output/na_counts.csv", "\n\n")
 cat("####################################################", "\n")
 cat("Saving a summary_problems file", "\n" ,"see /output/summary_dataset_problems.csv", "\n")
@@ -496,8 +508,6 @@ cat("####################################################", "\n\n")
 
 readr::write_delim(na_count_features, file = paste0(outdir_name, "/na_counts.csv"), delim = ",") %>%
   suppressMessages() 
-
-suppressWarnings(ggsave(paste0(outdir_name,"/na_counts.pdf"), plot = last_plot(), scale = 1, width = 15, height = 5, units = "in", dpi = 500, limitsize = TRUE, bg = NULL))
 
 ## write summary problems dataframe to file 
 summary_problems_tmp <- summary_problems[1:NROW(summary_problems), ] %>% dplyr::group_by(dataset) %>% dplyr::summarise(across(everything(), ~n_distinct(., na.rm = T)))
