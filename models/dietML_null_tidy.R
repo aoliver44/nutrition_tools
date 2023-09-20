@@ -78,9 +78,9 @@ for (seed in seeds) {
   ## fit model ==============================================================
   
   ## fit to test data
-  final_res <- parsnip::fit(dietML_wflow, train)
+  final_res <- parsnip::fit(dietML_wflow, test)
   
-  df_loop_results <- add_row(df_loop_results, truth = train$label)
+  df_loop_results <- add_row(df_loop_results, truth = test$label)
   df_loop_results$estimate <- final_res$fit$fit$fit$value
   
   if (opt$type == "classification") {
