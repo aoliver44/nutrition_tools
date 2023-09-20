@@ -38,7 +38,7 @@ Arguments:
 
 " -> doc
 
-opt <- docopt(doc, version = 'generic_read_in.R v0.3.0a.5\n\n')
+opt <- docopt(doc, version = 'generic_read_in.R v0.3.0a.6\n\n')
 
 ## load libraries ==============================================================
 
