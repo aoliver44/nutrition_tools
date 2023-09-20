@@ -423,6 +423,17 @@ if (as.numeric(opt$cor_level) < 0.99) {
 
 }
 
+## add a numeric_id for the subject_id. If the subject_id has characters, it
+## seems to trip up mikropML (subject_id gets one-hot encoded)
+full_merge_dedup_pre_cor <- full_merge_dedup_pre_cor %>%
+  dplyr::mutate(., subject_index = as.numeric(factor(.data[[opt$subject_identifier]])))
+
+subject_index_mapping <- full_merge_dedup_pre_cor %>%
+  dplyr::select(., opt$subject_identifier, subject_index)
+
+full_merge_dedup_pre_cor <- full_merge_dedup_pre_cor %>%
+  dplyr::select(., -opt$subject_identifier)
+
 ## prepare the data for correlation (one-hot encode, remove zero-variance)
 corr_raw_data <- suppressMessages(suppressWarnings(mikropml::preprocess_data(dataset = full_merge_dedup_pre_cor,
                                          method = NULL,
@@ -433,8 +444,8 @@ post_mikrop_data <- corr_raw_data$dat_transformed
 
 ## correlation will not happen if label is non-numeric
 if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
-  label_df <- corr_raw_data$dat_transformed %>% dplyr::select(., opt$label, subject_id)
-  corr_raw_data$dat_transformed <- corr_raw_data$dat_transformed %>% dplyr::select(., -opt$label, -subject_id)
+  label_df <- corr_raw_data$dat_transformed %>% dplyr::select(., opt$label, opt$subject_identifier)
+  corr_raw_data$dat_transformed <- corr_raw_data$dat_transformed %>% dplyr::select(., -opt$label, -opt$subject_identifier)
 }
 
 ## co-correlate features at specified threshold
@@ -569,7 +580,7 @@ kept_features_summary <- kept_features_summary %>%
   dplyr::mutate(., category = ifelse(is.na(category), "dropped_in_correlation", category))
 
 kept_features_summary <- kept_features_summary %>% 
-  tibble::add_row(features = full_decision_list) %>% 
+  tibble::add_row(features = full_decision_list[full_decision_list %!in% "subject_index"]) %>% 
   dplyr::mutate(., category = ifelse(is.na(category), "final_feature_list", category))
 
 readr::write_delim(x = kept_features_summary, file = paste0(full_path, "/feature_summary.csv"), delim = ",", quote = NULL)
@@ -577,6 +588,10 @@ readr::write_delim(x = kept_features_summary, file = paste0(full_path, "/feature
 ## write final file for ML =====================================================
 
 for_ml <- post_mikrop_data %>% 
-  dplyr::select(., any_of(full_decision_list), opt$subject_identifier)
+  dplyr::select(., any_of(full_decision_list), subject_index)
+
+## add back in real subject_ids
+for_ml <- merge(subject_index_mapping, for_ml, by = "subject_index")
+for_ml$subject_index <- NULL
 
 readr::write_delim(for_ml, file = paste0(full_path, "/", opt$output_file), delim = ",", quote = NULL)
