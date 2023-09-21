@@ -335,9 +335,9 @@ full_merge_dedup <- full_merge_dedup %>% tibble::column_to_rownames(., var = opt
 
 ## pre-corr col drop ===========================================================
 
-## lets initally drop columns that are mostly NA already (50% or greater)
+## lets initally drop columns (features) that are mostly NA already (50% or greater)
 full_merge_dedup_init_filt <- full_merge_dedup[, colSums(!is.na(full_merge_dedup)) >= (0.5 * NROW(full_merge_dedup))]
-## lets initally drop rows that are mostly NA already (75% or greater)
+## lets initally drop rows (samples) that are mostly NA already (75% or greater)
 full_merge_dedup_init_filt <- full_merge_dedup_init_filt[rowSums(!is.na(full_merge_dedup_init_filt)) >= (0.75 * NCOL(full_merge_dedup_init_filt)), ]
 
 ## calculate cutoffs of features to preserve samples or more features 
@@ -444,8 +444,8 @@ post_mikrop_data <- corr_raw_data$dat_transformed
 
 ## correlation will not happen if label is non-numeric
 if (class(corr_raw_data$dat_transformed[[opt$label]]) != "numeric") {
-  label_df <- corr_raw_data$dat_transformed %>% dplyr::select(., opt$label, opt$subject_identifier)
-  corr_raw_data$dat_transformed <- corr_raw_data$dat_transformed %>% dplyr::select(., -opt$label, -opt$subject_identifier)
+  label_df <- corr_raw_data$dat_transformed %>% dplyr::select(., dplyr::any_of(as.character(opt$label)), any_of(as.character(opt$subject_identifier)))
+  corr_raw_data$dat_transformed <- corr_raw_data$dat_transformed %>% dplyr::select(., -dplyr::any_of(as.character(opt$label)), -dplyr::any_of(as.character(opt$subject_identifier)))
 }
 
 ## co-correlate features at specified threshold
