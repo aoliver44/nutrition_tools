@@ -18,9 +18,13 @@ shap.error.occured <- FALSE
 
 tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
+  #####################
+  ## FULL DATA 1
+  #####################
+  
   ## Prediction wrapper
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 1L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[1]]
   }
   
   ## pull model out of workflow
@@ -42,14 +46,18 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
   
-  ####################
+  #####################
+  ## FULL DATA 2
+  #####################
   
   ## Prediction wrapper
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 2L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[2]]
   }
   
   ## pull model out of workflow
@@ -71,12 +79,18 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
+  
+  #####################
+  ## TRAIN DATA 1
+  #####################
   
   ## Prediction wrapper: first level (ie if levels are high, low, this is high)
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 1L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[1]]
   }
   
   ## pull model out of workflow
@@ -87,7 +101,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_train <- recipes::prep(dietML_recipe, train) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -98,14 +112,18 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[1], " (train)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (train data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_train_1, filename = paste0(opt$outdir, "importance_plot_train_1.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_train$X)))), 6), height = 4.5, units = "in")
   
-                              ################
+  #####################
+  ## TRAIN DATA 2
+  #####################
   
   ## Prediction wrapper: first level (ie if levels are high, low, this is high)
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 2L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[2]]
   }
   
   ## pull model out of workflow
@@ -116,7 +134,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_train <- recipes::prep(dietML_recipe, train) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -127,14 +145,18 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", levels(as.factor(train$label))[2], " (train)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (train data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_train_2, filename = paste0(opt$outdir, "importance_plot_train_2.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_train$X)))), 6), height = 4.5, units = "in")
   
-                             ################
+  #####################
+  ## TEST DATA 1
+  #####################
   
   ## Prediction wrapper: second level (ie if levels are high, low, this is low)
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 2L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[1]]
   }
   
   ## pull model out of workflow
@@ -145,7 +167,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_test<- recipes::prep(dietML_recipe, test) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -156,14 +178,18 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[1], " (test)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (test data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_test_1, filename = paste0(opt$outdir, "importance_plot_test_1.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_test$X)))), 6), height = 4.5, units = "in")
   
-  ################
+  #####################
+  ## TEST DATA 2
+  #####################
   
   ## Prediction wrapper: second level (ie if levels are high, low, this is low)
   pfun <- function(object, newdata) {
-    predict(object, data = newdata)$predictions[, 2L]
+    predict(object, data = newdata)$predictions[, levels(as.factor(input$label))[2]]
   }
   
   ## pull model out of workflow
@@ -174,7 +200,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   ## pull out data
   shap_data_test<- recipes::prep(dietML_recipe, test) %>% 
     recipes::juice() %>% 
-    dplyr::select(-label) %>% 
+    dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
     as.matrix()
   
   ## explain with fastshap
@@ -185,7 +211,9 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   ## make shap plot
   importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
-    ggtitle(label = paste0("SHAP: ", levels(as.factor(test$label))[2], " (test)")) + theme_bw(base_size = 14)
+    ggtitle(label = paste0("SHAP: ", opt$label, " (test data)")) + 
+    labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
+    theme_bw(base_size = 14)
   ggplot2::ggsave(plot = importance_plot_test_2, filename = paste0(opt$outdir, "importance_plot_test_2.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_test$X)))), 6), height = 4.5, units = "in")
   
   } 
