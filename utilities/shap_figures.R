@@ -45,11 +45,11 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full_1 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
     theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_full_1, filename = paste0(opt$outdir, "importance_plot_full_1.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
   
   #####################
   ## FULL DATA 2
@@ -78,11 +78,11 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full_2 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
     theme_bw(base_size = 14)
-  ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
+  ggplot2::ggsave(plot = importance_plot_full_2, filename = paste0(opt$outdir, "importance_plot_full_2.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
   
   #####################
   ## TRAIN DATA 1
