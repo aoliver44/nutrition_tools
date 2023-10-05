@@ -65,6 +65,9 @@ Now navigate to a terminal (I am not sure how this all works in Powershell. I su
  ```
 ## Option 1 (preferred), local installation:
 docker pull aoliver44/nutrition_tools:latest
+
+## from the local directory containing your data
+docker run --rm -it -v `pwd`:/home/docker -w /home/docker aoliver44/nutrition_tools:latest bash
 ```
 
 ```
