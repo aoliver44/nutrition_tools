@@ -205,29 +205,32 @@ This script will take the output of ```generic_read_in``` and combine all the fi
 ```
 Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
-    
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
     --cor_level level to group features together [default: 0.95]
-    --train_split what percentage of samples should be used in training 
+    --train_split what percentage of samples should be used in training
             [default: 0.70]
-    --model what model would you like run 
+    --model what model would you like run
             (options: rf,lasso,ridge,enet) [default: rf]
-    --metric what metric would you like to optimize in training 
-            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
-             f_meas) [default: bal_accuracy]
-    --type for models that do both regression and classification 
+    --folds number of CV folds to tune with [default: 10]
+    --metric what metric would you like to optimize in training
+            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap,
+             f_meas, ccc) [default: bal_accuracy]
+    --type for models that do both regression and classification
             [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 80]
     --tune_time length of time tune_bayes runs [default: 10]
+    --tune_stop number of HP interations to let pass without a metric
+            improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
     --ncores number of processesing cores for parallel computing [default: 2]
-    
+
 Arguments:
     input  FULL path to input file for ML (output from generic_combine.R)
     outdir FULL path where results should be written
@@ -239,6 +242,8 @@ dietML --label label --cor_level 0.95 --train_split 0.7 --model lasso --type cla
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. The underlying ML framework is from the developers of [TidyModels](https://www.tidymodels.org/), a big thank you to them. The engines themselves are largely from [ranger()](https://github.com/imbs-hl/ranger) and [glmnet()](https://glmnet.stanford.edu/) packages (and others as this project grows). Again, I have to recognize the epic contributions of these developers. 
 
 Info about the flags:
+
+--subject_identifier: column name of subject_identifier
 
 --label: the name of the column in your input dataset (such as output from generic_combine) that you are trying to predict with ML
 
@@ -257,6 +262,8 @@ Info about the flags:
 - Random forest: a ensemble model which uses a "forest" of decision trees to classify samples.
   - Hyperparameter search space: a (random) grid search of 3 hyperparameters (mtry, splitrule, and minimum node size). These hyperparameters were chosen because they are the main ones tuned inside the R Caret package for the Ranger random forest models. The actual grid will be defined to take into account features that may be lost in the pre-processessing step. As an example, if your feature set is 30, and you lose 5 features due to correlation pre-processessing, setting mtry to 27 (for example) will cause the program to error out. ```dietML``` attempts to heuristically set hyperparameters so the program doesn't error out. This search space is the grid for training the caret model.
 
+--folds: number of k folds to use in hyperparameter tuning (using the training data partition)
+
 --metric: metric that should be optimized during hyperparameter tuning. Currently, dietML supports balanced accuracy (bal_accuracy), kappa (kap), ROC AUC, F-measure, and accuracy for classification. Most of these metrics will auto-detect if the classification is a multi-class problem and weight accordingly (e.g. macro-averaged for balanced accuracy). For regression, metrics include mean absolute error (mae), R-squared (rsq), root mean squared error (rsme), concordance correlation coefficient (ccc). You can read more about these metrics in the Yardstick R package [documentation](https://yardstick.tidymodels.org/articles/metric-types.html#metrics). 
 
 --type: whether the user is trying to accomplish classification (your label has discrete levels) or regression (your label is continous).
@@ -265,9 +272,13 @@ Info about the flags:
 
 --tune_length: The hyperparameter grid this program auto-generates can be VERY large. This would mean the program runs for a very long time. Often times it doesnt make a large difference in the model performance by testing ALL the hyperparameter combinations. By setting this to a resonable number of combinations, the model will train faster! What is reasonable? That is hard to answer. In LASSO, the models train pretty fast...so testing 500 hyperparameter combinations does not take terribly long to do on a local machine. Alternatively, a random forest takes longer to train, so 500 hyperparameter combinations would take a very long time. If the user specifies a value larger than the size of the auto-generated grid, the search will default to the entire grid (an exhuastive grid search). 
 
+--tune_time: how long (in minutes) should hyperparameter tuning be allowed
+
+--tune_stop: how many interations should tuning be allowed without any improvement in the scoring metric. Note: every 5 interations without improvement, an uncertainty sample is created which is meant to shift the search space to a region not explored. Read more about that uncertainty functioning [here](https://tune.tidymodels.org/reference/control_bayes.html#:~:text=without%20better%20results.-,uncertain,%2C%20this%20condition%20is%20triggered%20every%2010%20samples%20with%20no%20improvement.,-seed)
+
 --ncores: number of parallel processes to use in model training. This can greatly speed up the time it takes to train. **NOTE:** use this at your own risk on an HPC system. In my brief testing, setting this to reasonable number, 16 cores, seemed to light up 64 cores. Im still not sure how the doParallel package in R translates to an HPC system. 
 
---shap: A good overview of shap values can be found [here](https://www.aidancooper.co.uk/a-non-technical-guide-to-interpreting-shap-analyses/)
+--shap: A good overview of shap values can be found [here](https://www.aidancooper.co.uk/a-non-technical-guide-to-interpreting-shap-analyses/). This feature only works when you have a classification task with 2 categories (e.g. healthy vs disease), or a regression task.
 
 ------------------------------------------
 
