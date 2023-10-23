@@ -9,13 +9,6 @@
 
 ## helper functions and vars ===================================================
 
-## define lasso, ridge, enet
-if (opt$model == "lasso") {
-  mixture_value = 1
-} else if (opt$model == "ridge") {
-  mixture_value = 0
-} 
-
 ## suppress warnings
 options(warn=-1)
 
@@ -63,15 +56,29 @@ dietML_recipe <-
 
 ## specify ML model and engine 
 if (opt$type == "classification") {
-  initial_mod <- parsnip::logistic_reg(mode = "classification", 
+  if (opt$model == "lasso") {
+    initial_mod <- parsnip::logistic_reg(mode = "classification", 
                                        penalty = tune(),
-                                       mixture = mixture_value) %>%
+                                       mixture = 1) %>%
     parsnip::set_engine("glmnet")
+  } else {
+    initial_mod <- parsnip::logistic_reg(mode = "classification", 
+                                         penalty = tune(),
+                                         mixture = 0) %>%
+      parsnip::set_engine("glmnet")
+  }
 } else {
-  initial_mod <- parsnip::linear_reg(mode = "regression", 
-                                       penalty = tune(),
-                                       mixture = mixture_value) %>%
-    parsnip::set_engine("glmnet")
+  if (opt$model == "lasso") {
+    initial_mod <- parsnip::linear_reg(mode = "regression", 
+                                         penalty = tune(),
+                                         mixture = 1) %>%
+      parsnip::set_engine("glmnet")
+  } else {
+    initial_mod <- parsnip::linear_reg(mode = "regression", 
+                                         penalty = tune(),
+                                         mixture = 0) %>%
+      parsnip::set_engine("glmnet")
+  }
 }
 
 initial_mod %>% parsnip::translate()
