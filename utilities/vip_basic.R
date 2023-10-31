@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.3
+## v0.3.0a.7
 
 ## SCRIPT: vip_basic.R =========================================================
 ## AUTHOR: Andrew Oliver
