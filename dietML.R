@@ -263,10 +263,17 @@ if (opt$model %in% c("enet", "elasticnet")) {
 if (opt$shap == TRUE) {
   
   cat("\n#########################\n")
-  cat("Calculating SHAP...", "\n")
+  cat("Calculating Feature Importance", "\n")
   cat("#########################\n\n")
   
-  source("/scripts/utilities/shap_figures.R")
+  if (opt$model %in% c("ranger", "rf", "randomforest")) {
+    source("/scripts/utilities/shap_figures.R")
+  } else if (opt$model %in% c("enet", "elasticnet", "lasso", "ridge")) {
+    cat("You are not using a RF model. We will attempt to\n calculate VIP values instead.")
+    source("/scripts/utilities/vip_basic.R")
+  } else {
+    cat("We are unable to calculate feature importances for\n the chosen model at this time.")
+  }
 }
 
 

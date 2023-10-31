@@ -77,16 +77,6 @@
       "Hash": "71476c1d88d1ebdf31580e5a257d5d31",
       "Requirements": []
     },
-    "MLeval": {
-      "Package": "MLeval",
-      "Version": "0.3",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "292c77011e7d62d1bc18d14ffee4d3d5",
-      "Requirements": [
-        "ggplot2"
-      ]
-    },
     "MLmetrics": {
       "Package": "MLmetrics",
       "Version": "1.1.1",
@@ -518,25 +508,6 @@
         "vctrs"
       ]
     },
-    "dtplyr": {
-      "Package": "dtplyr",
-      "Version": "1.2.2",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "c5f8828a0b459a703db190b001ad4818",
-      "Requirements": [
-        "crayon",
-        "data.table",
-        "dplyr",
-        "ellipsis",
-        "glue",
-        "lifecycle",
-        "rlang",
-        "tibble",
-        "tidyselect",
-        "vctrs"
-      ]
-    },
     "e1071": {
       "Package": "e1071",
       "Version": "1.7-12",
@@ -604,6 +575,21 @@
         "gridExtra",
         "matrixStats",
         "plyr",
+        "tibble"
+      ]
+    },
+    "forcats": {
+      "Package": "forcats",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "1a0a9a3d5083d0d573c4214576f1e690",
+      "Requirements": [
+        "cli",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "rlang",
         "tibble"
       ]
     },
@@ -738,17 +724,6 @@
         "Rcpp",
         "ggplot2",
         "rlang",
-        "scales"
-      ]
-    },
-    "ggsci": {
-      "Package": "ggsci",
-      "Version": "2.9",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "81ccb8213ed592598210afd10c3a5936",
-      "Requirements": [
-        "ggplot2",
         "scales"
       ]
     },
@@ -1310,14 +1285,6 @@
         "gtable"
       ]
     },
-    "permute": {
-      "Package": "permute",
-      "Version": "0.9-7",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "abf0ca85c1c752e0d04f46334e635046",
-      "Requirements": []
-    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.8.1",
@@ -1858,18 +1825,17 @@
         "rlang"
       ]
     },
-    "vegan": {
-      "Package": "vegan",
-      "Version": "2.6-4",
+    "vip": {
+      "Package": "vip",
+      "Version": "0.4.1",
       "Source": "Repository",
       "Repository": "RSPM",
-      "Hash": "659fe7589b8e0b16baa49043a61a0ce0",
+      "Hash": "4bfee1f7181f71d552a4b63485f8fc25",
       "Requirements": [
-        "MASS",
-        "cluster",
-        "lattice",
-        "mgcv",
-        "permute"
+        "foreach",
+        "ggplot2",
+        "tibble",
+        "yardstick"
       ]
     },
     "viridis": {

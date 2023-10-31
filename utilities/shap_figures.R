@@ -218,7 +218,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   } 
   
-  if (opt$type == "regression") {
+  if ((opt$type == "regression") && (opt$model == "rf")) {
     
     ## Prediction wrapper
     pfun <- function(object, newdata) {
@@ -314,5 +314,3 @@ if (shap.error.occured == TRUE) {
   cat("ERROR: Could not complete SHAP anlaysis.", "\n")
   cat("#########################\n\n")
 }
-  
-  

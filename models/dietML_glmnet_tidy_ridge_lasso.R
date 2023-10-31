@@ -30,7 +30,7 @@ library(mikropml, quietly = T, verbose = F, warn.conflicts = F)
 library(tidyr, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 suppressPackageStartupMessages(library(tidymodels, quietly = T, verbose = F, warn.conflicts = F))
-library(glmnet, quietly = T, verbose = F, warn.conflicts = F)
+suppressPackageStartupMessages(library(glmnet, quietly = T, verbose = F, warn.conflicts = F))
 
 
 ## resample strategy ===========================================================
