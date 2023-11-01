@@ -30,8 +30,9 @@ final_fit <- best_tidy_workflow %>%
 
 importance_plot_full <- final_fit %>%
   vip::vi(lambda = best_mod$penalty) %>%
-  mutate(Variable = fct_reorder(Variable, Importance)) %>%
-  ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
+  dplyr::mutate(Variable = fct_reorder(Variable, Importance)) %>%
+  dplyr::slice_head(n = 25) %>%
+  ggplot2::ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
   geom_col() +
   scale_x_continuous(expand = c(0, 0)) +
   labs(y = NULL) +
@@ -50,8 +51,9 @@ final_fit <- best_tidy_workflow %>%
 
 importance_plot_train <- final_fit %>%
   vip::vi(lambda = best_mod$penalty) %>%
-  mutate(Variable = fct_reorder(Variable, Importance)) %>%
-  ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
+  dplyr::mutate(Variable = fct_reorder(Variable, Importance)) %>%
+  dplyr::slice_head(n = 25) %>%
+  ggplot2::ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
   geom_col() +
   scale_x_continuous(expand = c(0, 0)) +
   labs(y = NULL) +
@@ -70,8 +72,9 @@ final_fit <- best_tidy_workflow %>%
 
 importance_plot_test <- final_fit %>%
   vip::vi(lambda = best_mod$penalty) %>%
-  mutate(Variable = fct_reorder(Variable, Importance)) %>%
-  ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
+  dplyr::mutate(Variable = fct_reorder(Variable, Importance)) %>%
+  dplyr::slice_head(n = 25) %>%
+  ggplot2::ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
   geom_col() +
   scale_x_continuous(expand = c(0, 0)) +
   labs(y = NULL) +

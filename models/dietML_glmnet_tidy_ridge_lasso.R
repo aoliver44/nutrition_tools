@@ -165,14 +165,20 @@ best_mod <-
   tune::select_best(metric = opt$metric)
 
 ## create the last model based on best parameters
-if (opt$type == "classification") {
-  last_best_mod <- 
-    parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = mixture_value) %>% 
+if (opt$type == "classification" && opt$model == "lasso") {
+  last_best_mod <- parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = 1) %>% 
     parsnip::set_engine("glmnet") %>% 
     parsnip::set_mode(opt$type)
-} else {
-  last_best_mod <- 
-    parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = mixture_value) %>% 
+  } else if (opt$type == "classification" && opt$model == "ridge") {
+  last_best_mod <- parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = 0) %>% 
+      parsnip::set_engine("glmnet") %>% 
+      parsnip::set_mode(opt$type)
+  } else if (opt$type == "regression" && opt$model == "lasso") {
+  last_best_mod <- parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = 1) %>% 
+    parsnip::set_engine("glmnet") %>% 
+    parsnip::set_mode(opt$type)
+  } else if (opt$type == "regression" && opt$model == "ridge") {
+    last_best_mod <- parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = 0) %>% 
     parsnip::set_engine("glmnet") %>% 
     parsnip::set_mode(opt$type)
 }
@@ -204,6 +210,17 @@ cat("File: ", opt$input, "\n")
 cat("Label: ", opt$label, "\n")
 cat("Model: ", opt$model, "\n")
 print(workflowsets::collect_metrics(final_res))
+
+## merge null results with trained results and write table
+null_results <- results_df %>% 
+  dplyr::select(., -seed) %>% 
+  summarise_all(., mean) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column(var = ".metric") %>% 
+  dplyr::rename(., "null_model_avg" = 2)
+full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
+readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"))
 
 ## graphs ======================================================================
 

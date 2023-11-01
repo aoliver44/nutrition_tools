@@ -189,6 +189,17 @@ cat("Label: ", opt$label, "\n")
 cat("Model: ", opt$model, "\n")
 print(workflowsets::collect_metrics(final_res))
 
+## merge null results with trained results and write table
+null_results <- results_df %>% 
+  dplyr::select(., -seed) %>% 
+  summarise_all(., mean) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column(var = ".metric") %>% 
+  dplyr::rename(., "null_model_avg" = 2)
+full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
+readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"))
+
 ## graphs ======================================================================
 
 hyperpar_perf_plot <- autoplot(search_res, type = "performance")
