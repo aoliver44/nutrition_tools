@@ -198,6 +198,7 @@ null_results <- results_df %>%
   tibble::rownames_to_column(var = ".metric") %>% 
   dplyr::rename(., "null_model_avg" = 2)
 full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
+full_results$seed <- opt$seed
 readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"))
 
 ## graphs ======================================================================
