@@ -221,7 +221,10 @@ null_results <- results_df %>%
   dplyr::rename(., "null_model_avg" = 2)
 full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
 full_results$seed <- opt$seed
-readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"))
+
+## write final results to file or append if file exists
+readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "ml_results.csv")))
+
 
 ## graphs ======================================================================
 

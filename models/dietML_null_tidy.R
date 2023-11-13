@@ -33,7 +33,7 @@ if (opt$type == "classification") {
 }
 
 ## interate over null model ====================================================
-seeds <- sample(x = 1:999, size = 20, replace = F)
+seeds <- sample(x = 1:99999, size = 20, replace = F)
 
 for (seed in seeds) {
   
@@ -122,8 +122,7 @@ for (seed in seeds) {
 ## write df ====================================================================
 
 ## write table of results to file
-
-write.csv(x = results_df, file = "dummy_model_results.csv", row.names = F)
+readr::write_csv(x = results_df, file = paste0(opt$outdir, "dummy_model_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "dummy_model_results.csv")))
 
 ## show the final results
 cat("Performance of NULL model:", "\n")
