@@ -45,7 +45,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full_1 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full_1 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
     theme_bw(base_size = 14)
@@ -78,7 +78,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
   
   ## make shap plot
-  importance_plot_full_2 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_full_2 <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
     theme_bw(base_size = 14)
@@ -111,7 +111,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
   
   ## make shap plot
-  importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_train_1 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (train data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
     theme_bw(base_size = 14)
@@ -144,7 +144,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
   
   ## make shap plot
-  importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_train_2 <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (train data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
     theme_bw(base_size = 14)
@@ -177,7 +177,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
   
   ## make shap plot
-  importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_test_1 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (test data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[2], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[1])) + 
     theme_bw(base_size = 14)
@@ -210,7 +210,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
   
   ## make shap plot
-  importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+  importance_plot_test_2 <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
     ggtitle(label = paste0("SHAP: ", opt$label, " (test data)")) + 
     labs(y = paste0("predictive of ", levels(as.factor(input$label))[1], " < SHAP > ", "predictive of ", levels(as.factor(input$label))[2])) + 
     theme_bw(base_size = 14)
@@ -243,7 +243,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
     
     ## make shap plot
-    importance_plot_train <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_train <- shapviz::sv_importance(sv_train, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (train)")) + theme_bw(base_size = 14)
     ggplot2::ggsave(plot = importance_plot_train, filename = paste0(opt$outdir, "importance_plot_train.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_train$X)))), 6), height = 4.5, units = "in")
     
@@ -272,7 +272,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
     
     ## make shap plot
-    importance_plot_test <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_test <- shapviz::sv_importance(sv_test, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (test)")) + theme_bw(base_size = 14)
     ggplot2::ggsave(plot = importance_plot_test, filename = paste0(opt$outdir, "importance_plot_test.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_test$X)))), 6), height = 4.5, units = "in")
     
@@ -301,7 +301,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
     
     ## make shap plot
-    importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10, show_other = FALSE) + 
+    importance_plot_full <- shapviz::sv_importance(sv_full, kind = "bee", show_numbers = TRUE, bee_width = 0.2, max_display = 10) + 
       ggtitle(label = paste0("SHAP: ", opt$label, " (full data)")) + theme_bw(base_size = 14)
     ggplot2::ggsave(plot = importance_plot_full, filename = paste0(opt$outdir, "importance_plot_full.pdf"), width = pmax((0.1 * max(nchar(colnames(sv_full$X)))), 6), height = 4.5, units = "in")
     
