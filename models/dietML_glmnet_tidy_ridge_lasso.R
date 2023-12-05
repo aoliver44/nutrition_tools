@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.7
+## v0.3.0a.8
 
 ## SCRIPT: dietML_glmnet_tidy_ridge_lasso.R ====================================
 ## AUTHOR: Andrew Oliver
