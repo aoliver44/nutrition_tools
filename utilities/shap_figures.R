@@ -39,7 +39,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
   
   ## make shap viz object
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
@@ -72,7 +72,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
   
   ## make shap viz object
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
@@ -105,7 +105,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
 
   ## make shap viz object
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
@@ -138,7 +138,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
   
   ## make shap viz object
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
@@ -171,7 +171,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
   
   ## make shap viz object
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
@@ -204,7 +204,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 10)
+  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
   
   ## make shap viz object
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
@@ -237,7 +237,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 10)
+    shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
     
     ## make shap viz object
     sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
@@ -266,7 +266,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 10)
+    shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
     
     ## make shap viz object
     sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
@@ -295,7 +295,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 10)
+    shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
     
     ## make shap viz object
     sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
