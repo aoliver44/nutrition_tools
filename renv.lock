@@ -1593,15 +1593,16 @@
     },
     "shapviz": {
       "Package": "shapviz",
-      "Version": "0.4.1",
+      "Version": "0.9.2",
       "Source": "Repository",
       "Repository": "RSPM",
-      "Hash": "d3b4ab9413a2351086157db175386c42",
+      "Hash": "585018356857dc6413acd42497bfc706",
       "Requirements": [
         "ggfittext",
         "gggenes",
         "ggplot2",
         "ggrepel",
+        "patchwork",
         "rlang",
         "xgboost"
       ]
