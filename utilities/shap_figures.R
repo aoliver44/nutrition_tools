@@ -13,6 +13,7 @@ library(fastshap, quietly = T, verbose = F, warn.conflicts = F)
 library(shapviz, quietly = T, verbose = F, warn.conflicts = F)
 library(ggplot2, quietly = T, verbose = F, warn.conflicts = F)
 library(tidymodels, quietly = T, verbose = F, warn.conflicts = F)
+library(recipes, quietly = T, verbose = F, warn.conflicts = F)
 
 shap.error.occured <- FALSE
 
