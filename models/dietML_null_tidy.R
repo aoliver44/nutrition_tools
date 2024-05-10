@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.8
+## v0.3.0a.9
 
 ## SCRIPT: dietML_null_tidy.R ===================================================
 ## AUTHOR: Andrew Oliver
@@ -54,9 +54,10 @@ for (seed in seeds) {
   dietML_recipe <- 
     recipes::recipe(label ~ ., data = train) %>% 
     recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
+    recipes::step_dummy(recipes::all_nominal_predictors()) %>%
     recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level)) %>%
     recipes::step_zv(all_predictors())
-  
+    
   
   ## ML engine ===================================================================
   

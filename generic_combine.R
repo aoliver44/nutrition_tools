@@ -39,7 +39,7 @@ Arguments:
 
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'generic_combine.R v0.3.0a.8\n\n')
+opt <- docopt::docopt(doc, version = 'generic_combine.R v0.3.0a.9\n\n')
 
 ## load libraries ==============================================================
 
