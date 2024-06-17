@@ -1,5 +1,5 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:base_0.3.0a.8
+## Version: aoliver44/nutrition_tools:0.3.0a.9
 ## Date: Jun 7, 2023
 
 ## base image to start with
@@ -8,9 +8,10 @@ FROM rocker/r-base:4.2.0
 ## RENV version
 ENV RENV_VERSION=0.16.0
 
-RUN apt update
-# install some things that R needs
-RUN apt install -y libz-dev libxml2-dev
+#RUN apt update
+## install some things that R needs
+## only if you are using and INTEL or linux/amd64 machine
+#RUN apt install -y libz-dev libxml2-dev
 
 # install RENV, which will then install all R project packages
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
@@ -38,5 +39,3 @@ COPY utilities/vip_basic.R ./scripts/utilities/vip_basic.R
 COPY models/dietML_null_tidy.R ./scripts/models/dietML_null_tidy.R
 
 ENV PATH="${PATH}:/scripts/"
-
-USER docker
