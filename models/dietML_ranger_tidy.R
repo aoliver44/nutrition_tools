@@ -91,7 +91,7 @@ dietML_param_set <- parsnip::extract_parameter_set_dials(dietML_wflow)
 
 ## for random forests, set mtry to max features after correlation
 ## co-correlate features at specified threshold (get upper limit of mtry)
-training_cor <- mikropml:::group_correlated_features(train %>% dplyr::select(., -label, -dplyr::any_of(opt$subject_identifier)), 
+training_cor <- mikropml:::group_correlated_features(train %>% dplyr::select(., -label, -dplyr::any_of(opt$subject_identifier)) %>% dplyr::select(., where(is.numeric)), 
                                                       corr_thresh = as.numeric(opt$cor_level), group_neg_corr = T)
 
 ## make dataframe of what is correlated at specified threshold.
