@@ -102,7 +102,8 @@ training_cor <- as.data.frame(training_cor) %>%
 dietML_param_set <- 
   dietML_param_set %>% 
   # Pick an upper bound for mtry: 
-  recipes::update(mtry = mtry(c(2, round((NROW(training_cor) * 0.9), digits = 0))))
+  recipes::update(mtry = mtry(c(2, round((NROW(training_cor) * 0.9), digits = 0))), 
+                  min_n = min_n(c(1, nrow(test))))
 
 ## set up hyper parameter search
 if (opt$type == "classification") {
@@ -123,7 +124,8 @@ if (opt$type == "classification") {
                                     verbose = FALSE,
                                     parallel_over = "resamples",
                                     time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed))
+                                    seed = as.numeric(opt$seed),
+                                    save_pred = TRUE)
     )
   
 } else if (opt$type == "regression") {
@@ -144,7 +146,8 @@ if (opt$type == "classification") {
                                     verbose = FALSE,
                                     parallel_over = "resamples",
                                     time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed))
+                                    seed = as.numeric(opt$seed),
+                                    save_pred = TRUE)
     )
 }
 
