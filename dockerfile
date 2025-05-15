@@ -1,5 +1,5 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:0.3.0a.9
+## Version: aoliver44/nutrition_tools:0.3.0a.10
 ## Date: Jun 7, 2023
 
 ## base image to start with
@@ -8,10 +8,11 @@ FROM rocker/r-base:4.2.0
 ## RENV version
 ENV RENV_VERSION=0.16.0
 
-#RUN apt update
+RUN apt update
 ## install some things that R needs
-## only if you are using and INTEL or linux/amd64 machine
-#RUN apt install -y libz-dev libxml2-dev
+## doesnt seem to need anymore?
+#RUN apt install -y libxml2-dev
+#RUN apt install -y libz-dev
 
 # install RENV, which will then install all R project packages
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
