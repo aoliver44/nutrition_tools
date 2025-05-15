@@ -118,6 +118,8 @@ models <- c("rf", "lasso", "ridge", "enet")
 ## set seed  ===================================================================
 
 set.seed(as.numeric(opt$seed))
+# change the label in opt to match the col on read in (janitor is run on read-in)
+opt$label <- janitor::make_clean_names(opt$label)
 
 ## check for inputs ============================================================
 
