@@ -33,7 +33,7 @@ Options:
             [default: 0.70]
     --model what model would you like run 
             (options: rf,lasso,ridge,enet) [default: rf]
-    --folds number of CV folds to tune with, or LOO [default: 10]
+    --folds number of CV folds to tune with [default: 10]
     --metric what metric would you like to optimize in training 
             (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
              f_meas, ccc) [default: bal_accuracy]
