@@ -124,7 +124,7 @@ opt$label <- janitor::make_clean_names(opt$label)
 ## check for inputs ============================================================
 
 ## quietly check to make sure /scripts wasn't overwritten
-if (file.exists("/scripts/models/dietML_ranger.R") == FALSE) {
+if (file.exists("/scripts/dietML") == FALSE) {
   stop("It appears you bind mounted docker to a virtual directory named /scripts. We
        need to use that folder. Please restart the docker image and use a different
        virtual directory name.")
