@@ -3,7 +3,7 @@
 ## SCRIPT: dietML.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Nov, 1 2022
-##
+## LAST UPDATED: June 26, 2025
 ## PURPOSE: Run classification or regression ML
 ## the dietML.R script
 
@@ -33,7 +33,7 @@ Options:
             [default: 0.70]
     --model what model would you like run 
             (options: rf,lasso,ridge,enet) [default: rf]
-    --folds number of CV folds to tune with [default: 10]
+    --folds number of CV folds to tune with, or LOO [default: 10]
     --metric what metric would you like to optimize in training 
             (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
              f_meas, ccc) [default: bal_accuracy]
@@ -52,7 +52,7 @@ Arguments:
     outdir FULL path where results should be written
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'dietML.R v0.3.0a.9\n\n')
+opt <- docopt::docopt(doc, version = 'dietML.R v0.3.0a.10\n\n')
 
 ## load libraries ==============================================================
 library(readr, quietly = T, verbose = F, warn.conflicts = F)

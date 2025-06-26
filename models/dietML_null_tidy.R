@@ -1,10 +1,9 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.9
 
 ## SCRIPT: dietML_null_tidy.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Mar, 20 2023
-##
+## LAST UPDATED: June 26, 2025
 ## PURPOSE: NULL model for tidymodels
 
 ## helper functions and vars ===================================================

@@ -1,10 +1,9 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.9
 
 ## SCRIPT: dietML_glmnet_tidy_ridge_lasso.R ====================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Jan, 30 2023
-##
+## LAST UPDATED: June 26, 2025
 ## PURPOSE: Glmnet (ridge/lasso) model for tidymodels
 
 ## helper functions and vars ===================================================
@@ -41,8 +40,11 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = 3)
-
+if (as.character(opt$fold) %in% c("LOO", "loo", "LOOCV", "loocv")) {
+  folds <- rsample::loo_cv(train)
+} else {
+  folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = 3)
+}
 ## recipe ======================================================================
 
 ## specify recipe (this is like the pre-process work)
