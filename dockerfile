@@ -1,5 +1,5 @@
 ## Author: Andrew Oliver
-## Version: aoliver44/nutrition_tools:0.3.0a.10
+## Version: aoliver44/nutrition_tools:v06262025
 ## Date: Jun 7, 2023
 
 ## base image to start with
@@ -27,16 +27,12 @@ RUN R -e 'renv::restore()'
 COPY ./generic_read_in.R ./scripts/generic_read_in
 COPY ./generic_combine.R ./scripts/generic_combine
 COPY ./dietML.R ./scripts/dietML
-COPY models/dietML_glmnet.R ./scripts/models/dietML_glmnet.R
 COPY models/dietML_glmnet_tidy_enet.R ./scripts/models/dietML_glmnet_tidy_enet.R
 COPY models/dietML_glmnet_tidy_ridge_lasso.R ./scripts/models/dietML_glmnet_tidy_ridge_lasso.R
-COPY models/dietML_ranger.R ./scripts/models/dietML_ranger.R
 COPY models/dietML_ranger_tidy.R ./scripts/models/dietML_ranger_tidy.R
 COPY utilities/lime_figures.R ./scripts/utilities/lime_figures.R
 COPY utilities/shap_figures.R ./scripts/utilities/shap_figures.R
 COPY utilities/vip_basic.R ./scripts/utilities/vip_basic.R
-#COPY taxaHFE/taxaHFE.R ./scripts/taxaHFE
-#COPY taxaHFE/taxaHFE_functions.R ./scripts/utilities/taxaHFE_functions.R
 COPY models/dietML_null_tidy.R ./scripts/models/dietML_null_tidy.R
 
 ENV PATH="${PATH}:/scripts/"
