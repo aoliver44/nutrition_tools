@@ -29,3 +29,5 @@ playground.R
 .bash_history
 taxaHFE/
 models/.Rapp.history
+/.config
+/.local
