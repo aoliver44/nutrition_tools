@@ -1,11 +1,10 @@
 #!/usr/bin/env Rscript
-## v0.3.0a.9
 
-## SCRIPT: shap_figures.R ======================================================
+## SCRIPT: shap_figures.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Jan, 30 2023
-##
-## PURPOSE: fastshap and viz for tidymodels
+## LAST UPDATED: July 25, 2025
+## PURPOSE: Run SHAP analysis post DietML
 
 ## load libraries
 
@@ -138,7 +137,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## pull out data
     shap_data_train <- recipes::prep(dietML_recipe, train) %>% 
       recipes::juice() %>% 
-      dplyr::select(-label) %>% 
+      dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
       as.matrix()
     
     ## explain with fastshap
@@ -167,7 +166,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     ## pull out data
     shap_data_test <- recipes::prep(dietML_recipe, test) %>% 
       recipes::juice() %>% 
-      dplyr::select(-label) %>% 
+      dplyr::select(-label, -dplyr::any_of(opt$subject_identifier)) %>% 
       as.matrix()
     
     ## explain with fastshap
