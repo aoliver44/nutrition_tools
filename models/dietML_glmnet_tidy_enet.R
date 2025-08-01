@@ -45,12 +45,18 @@ folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, rep
 ## recipe ======================================================================
 
 ## specify recipe (this is like the pre-process work)
-dietML_recipe <- 
-  recipes::recipe(label ~ ., data = train) %>% 
+if (as.numeric(opt$cor_level) < 1) {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
   recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
-  recipes::step_dummy(recipes::all_nominal_predictors()) %>%
-  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>%
+  recipes::step_dummy(recipes::all_nominal_predictors()) %>% 
+  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>% 
   recipes::step_zv(all_predictors())
+  
+} else {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
+  recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
+  recipes::step_dummy(recipes::all_nominal_predictors()) 
+}
 
 ## ML engine ===================================================================
 

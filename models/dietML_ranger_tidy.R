@@ -47,12 +47,18 @@ folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, rep
 ## recipe ======================================================================
 
 ## specify recipe (this is like the pre-process work)
-dietML_recipe <- 
-  recipes::recipe(label ~ ., data = train) %>% 
+if (as.numeric(opt$cor_level) < 1) {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
   recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
-  recipes::step_dummy(recipes::all_nominal_predictors()) %>%
-  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>%
+  recipes::step_dummy(recipes::all_nominal_predictors()) %>% 
+  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>% 
   recipes::step_zv(all_predictors())
+  
+} else {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
+  recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
+  recipes::step_dummy(recipes::all_nominal_predictors()) 
+}
 
 ## ML engine ===================================================================
 
@@ -89,6 +95,7 @@ doParallel::registerDoParallel(cl)
 ## define the hyper parameter set
 dietML_param_set <- parsnip::extract_parameter_set_dials(dietML_wflow)
 
+if (as.numeric(opt$cor_level) < 1) {
 ## for random forests, set mtry to max features after correlation
 ## co-correlate features at specified threshold (get upper limit of mtry)
 training_cor <- mikropml:::group_correlated_features(train %>% dplyr::select(., -label, -dplyr::any_of(opt$subject_identifier)) %>% dplyr::select(., where(is.numeric)), 
@@ -105,6 +112,12 @@ dietML_param_set <-
   recipes::update(mtry = mtry(range(c(2, round((NROW(training_cor) * 0.9), digits = 0)))), 
                   min_n = min_n(range(c(2, nrow(test)))))
 
+} else {
+  dietML_param_set <- 
+    dietML_param_set %>% 
+    # Pick an upper bound for mtry: 
+    recipes::update(mtry = mtry(range(1, ncol(train %>% dplyr::select(., -dplyr::any_of(opt$subject_identifier), -label)))))
+}
 ## set up hyper parameter search
 if (opt$type == "classification") {
   
