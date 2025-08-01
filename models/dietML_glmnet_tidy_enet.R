@@ -82,6 +82,7 @@ dietML_wflow <-
   workflows::workflow() %>% 
   workflows::add_model(initial_mod) %>% 
   workflows::add_recipe(dietML_recipe)  
+print(dietML_wflow)
 
 ## set up parallel jobs ========================================================
 ## remove any doParallel job setups that may have
