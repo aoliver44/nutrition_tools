@@ -28,7 +28,7 @@ Options:
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
-    --cor_level level to group features together [default: 0.95]
+    --cor_level level to group features together. If --cor_level 1, no feature pre-processesing is done beyond dummy variable encoding [default: 0.95]
     --train_split what percentage of samples should be used in training 
             [default: 0.70]
     --model what model would you like run 
