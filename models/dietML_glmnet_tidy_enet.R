@@ -40,17 +40,23 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = 3)
+folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = as.numeric(opt$cv_repeats))
 
 ## recipe ======================================================================
 
 ## specify recipe (this is like the pre-process work)
-dietML_recipe <- 
-  recipes::recipe(label ~ ., data = train) %>% 
+if (as.numeric(opt$cor_level) < 1) {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
   recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
-  recipes::step_dummy(recipes::all_nominal_predictors()) %>%
-  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>%
+  recipes::step_dummy(recipes::all_nominal_predictors()) %>% 
+  recipes::step_corr(all_numeric_predictors(), threshold = as.numeric(opt$cor_level), use = "everything") %>% 
   recipes::step_zv(all_predictors())
+  
+} else {
+  dietML_recipe <- recipes::recipe(label ~ ., data = train) %>% 
+  recipes::update_role(tidyr::any_of(opt$subject_identifier), new_role = "ID") %>% 
+  recipes::step_dummy(recipes::all_nominal_predictors()) 
+}
 
 ## ML engine ===================================================================
 
@@ -76,6 +82,7 @@ dietML_wflow <-
   workflows::workflow() %>% 
   workflows::add_model(initial_mod) %>% 
   workflows::add_recipe(dietML_recipe)  
+print(dietML_wflow)
 
 ## set up parallel jobs ========================================================
 ## remove any doParallel job setups that may have
