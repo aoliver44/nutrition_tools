@@ -21,40 +21,33 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
-    --cor_level level to group features together. If --cor_level 1, 
-            no feature pre-processesing is done beyond dummy variable 
-            encoding [default: 0.95]
-    --train_split what percentage of samples should be used in training 
-            [default: 0.70]
-    --model what model would you like run 
-            (options: rf,lasso,ridge,enet) [default: rf]
+    --cor_level level to group features together. If --cor_level 1, no feature pre-processesing is done beyond dummy variable encoding [default: 0.95]
+    --train_split what percentage of samples should be used in training [default: 0.70]
+    --model what model would you like run (options: rf,lasso,ridge,enet) [default: rf]
     --folds number of CV folds to tune with [default: 10]
-    --metric what metric would you like to optimize in training 
-            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap, 
-             f_meas, ccc) [default: bal_accuracy]
-    --type for models that do both regression and classification 
-            [default: classification]
+    --cv_repeats number of repeats to perform for CV [default: 3]
+    --metric what metric would you like to optimize in training (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap,f_meas, ccc) [default: bal_accuracy]
+    --type for models that do both regression and classification [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 80]
     --tune_time length of time tune_bayes runs [default: 10]
-    --tune_stop number of HP interations to let pass without a metric 
-            improvement [default: 10]
+    --tune_stop number of HP interations to let pass without a metric improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
     --ncores number of processesing cores for parallel computing [default: 2]
     
 Arguments:
-    input  FULL path to input file for ML (output from generic_combine.R)
+    input  FULL path to input file for ML (e.g., a flat file or output from generic_combine.R)
     outdir FULL path where results should be written
 " -> doc
 
-opt <- docopt::docopt(doc, version = 'dietML.R v07252025\n\n')
+opt <- docopt::docopt(doc, version = 'dietML.R v08042025\n\n')
 
 ## load libraries ==============================================================
 library(readr, quietly = T, verbose = F, warn.conflicts = F)
@@ -204,6 +197,7 @@ cat(paste0("Train-Test Split: ", opt$train_split, "\n"))
 cat(paste0("Model: ", opt$model, "\n"))
 cat(paste0("Type: ", opt$type, "\n"))
 cat(paste0("Number of folds: ", opt$folds, "\n"))
+cat(paste0("Number of CV repeats: ", opt$cv_repeats, "\n"))
 cat(paste0("Metric optimized: ", opt$metric, "\n"))
 cat(paste0("Number* of HP combinations to test: ", opt$tune_length, "\n"))
 cat(paste0("Tune time limit: ", opt$tune_time, "\n"))

@@ -40,7 +40,7 @@ train <- rsample::training(tr_te_split)
 test  <- rsample::testing(tr_te_split)
 
 ## set resampling scheme
-folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = 3)
+folds <- rsample::vfold_cv(train, v = as.numeric(opt$folds), strata = label, repeats = as.numeric(opt$cv_repeats))
 
 #folds <- rsample::bootstraps(train, times = as.numeric(opt$folds), strata = label, apparent = F)
 
