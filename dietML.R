@@ -3,7 +3,7 @@
 ## SCRIPT: dietML.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Nov, 1 2022
-## LAST UPDATED: June 26, 2025
+## LAST UPDATED: Sept 2, 2025
 ## PURPOSE: Run classification or regression ML
 ## the dietML.R script
 
@@ -21,7 +21,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --engine_cores=<engine_cores> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --parallel_workers=<parallel_workers> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -40,8 +40,8 @@ Options:
     --tune_time length of time tune_bayes runs [default: 10]
     --tune_stop number of HP interations to let pass without a metric improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
-    --engine_cores parallel cores for the ML engine, note resources req: engine cores x ncores [default: 1]
-    --ncores number of parallel workers  [default: 2]
+    --ncores parallel cores for the ML engine, note resources req: ncores x parallel_workers [default: 1]
+    --parallel_workers number of parallel workers  [default: 2]
     
 Arguments:
     input  FULL path to input file for ML (e.g., a flat file or output from generic_combine.R)
@@ -141,20 +141,33 @@ if (file.exists(opt$input) == FALSE) {
 }
 
 ## check parallel arguments ====================================================
-if ((as.numeric(opt$engine_cores) * as.numeric(opt$ncores)) > parallelly::availableCores()) {
-  stop(sprintf("DietML detects %i cores but you asked for %i cores \n(%i engine cores * %i parallel workers (ncores))", parallelly::availableCores(), (as.numeric(opt$engine_cores) * as.numeric(opt$ncores)), opt$engine_cores, opt$ncores))
+if ((as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)) > parallelly::availableCores()) {
+  stop(sprintf("DietML detects %i cores but you asked for %i cores \n(%i parallel workers * %i ncores (ML engine cores)", parallelly::availableCores(), (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)), opt$parallel_workers, opt$ncores))
+} else {
+  opt$total_cores <- (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores))
 }
+
+## make sure args are the right type ===========================================
+opt$cor_level <- as.numeric(opt$cor_level)
+opt$train_split <- as.numeric(opt$train_split)
+opt$ncores <- as.numeric(opt$ncores)
+opt$parallel_workers <- as.numeric(opt$parallel_workers)
+opt$folds <- as.numeric(opt$folds)
+opt$tune_time <- as.numeric(opt$tune_time)
+opt$tune_length <- as.numeric(opt$tune_length)
+opt$tune_stop <- as.numeric(opt$tune_stop)
+opt$total_cores <- as.numeric(opt$total_cores)
 
 ## read in input ===============================================================
 
 if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
-  input <- readr::read_delim(file = opt$input, delim = ",") %>% 
+  input <- vroom::vroom(file = opt$input, delim = ",", num_threads = as.numeric(opt$total_cores)) %>% 
     janitor::clean_names() %>% tidyr::drop_na() %>% 
     #dplyr::select(., -dplyr::any_of("subject_id")) %>%
     suppressMessages()
   
 } else if (strsplit(basename(opt$input), split="\\.")[[1]][2] %in% c("tsv","txt")){
-  input <- readr::read_delim(file = opt$input, delim = "\t") %>% 
+  input <- vroom::vroom(file = opt$input, delim = "\t", num_threads = as.numeric(opt$total_cores)) %>% 
     janitor::clean_names() %>% tidyr::drop_na() %>% 
     #dplyr::select(., -dplyr::any_of("subject_id")) %>%
     suppressMessages()
@@ -208,8 +221,8 @@ cat(paste0("Metric optimized: ", opt$metric, "\n"))
 cat(paste0("Number* of HP combinations to test: ", opt$tune_length, "\n"))
 cat(paste0("Tune time limit: ", opt$tune_time, "\n"))
 cat(paste0("Attempt to calculate SHAP: ", opt$shap, "\n"))
-cat(paste0("Number of ml engine cores: ", opt$engine_cores, "\n"))
-cat(paste0("Number of parallel workers: ", opt$ncores, "\n"))
+cat(paste0("Number of ml engine cores: ", opt$ncores, "\n"))
+cat(paste0("Number of parallel workers: ", opt$parallel_workers, "\n"))
 cat(paste0("Random seed: ", opt$seed, "\n"))
 cat(paste0("*will prematurely end if metric is not optimized in ", opt$tune_stop," iterations\n"))
 
