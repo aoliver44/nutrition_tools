@@ -65,10 +65,10 @@ if (as.numeric(opt$cor_level) < 1) {
 ## specify ML model and engine 
 initial_mod <- parsnip::rand_forest(mode = opt$type, 
                                mtry = tune(),
-                               trees = 1500,
+                               trees = tune(),
                                min_n = tune()) %>%
   parsnip::set_engine("ranger", 
-                      num.threads = 1,
+                      num.threads = as.numeric(opt$engine_cores),
                       importance = "none")
 
 initial_mod %>% parsnip::translate()
