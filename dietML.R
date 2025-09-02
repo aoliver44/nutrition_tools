@@ -21,7 +21,7 @@ setwd("/home")
 library(docopt, quietly = T, verbose = F, warn.conflicts = F)
 "Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --engine_cores=<engine_cores> --ncores=<ncores>] <input> <outdir>
     
 Options:
     -h --help  Show this screen.
@@ -40,7 +40,8 @@ Options:
     --tune_time length of time tune_bayes runs [default: 10]
     --tune_stop number of HP interations to let pass without a metric improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
-    --ncores number of processesing cores for parallel computing [default: 2]
+    --engine_cores parallel cores for the ML engine, note resources req: engine cores x ncores [default: 1]
+    --ncores number of parallel workers  [default: 2]
     
 Arguments:
     input  FULL path to input file for ML (e.g., a flat file or output from generic_combine.R)
@@ -139,6 +140,11 @@ if (file.exists(opt$input) == FALSE) {
   stop("Input file not found.\n")
 }
 
+## check parallel arguments ====================================================
+if ((as.numeric(opt$engine_cores) * as.numeric(opt$ncores)) > parallelly::availableCores()) {
+  stop(sprintf("DietML detects %i cores but you asked for %i cores \n(%i engine cores * %i parallel workers (ncores))", parallelly::availableCores(), (as.numeric(opt$engine_cores) * as.numeric(opt$ncores)), opt$engine_cores, opt$ncores))
+}
+
 ## read in input ===============================================================
 
 if (strsplit(basename(opt$input), split="\\.")[[1]][2] == "csv") {
@@ -202,7 +208,8 @@ cat(paste0("Metric optimized: ", opt$metric, "\n"))
 cat(paste0("Number* of HP combinations to test: ", opt$tune_length, "\n"))
 cat(paste0("Tune time limit: ", opt$tune_time, "\n"))
 cat(paste0("Attempt to calculate SHAP: ", opt$shap, "\n"))
-cat(paste0("Number of cores: ", opt$ncores, "\n"))
+cat(paste0("Number of ml engine cores: ", opt$engine_cores, "\n"))
+cat(paste0("Number of parallel workers: ", opt$ncores, "\n"))
 cat(paste0("Random seed: ", opt$seed, "\n"))
 cat(paste0("*will prematurely end if metric is not optimized in ", opt$tune_stop," iterations\n"))
 
