@@ -198,7 +198,7 @@ if (as.numeric(opt$tune_time) == 0) {
   
   ## create the last model based on best parameters
   last_best_mod <- 
-    parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n) %>% 
+    parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n, trees = best_mod$trees) %>% 
     parsnip::set_engine("ranger", num.threads = as.numeric(opt$total_cores), importance = "none") %>% 
     parsnip::set_mode(opt$type)
   
