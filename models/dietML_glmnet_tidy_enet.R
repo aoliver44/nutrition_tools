@@ -3,7 +3,7 @@
 ## SCRIPT: dietML_glmnet_tidy_enet.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Jan, 30 2023
-## LAST UPDATED: June 26, 2025
+## LAST UPDATED: Sept 2, 2025
 ## PURPOSE: Glmnet model for tidymodels
 
 ## helper functions and vars ===================================================
@@ -61,19 +61,33 @@ if (as.numeric(opt$cor_level) < 1) {
 ## ML engine ===================================================================
 
 ## specify ML model and engine 
-if (opt$type == "classification") {
-  initial_mod <- parsnip::logistic_reg(mode = "classification", 
-                                       penalty = tune(),
-                                       mixture = tune()) %>%
-    parsnip::set_engine("glmnet")
-} else {
-  initial_mod <- parsnip::linear_reg(mode = "regression", 
-                                       penalty = tune(),
-                                       mixture = tune()) %>%
-    parsnip::set_engine("glmnet")
-}
 
-initial_mod %>% parsnip::translate()
+if (as.numeric(opt$tune_time) == 0) {
+  if (opt$type == "classification") {
+    initial_mod <- parsnip::logistic_reg(mode = "classification") %>%
+      parsnip::set_engine("glmnet")
+  } else {
+    initial_mod <- parsnip::linear_reg(mode = "regression") %>%
+      parsnip::set_engine("glmnet")
+  }
+  
+  initial_mod %>% parsnip::translate()
+  
+} else {
+  if (opt$type == "classification") {
+    initial_mod <- parsnip::logistic_reg(mode = "classification", 
+                                         penalty = tune(),
+                                         mixture = tune()) %>%
+      parsnip::set_engine("glmnet")
+  } else {
+    initial_mod <- parsnip::linear_reg(mode = "regression", 
+                                       penalty = tune(),
+                                       mixture = tune()) %>%
+      parsnip::set_engine("glmnet")
+  }
+  
+  initial_mod %>% parsnip::translate()
+}
 
 ## workflow ====================================================================
 
@@ -84,94 +98,112 @@ dietML_wflow <-
   workflows::add_recipe(dietML_recipe)  
 print(dietML_wflow)
 
-## set up parallel jobs ========================================================
-## remove any doParallel job setups that may have
-## unneccessarily hung around
-unregister_dopar()
-
-## register parallel cluster
-cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-doParallel::registerDoParallel(cl)
-
 ## hyperparameters =============================================================
 
 ## define the hyper parameter set
 dietML_param_set <- parsnip::extract_parameter_set_dials(dietML_wflow)
 
-## set up hyper parameter search
-if (opt$type == "classification") {
-  search_res <-
-    dietML_wflow %>% 
-    tune::tune_bayes(
-      resamples = folds,
-      # To use non-default parameter ranges
-      param_info = dietML_param_set,
-      # Generate five at semi-random to start
-      initial = 5,
-      iter = opt$tune_length,
-      # How to measure performance?
-      metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
-      control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
-                                    uncertain = 5,
-                                    verbose = FALSE,
-                                    parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed))
-    )
+## set up hyper parameter search (or not)
+
+if (as.numeric(opt$tune_time) == 0) {
   
-} else if (opt$type == "regression") {
-  search_res <-
-    dietML_wflow %>% 
-    tune::tune_bayes(
-      resamples = folds,
-      # To use non-default parameter ranges
-      param_info = dietML_param_set,
-      # Generate five at semi-random to start
-      initial = 5,
-      iter = opt$tune_length,
-      # How to measure performance?
-      metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
-      control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
-                                    uncertain = 5,
-                                    verbose = FALSE,
-                                    parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed))
-    )
-}
-
-search_res %>% tune::show_best(opt$metric)
-
-## stop parallel jobs
-parallel::stopCluster(cl)
-## remove any doParallel job setups that may have
-## unneccessarily hung around
-unregister_dopar()
-
-## fit best model ==============================================================
-
-## get the best parameters from tuning
-best_mod <- 
-  search_res %>% 
-  tune::select_best(metric = opt$metric)
-
-## create the last model based on best parameters
-if (opt$type == "classification") {
-  last_best_mod <- 
-    parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
-    parsnip::set_engine("glmnet") %>% 
-    parsnip::set_mode(opt$type)
+  best_tidy_workflow <- parsnip::fit(dietML_wflow, train)
+  
 } else {
-  last_best_mod <- 
-    parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
-    parsnip::set_engine("glmnet") %>% 
-    parsnip::set_mode(opt$type)
+  
+  ## set up parallel jobs ======================================================
+  ## remove any doParallel job setups that may have
+  ## unneccessarily hung around
+  unregister_dopar()
+  
+  ## register parallel cluster
+  cl <- parallel::makePSOCKcluster(as.numeric(opt$parallel_workers))
+  doParallel::registerDoParallel(cl)
+  
+  if (opt$type == "classification") {
+    search_res <-
+      dietML_wflow %>% 
+      tune::tune_bayes(
+        resamples = folds,
+        # To use non-default parameter ranges
+        param_info = dietML_param_set,
+        # Generate five at semi-random to start
+        initial = 5,
+        iter = opt$tune_length,
+        # How to measure performance?
+        metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap),
+        control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
+                                      uncertain = 5,
+                                      verbose = FALSE,
+                                      parallel_over = "resamples",
+                                      time_limit = as.numeric(opt$tune_time),
+                                      seed = as.numeric(opt$seed))
+      )
+    
+  } else if (opt$type == "regression") {
+    search_res <-
+      dietML_wflow %>% 
+      tune::tune_bayes(
+        resamples = folds,
+        # To use non-default parameter ranges
+        param_info = dietML_param_set,
+        # Generate five at semi-random to start
+        initial = 5,
+        iter = opt$tune_length,
+        # How to measure performance?
+        metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
+        control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
+                                      uncertain = 5,
+                                      verbose = FALSE,
+                                      parallel_over = "resamples",
+                                      time_limit = as.numeric(opt$tune_time),
+                                      seed = as.numeric(opt$seed))
+      )
+  }
+  
+  search_res %>% tune::show_best(opt$metric)
+  
+  ## stop parallel jobs
+  parallel::stopCluster(cl)
+  ## remove any doParallel job setups that may have
+  ## unneccessarily hung around
+  unregister_dopar()
+  
+  ## fit best model ============================================================
+  
+  ## get the best parameters from tuning
+  best_mod <- 
+    search_res %>% 
+    tune::select_best(metric = opt$metric)
+  
+  ## create the last model based on best parameters
+  if (opt$type == "classification") {
+    last_best_mod <- 
+      parsnip::logistic_reg(mode = "classification", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
+      parsnip::set_engine("glmnet") %>% 
+      parsnip::set_mode(opt$type)
+  } else {
+    last_best_mod <- 
+      parsnip::linear_reg(mode = "regression", penalty = best_mod$penalty, mixture = best_mod$mixture) %>% 
+      parsnip::set_engine("glmnet") %>% 
+      parsnip::set_mode(opt$type)
+  }
+  
+  ## update workflow with best model
+  best_tidy_workflow <- 
+    dietML_wflow %>% 
+    workflows::update_model(last_best_mod)
+  
+  ## graphs ====================================================================
+  
+  hyperpar_perf_plot <- autoplot(search_res, type = "performance")
+  ggplot2::ggsave(plot = hyperpar_perf_plot, filename = paste0(opt$outdir, "training_performance.pdf"), width = 7, height = 2.5, units = "in")
+  
+  hyperpar_tested_plot <- autoplot(search_res, type = "parameters") + 
+    labs(x = "Iterations", y = NULL)
+  ggplot2::ggsave(plot = hyperpar_tested_plot, filename = paste0(opt$outdir, "hyperpars_tested.pdf"), width = 7, height = 2.5, units = "in")
+  
 }
-
-## update workflow with best model
-best_tidy_workflow <- 
-  dietML_wflow %>% 
-  workflows::update_model(last_best_mod)
 
 ## fit to test data
 if (opt$type == "classification") {
@@ -209,14 +241,4 @@ full_results$seed <- opt$seed
 
 ## write final results to file or append if file exists
 readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "ml_results.csv")))
-
-
-## graphs ======================================================================
-
-hyperpar_perf_plot <- autoplot(search_res, type = "performance")
-ggplot2::ggsave(plot = hyperpar_perf_plot, filename = paste0(opt$outdir, "training_performance.pdf"), width = 7, height = 2.5, units = "in")
-
-hyperpar_tested_plot <- autoplot(search_res, type = "parameters") + 
-  labs(x = "Iterations", y = NULL)
-ggplot2::ggsave(plot = hyperpar_tested_plot, filename = paste0(opt$outdir, "hyperpars_tested.pdf"), width = 7, height = 2.5, units = "in")
 

@@ -3,7 +3,7 @@
 ## SCRIPT: dietML_ranger_tidy.R ===================================================
 ## AUTHOR: Andrew Oliver
 ## DATE:   Jan, 30 2023
-## LAST UPDATED: June 26, 2025
+## LAST UPDATED: Sept 2, 2025
 ## PURPOSE: RF model for tidymodels
 
 ## helper functions and vars ===================================================
@@ -62,16 +62,27 @@ if (as.numeric(opt$cor_level) < 1) {
 
 ## ML engine ===================================================================
 
-## specify ML model and engine 
-initial_mod <- parsnip::rand_forest(mode = opt$type, 
-                               mtry = tune(),
-                               trees = tune(),
-                               min_n = tune()) %>%
-  parsnip::set_engine("ranger", 
-                      num.threads = as.numeric(opt$engine_cores),
-                      importance = "none")
-
-initial_mod %>% parsnip::translate()
+if (as.numeric(opt$tune_time) == 0) {
+  ## specify ML model and engine 
+  initial_mod <- parsnip::rand_forest(mode = opt$type) %>%
+    parsnip::set_engine("ranger", 
+                        num.threads = .GlobalEnv$opt$total_cores,
+                        importance = "none")
+  
+  initial_mod %>% parsnip::translate()
+  
+} else {
+  ## specify ML model and engine 
+  initial_mod <- parsnip::rand_forest(mode = opt$type, 
+                                      mtry = tune(),
+                                      trees = tune(),
+                                      min_n = tune()) %>%
+    parsnip::set_engine("ranger", 
+                        num.threads = .GlobalEnv$opt$ncores,
+                        importance = "none")
+  
+  initial_mod %>% parsnip::translate()
+}
 
 ## workflow ====================================================================
 
@@ -82,116 +93,132 @@ dietML_wflow <-
   workflows::add_recipe(dietML_recipe)  
 print(dietML_wflow)
 
-## set up parallel jobs ========================================================
-## remove any doParallel job setups that may have
-## unneccessarily hung around
-unregister_dopar()
-
-## register parallel cluster
-cl <- parallel::makePSOCKcluster(as.numeric(opt$ncores))
-doParallel::registerDoParallel(cl)
-
 ## hyperparameters =============================================================
 
-## define the hyper parameter set
-dietML_param_set <- parsnip::extract_parameter_set_dials(dietML_wflow)
-
-if (as.numeric(opt$cor_level) < 1) {
-## for random forests, set mtry to max features after correlation
-## co-correlate features at specified threshold (get upper limit of mtry)
-training_cor <- mikropml:::group_correlated_features(train %>% dplyr::select(., -label, -dplyr::any_of(opt$subject_identifier)) %>% dplyr::select(., where(is.numeric)), 
-                                                      corr_thresh = as.numeric(opt$cor_level), group_neg_corr = T)
-
-## make dataframe of what is correlated at specified threshold.
-training_cor <- as.data.frame(training_cor) %>% 
-  tidyr::separate(., col = training_cor, into = c("keep", "co_correlated"), sep = "\\|", extra = "merge")
-
-## set mtry to max features after correlation
-dietML_param_set <- 
-  dietML_param_set %>% 
-  # Pick an upper bound for mtry: 
-  recipes::update(mtry = mtry(range(c(2, round((NROW(training_cor) * 0.9), digits = 0)))), 
-                  min_n = min_n(range(c(2, nrow(test)))))
-
+if (as.numeric(opt$tune_time) == 0) {
+  best_tidy_workflow <- parsnip::fit(dietML_wflow, train)
+  
 } else {
-  dietML_param_set <- 
-    dietML_param_set %>% 
-    # Pick an upper bound for mtry: 
-    recipes::update(mtry = mtry(range(1, ncol(train %>% dplyr::select(., -dplyr::any_of(opt$subject_identifier), -label)))))
-}
-## set up hyper parameter search
-if (opt$type == "classification") {
+  ## define the hyper parameter set
+  dietML_param_set <- parsnip::extract_parameter_set_dials(dietML_wflow)
   
-  search_res <-
-    dietML_wflow %>% 
-    tune::tune_bayes(
-      resamples = folds,
-      # To use non-default parameter ranges
-      param_info = dietML_param_set,
-      # Generate five at semi-random to start
-      initial = 5,
-      iter = opt$tune_length,
-      # How to measure performance?
-      metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap, f_meas),
-      control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
-                                    uncertain = 5,
-                                    verbose = FALSE,
-                                    parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed),
-                                    save_pred = TRUE)
-    )
+  if (as.numeric(opt$cor_level) < 1) {
+    ## for random forests, set mtry to max features after correlation
+    ## co-correlate features at specified threshold (get upper limit of mtry)
+    training_cor <- mikropml:::group_correlated_features(train %>% dplyr::select(., -label, -dplyr::any_of(opt$subject_identifier)) %>% dplyr::select(., where(is.numeric)), 
+                                                         corr_thresh = as.numeric(opt$cor_level), group_neg_corr = T)
+    
+    ## make dataframe of what is correlated at specified threshold.
+    training_cor <- as.data.frame(training_cor) %>% 
+      tidyr::separate(., col = training_cor, into = c("keep", "co_correlated"), sep = "\\|", extra = "merge")
+    
+    ## set mtry to max features after correlation
+    dietML_param_set <- 
+      dietML_param_set %>% 
+      # Pick an upper bound for mtry: 
+      recipes::update(mtry = mtry(range(c(2, round((NROW(training_cor) * 0.9), digits = 0)))), 
+                      min_n = min_n(range(c(2, nrow(test)))))
+    
+  } else {
+    dietML_param_set <- 
+      dietML_param_set %>% 
+      # Pick an upper bound for mtry: 
+      recipes::update(mtry = mtry(range(1, ncol(train %>% dplyr::select(., -dplyr::any_of(opt$subject_identifier), -label)))))
+  }
   
-} else if (opt$type == "regression") {
+  ## set up parallel jobs ========================================================
+  ## remove any doParallel job setups that may have
+  ## unneccessarily hung around
+  unregister_dopar()
   
-  search_res <-
-    dietML_wflow %>% 
-    tune::tune_bayes(
-      resamples = folds,
-      # To use non-default parameter ranges
-      param_info = dietML_param_set,
-      # Generate five at semi-random to start
-      initial = 5,
-      iter = opt$tune_length,
-      # How to measure performance?
-      metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
-      control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
-                                    uncertain = 5,
-                                    verbose = FALSE,
-                                    parallel_over = "resamples",
-                                    time_limit = as.numeric(opt$tune_time),
-                                    seed = as.numeric(opt$seed),
-                                    save_pred = TRUE)
-    )
-}
-
-search_res %>% tune::show_best(opt$metric)
-
-## stop parallel jobs
-parallel::stopCluster(cl)
-## remove any doParallel job setups that may have
-## unneccessarily hung around
-unregister_dopar()
-
-## fit best model ==============================================================
-
-## get the best parameters from tuning
-best_mod <- 
+  ## register parallel cluster
+  cl <- parallel::makePSOCKcluster(as.numeric(opt$parallel_workers))
+  doParallel::registerDoParallel(cl)
+  
+  ## set up hyper parameter search
+  if (opt$type == "classification") {
+    
+    search_res <-
+      dietML_wflow %>% 
+      tune::tune_bayes(
+        resamples = folds,
+        # To use non-default parameter ranges
+        param_info = dietML_param_set,
+        # Generate five at semi-random to start
+        initial = 5,
+        iter = opt$tune_length,
+        # How to measure performance?
+        metrics = yardstick::metric_set(bal_accuracy, roc_auc, accuracy, kap, f_meas),
+        control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
+                                      uncertain = 5,
+                                      verbose = FALSE,
+                                      parallel_over = "resamples",
+                                      time_limit = as.numeric(opt$tune_time),
+                                      seed = as.numeric(opt$seed),
+                                      save_pred = TRUE)
+      )
+    
+  } else if (opt$type == "regression") {
+    
+    search_res <-
+      dietML_wflow %>% 
+      tune::tune_bayes(
+        resamples = folds,
+        # To use non-default parameter ranges
+        param_info = dietML_param_set,
+        # Generate five at semi-random to start
+        initial = 5,
+        iter = opt$tune_length,
+        # How to measure performance?
+        metrics = yardstick::metric_set(mae, rmse, rsq, ccc),
+        control = tune::control_bayes(no_improve = as.numeric(opt$tune_stop),
+                                      uncertain = 5,
+                                      verbose = FALSE,
+                                      parallel_over = "resamples",
+                                      time_limit = as.numeric(opt$tune_time),
+                                      seed = as.numeric(opt$seed),
+                                      save_pred = TRUE)
+      )
+  }
+  
+  search_res %>% tune::show_best(opt$metric)
+  
+  ## stop parallel jobs
+  parallel::stopCluster(cl)
+  ## remove any doParallel job setups that may have
+  ## unneccessarily hung around
+  unregister_dopar()
+  
+  ## fit best model ============================================================
+  
+  ## get the best parameters from tuning
+  best_mod <- 
     search_res %>% 
     tune::select_best(metric = opt$metric)
+  
+  ## create the last model based on best parameters
+  last_best_mod <- 
+    parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n) %>% 
+    parsnip::set_engine("ranger", num.threads = as.numeric(opt$total_cores), importance = "none") %>% 
+    parsnip::set_mode(opt$type)
+  
+  ## update workflow with best model
+  best_tidy_workflow <- 
+    dietML_wflow %>% 
+    workflows::update_model(last_best_mod)
+  
+  ## graphs ====================================================================
+  
+  hyperpar_perf_plot <- autoplot(search_res, type = "performance")
+  ggplot2::ggsave(plot = hyperpar_perf_plot, filename = paste0(opt$outdir, "training_performance.pdf"), width = 7, height = 2.5, units = "in")
+  
+  hyperpar_tested_plot <- autoplot(search_res, type = "parameters") + 
+    labs(x = "Iterations", y = NULL)
+  ggplot2::ggsave(plot = hyperpar_tested_plot, filename = paste0(opt$outdir, "hyperpars_tested.pdf"), width = 7, height = 2.5, units = "in")
+  
+}
 
-## create the last model based on best parameters
-last_best_mod <- 
-  parsnip::rand_forest(mtry = best_mod$mtry, min_n = best_mod$min_n) %>% 
-  parsnip::set_engine("ranger", num.threads = as.numeric(opt$ncores), importance = "none") %>% 
-  parsnip::set_mode(opt$type)
-
-## update workflow with best model
-best_tidy_workflow <- 
-  dietML_wflow %>% 
-  workflows::update_model(last_best_mod)
-
-## fit to test data
+## fit to test data ============================================================
 if (opt$type == "classification") {
   final_res <- tune::last_fit(best_tidy_workflow, tr_te_split, 
                               metrics = yardstick::metric_set(bal_accuracy, 
@@ -227,15 +254,6 @@ full_results$seed <- opt$seed
 
 ## write final results to file or append if file exists
 readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "ml_results.csv")))
-
-## graphs ======================================================================
-
-hyperpar_perf_plot <- autoplot(search_res, type = "performance")
-ggplot2::ggsave(plot = hyperpar_perf_plot, filename = paste0(opt$outdir, "training_performance.pdf"), width = 7, height = 2.5, units = "in")
-
-hyperpar_tested_plot <- autoplot(search_res, type = "parameters") + 
-  labs(x = "Iterations", y = NULL)
-ggplot2::ggsave(plot = hyperpar_tested_plot, filename = paste0(opt$outdir, "hyperpars_tested.pdf"), width = 7, height = 2.5, units = "in")
 
 ## remove any doParallel job setups that may have
 ## unneccessarily hung around
