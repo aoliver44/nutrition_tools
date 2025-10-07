@@ -16,6 +16,15 @@ library(recipes, quietly = T, verbose = F, warn.conflicts = F)
 
 shap.error.occured <- FALSE
 
+## shap safety checks!
+n_rows <- nrow(input)
+n_cols <- ncol(input)
+# try and calc a conservative nsim, otherwise choose 10.
+safe_nsim <- max(10, floor(600000 / (n_rows * n_cols))) # 20 features x 300 samples x 200 sims = 600000
+## for smaller datasets, the above could lead to huge nsim. lets set max at 100.
+safe_nsim <- ifelse(safe_nsim > 99, 100, safe_nsim)
+message(glue::glue("Running SHAP with nsim = {safe_nsim}"))
+
 tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
   
   #####################
@@ -39,7 +48,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+  shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
   
   ## make shap viz object
   sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
@@ -73,7 +82,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+  shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
 
   ## make shap viz object
   sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
@@ -107,7 +116,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
     as.matrix()
   
   ## explain with fastshap
-  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+  shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
   
   ## make shap viz object
   sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
@@ -141,7 +150,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+    shap_explainations_full <- fastshap::explain(best_workflow_mod$fit, X = shap_data_full, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
     
     ## make shap viz object
     sv_full <- shapviz::shapviz(shap_explainations_full, X = shap_data_full)
@@ -170,7 +179,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+    shap_explainations_train <- fastshap::explain(best_workflow_mod$fit, X = shap_data_train, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
     
     ## make shap viz object
     sv_train <- shapviz::shapviz(shap_explainations_train, X = shap_data_train)
@@ -199,7 +208,7 @@ tryCatch( { if (length(levels(as.factor(input$label))) == 2) {
       as.matrix()
     
     ## explain with fastshap
-    shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = 100, adjust = TRUE)
+    shap_explainations_test <- fastshap::explain(best_workflow_mod$fit, X = shap_data_test, pred_wrapper = pfun, nsim = safe_nsim, adjust = TRUE)
     
     ## make shap viz object
     sv_test <- shapviz::shapviz(shap_explainations_test, X = shap_data_test)
