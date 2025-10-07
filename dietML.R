@@ -41,7 +41,7 @@ Options:
     --tune_stop number of HP interations to let pass without a metric improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
     --ncores parallel cores for the ML engine, note resources req: ncores x parallel_workers [default: 1]
-    --parallel_workers number of parallel workers  [default: 2]
+    --parallel_workers number of parallel workers  [default: 1]
     
 Arguments:
     input  FULL path to input file for ML (e.g., a flat file or output from generic_combine.R)
