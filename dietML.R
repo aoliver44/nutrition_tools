@@ -140,13 +140,6 @@ if (file.exists(opt$input) == FALSE) {
   stop("Input file not found.\n")
 }
 
-## check parallel arguments ====================================================
-if ((as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)) > parallelly::availableCores()) {
-  stop(sprintf("DietML detects %i cores but you asked for %i cores \n(%i parallel workers * %i ncores (ML engine cores)", parallelly::availableCores(), (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)), opt$parallel_workers, opt$ncores))
-} else {
-  opt$total_cores <- (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores))
-}
-
 ## make sure args are the right type ===========================================
 opt$cor_level <- as.numeric(opt$cor_level)
 opt$train_split <- as.numeric(opt$train_split)
@@ -157,6 +150,13 @@ opt$tune_time <- as.numeric(opt$tune_time)
 opt$tune_length <- as.numeric(opt$tune_length)
 opt$tune_stop <- as.numeric(opt$tune_stop)
 opt$total_cores <- as.numeric(opt$total_cores)
+
+## check parallel arguments ====================================================
+if ((as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)) > parallelly::availableCores()) {
+  stop(sprintf("DietML detects %i cores but you asked for %i cores \n(%i parallel workers * %i ncores (ML engine cores)", parallelly::availableCores(), (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores)), opt$parallel_workers, opt$ncores))
+} else {
+  opt$total_cores <- (as.numeric(opt$parallel_workers) * as.numeric(opt$ncores))
+}
 
 ## read in input ===============================================================
 
