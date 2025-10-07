@@ -96,7 +96,17 @@ print(dietML_wflow)
 ## hyperparameters =============================================================
 
 if (as.numeric(opt$tune_time) == 0) {
-  best_tidy_workflow <- parsnip::fit(dietML_wflow, train)
+  no_tune_model <- parsnip::fit(dietML_wflow, train)
+    ## create the last model based on best parameters
+    last_best_mod <- 
+      parsnip::rand_forest(mtry = no_tune_model$fit[[2]]$fit$mtry, min_n = no_tune_model$fit[[2]]$fit$min.node.size, trees = no_tune_model$fit[[2]]$fit$num.trees) %>% 
+      parsnip::set_engine("ranger", num.threads = as.numeric(opt$total_cores), importance = "none") %>% 
+      parsnip::set_mode(opt$type)
+    
+    ## update workflow with best model
+    best_tidy_workflow <- 
+      dietML_wflow %>% 
+      workflows::update_model(last_best_mod)
   
 } else {
   ## define the hyper parameter set
