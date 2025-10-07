@@ -205,38 +205,34 @@ This script will take the output of ```generic_read_in``` and combine all the fi
 ```
 Run regression or classification ML models on a dataframe
 Usage:
-    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --ncores=<ncores>] <input> <outdir>
+    dietML [--subject_identifier=<subject_id> --label=<label> --cor_level=<cor_level> --train_split=<train_split> --model=<model> --metric=<metric> --folds=<folds> --cv_repeats=<cv_repeats> --type=<type> --seed=<seed> --tune_length=<tune_length> --tune_stop=<tune_stop> --tune_time=<time_limit> --shap=<shap> --parallel_workers=<parallel_workers> --ncores=<ncores>] <input> <outdir>
 
 Options:
     -h --help  Show this screen.
     -v --version  Show version.
     --subject_identifier name of columns with subject IDs [default: subject_id]
     --label name of column that you are prediction [default: label]
-    --cor_level level to group features together [default: 0.95]
-    --train_split what percentage of samples should be used in training
-            [default: 0.70]
-    --model what model would you like run
-            (options: rf,lasso,ridge,enet) [default: rf]
+    --cor_level level to group features together. If --cor_level 1, no feature pre-processesing is done beyond dummy variable encoding [default: 0.95]
+    --train_split what percentage of samples should be used in training [default: 0.70]
+    --model what model would you like run (options: rf,lasso,ridge,enet) [default: rf]
     --folds number of CV folds to tune with [default: 10]
-    --metric what metric would you like to optimize in training
-            (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap,
-             f_meas, ccc) [default: bal_accuracy]
-    --type for models that do both regression and classification
-            [default: classification]
+    --cv_repeats number of repeats to perform for CV [default: 3]
+    --metric what metric would you like to optimize in training (options: roc_auc, bal_accuracy, accuracy, mae, rmse, rsq, kap,f_meas, ccc) [default: bal_accuracy]
+    --type for models that do both regression and classification [default: classification]
     --seed set random seed [default: 42]
     --tune_length number of hyperparameter combinations to sample [default: 80]
     --tune_time length of time tune_bayes runs [default: 10]
-    --tune_stop number of HP interations to let pass without a metric
-            improvement [default: 10]
+    --tune_stop number of HP interations to let pass without a metric improvement [default: 10]
     --shap attempt to calcualte shap values? [default: FALSE]
-    --ncores number of processesing cores for parallel computing [default: 2]
+    --ncores parallel cores for the ML engine, note resources req: ncores x parallel_workers [default: 1]
+    --parallel_workers number of parallel workers  [default: 1]
 
 Arguments:
-    input  FULL path to input file for ML (output from generic_combine.R)
+    input  FULL path to input file for ML (e.g., a flat file or output from generic_combine.R)
     outdir FULL path where results should be written
 
 ########### example: ###########
-dietML --label label --cor_level 0.95 --train_split 0.7 --model lasso --type classification --metric bal_accuracy --ncores 2 --tune_length 10 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
+dietML --label label --cor_level 0.95 --train_split 0.7 --model lasso --type classification --metric bal_accuracy --ncores 2 --tune_time 0 /home/docker/simulated_output/merged_data.csv /home/docker/simulated_output/ml_results/
 ```
 
 The final script in this pipeline takes a clean (no missing data!) dataframe and performs a (relatively) basic ML analysis. The underlying ML framework is from the developers of [TidyModels](https://www.tidymodels.org/), a big thank you to them. The engines themselves are largely from [ranger()](https://github.com/imbs-hl/ranger) and [glmnet()](https://glmnet.stanford.edu/) packages (and others as this project grows). Again, I have to recognize the epic contributions of these developers. 
