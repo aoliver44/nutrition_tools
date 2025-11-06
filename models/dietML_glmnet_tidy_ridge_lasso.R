@@ -63,31 +63,36 @@ if (as.numeric(opt$cor_level) < 1) {
 ## ML engine ===================================================================
 
 ## specify ML model and engine 
-if (opt$type == "classification") {
-  if (opt$model == "lasso") {
-    initial_mod <- parsnip::logistic_reg(mode = "classification", 
-                                       penalty = tune(),
-                                       mixture = 1) %>%
-    parsnip::set_engine("glmnet")
+if (as.numeric(opt$tune_time) == 0) {
+  # Define model with fixed penalty and mixture
+  if (opt$type == "classification") {
+    initial_mod <- parsnip::logistic_reg(
+      mode = "classification",
+      penalty = double(1),
+      mixture = ifelse(opt$model == "lasso", 1, 0)
+    ) %>%
+      parsnip::set_engine("glmnet")
   } else {
-    initial_mod <- parsnip::logistic_reg(mode = "classification", 
-                                         penalty = tune(),
-                                         mixture = 0) %>%
+    initial_mod <- parsnip::linear_reg(
+      mode = "regression",
+      penalty = double(1),
+      mixture = ifelse(opt$model == "lasso", 1, 0)
+    ) %>%
       parsnip::set_engine("glmnet")
   }
 } else {
-  if (opt$model == "lasso") {
-    initial_mod <- parsnip::linear_reg(mode = "regression", 
+  if (opt$type == "classification") {
+    initial_mod <- parsnip::logistic_reg(mode = "classification", 
                                          penalty = tune(),
-                                         mixture = 1) %>%
+                                         mixture = ifelse(opt$model == "lasso", 1, 0)) %>%
       parsnip::set_engine("glmnet")
   } else {
     initial_mod <- parsnip::linear_reg(mode = "regression", 
-                                         penalty = tune(),
-                                         mixture = 0) %>%
+                                       penalty = tune(),
+                                       mixture = ifelse(opt$model == "lasso", 1, 0)) %>%
       parsnip::set_engine("glmnet")
   }
-}
+} 
 
 initial_mod %>% parsnip::translate()
 
@@ -230,6 +235,7 @@ null_results <- results_df %>%
   dplyr::rename(., "null_model_avg" = 2)
 full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
 full_results$seed <- opt$seed
+full_results$model <- opt$model
 
 ## write final results to file or append if file exists
 readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "ml_results.csv")))

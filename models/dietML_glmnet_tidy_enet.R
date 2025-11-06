@@ -63,18 +63,23 @@ if (as.numeric(opt$cor_level) < 1) {
 ## ML engine ===================================================================
 
 ## specify ML model and engine 
-
 if (as.numeric(opt$tune_time) == 0) {
+  # Define model with fixed penalty and mixture
   if (opt$type == "classification") {
-    initial_mod <- parsnip::logistic_reg(mode = "classification") %>%
+    initial_mod <- parsnip::logistic_reg(
+      mode = "classification",
+      penalty = double(1),
+      mixture = 0.5
+    ) %>%
       parsnip::set_engine("glmnet")
   } else {
-    initial_mod <- parsnip::linear_reg(mode = "regression") %>%
+    initial_mod <- parsnip::linear_reg(
+      mode = "regression",
+      penalty = double(1),
+      mixture = 0.5
+    ) %>%
       parsnip::set_engine("glmnet")
   }
-  
-  initial_mod %>% parsnip::translate()
-  
 } else {
   if (opt$type == "classification") {
     initial_mod <- parsnip::logistic_reg(mode = "classification", 
@@ -87,9 +92,9 @@ if (as.numeric(opt$tune_time) == 0) {
                                        mixture = tune()) %>%
       parsnip::set_engine("glmnet")
   }
-  
-  initial_mod %>% parsnip::translate()
-}
+} 
+
+initial_mod %>% parsnip::translate()
 
 ## workflow ====================================================================
 
@@ -207,6 +212,7 @@ if (as.numeric(opt$tune_time) == 0) {
   
 }
 
+
 ## fit to test data
 if (opt$type == "classification") {
   final_res <- tune::last_fit(best_tidy_workflow, tr_te_split, 
@@ -240,6 +246,7 @@ null_results <- results_df %>%
   dplyr::rename(., "null_model_avg" = 2)
 full_results <- merge(workflowsets::collect_metrics(final_res), null_results, by = ".metric", all = T)
 full_results$seed <- opt$seed
+full_results$model <- opt$model
 
 ## write final results to file or append if file exists
 readr::write_csv(x = full_results, file = paste0(opt$outdir, "ml_results.csv"), append = T, col_names = !file.exists(paste0(opt$outdir, "ml_results.csv")))
