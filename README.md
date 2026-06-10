@@ -1,4 +1,4 @@
-# Note! DietML has moved! 
+# Note: DietML has moved!!
 It is now being maintained alongside TaxaHFE. Please find it here:
 https://github.com/aoliver44/taxaHFE/blob/main/dietml.md
 
