@@ -1,3 +1,7 @@
+# Note! DietML has moved! 
+It is now being maintained alongside TaxaHFE. Please find it here:
+https://github.com/aoliver44/taxaHFE/blob/main/dietml.md
+
 # Table of Contents
 
 - dietML pipeline for machine learning
